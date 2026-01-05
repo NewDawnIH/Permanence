@@ -3,306 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Workspace | Self-Contained</title>
-    <style>
-        :root {
-            --bg: #f8fafc;
-            --sidebar-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --accent: #eff6ff;
-            --border: #e2e8f0;
-            --card-bg: #ffffff;
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: var(--font-sans);
-            background-color: var(--bg);
-            color: var(--text-main);
-            line-height: 1.5;
-            direction: ltr; /* Explicitly ensure left-to-right */
-        }
-
-        /* Layout */
-        .app-container { display: flex; min-height: 100vh; }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            padding: 24px;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 40px;
-        }
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            color: white;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .nav-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-bottom: 4px;
-            transition: all 0.2s;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-size: 14px;
-        }
-        .nav-item:hover { background: var(--bg); color: var(--text-main); }
-        .nav-item.active { background: var(--accent); color: var(--primary); }
-
-        .sidebar-footer {
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
-        }
-        .user-badge {
-            background: var(--bg);
-            padding: 12px;
-            border-radius: var(--radius-md);
-            margin-bottom: 12px;
-        }
-        .user-badge-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .user-badge-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* Main Content */
-        .main-content { flex-grow: 1; padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
-
-        /* Dashboard Components */
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 32px;
-        }
-        .title-group h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-        .title-group p { margin: 4px 0 0; color: var(--text-muted); }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-        .btn-primary:hover { background: var(--primary-hover); }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 32px;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-        }
-        .stat-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .stat-value { font-size: 24px; font-weight: 700; margin-top: 4px; }
-
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            background: #f1f5f9;
-            padding: 4px;
-            border-radius: 10px;
-            width: fit-content;
-            margin-bottom: 24px;
-        }
-        .filter-btn {
-            border: none;
-            background: none;
-            padding: 6px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-        .filter-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        .project-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .project-card {
-            background: white;
-            padding: 24px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .project-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--primary); }
-        .type-tag {
-            background: var(--accent);
-            color: var(--primary);
-            font-size: 10px;
-            font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        /* Widgets */
-        .widget { background: #1e293b; color: white; padding: 24px; border-radius: var(--radius-lg); }
-        .widget-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-        .todo-item-compact {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.05);
-            border-radius: var(--radius-md);
-            margin-bottom: 8px;
-        }
-        .todo-text { font-size: 13px; font-weight: 500; }
-        .todo-subtext { font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight: 700; display: block; margin-top: 4px; }
-
-        /* Search Results Styles */
-        .result-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        /* Modals */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal-box {
-            background: white;
-            width: 100%;
-            max-width: 500px;
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--text-muted); }
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            font-family: var(--font-sans);
-            font-size: 14px;
-            text-align: left; /* Explicitly ensure left alignment */
-        }
-        input:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
-
-        /* Utils */
-        .hidden { display: none !important; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        pre { background: #0f172a; color: #38bdf8; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
-        
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .main-content { padding: 20px; }
-        }
-    </style>
+    <title>Nexus Workspace</title>
 </head>
-<body>
+<body style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.5; direction: ltr;">
 
-    <div class="app-container">
+    <div id="app-root" style="display: flex; min-height: 100vh; direction: ltr;">
         <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar hidden">
-            <div class="logo-area">
-                <div class="logo-icon">N</div>
+        <aside id="sidebar" style="display: none; width: 260px; background: #ffffff; border-right: 1px solid #e2e8f0; flex-direction: column; position: sticky; top: 0; height: 100vh; padding: 24px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 40px;">
+                <div style="width: 32px; height: 32px; background: #2563eb; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold;">N</div>
                 <span style="font-size: 20px; font-weight: 800;">Nexus</span>
             </div>
 
-            <nav class="nav-list">
-                <button onclick="app.setMainView('dashboard')" id="nav-dashboard" class="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <nav style="list-style: none; padding: 0; margin: 0; flex-grow: 1;">
+                <button onclick="app.setMainView('dashboard')" id="nav-dashboard" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
                     Projects
                 </button>
-                <button onclick="app.setMainView('mailbox')" id="nav-mailbox" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <button onclick="app.setMainView('mailbox')" id="nav-mailbox" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     Mailbox
                 </button>
-                <button onclick="app.setMainView('filter')" id="nav-filter" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <button onclick="app.setMainView('filter')" id="nav-filter" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     Search
                 </button>
             </nav>
 
-            <div class="sidebar-footer">
-                <div class="user-badge">
-                    <div class="user-badge-label">User Session</div>
-                    <div class="user-badge-name" id="user-display">---</div>
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <div style="background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 12px;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">User Session</div>
+                    <div id="user-display" style="font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">---</div>
                 </div>
-                <button onclick="app.setMainView('export')" style="background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; padding: 4px;">Export Backup</button>
+                <button onclick="app.setMainView('export')" style="background: none; border: none; color: #64748b; font-size: 11px; cursor: pointer; padding: 4px;">Export Backup</button>
             </div>
         </aside>
 
-        <!-- Content Area -->
-        <main id="main-content" class="main-content">
-            <!-- Content Injected via app.render() -->
+        <!-- Main Content Area -->
+        <main id="main-content" style="flex-grow: 1; padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
+            <!-- Dynamic Injection -->
         </main>
     </div>
 
-    <!-- Modals Overlay -->
-    <div id="modal-overlay" class="modal-overlay" onclick="if(event.target === this) app.closeModal()">
-        <div id="modal-container" class="modal-box"></div>
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" onclick="if(event.target === this) app.closeModal()" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
+        <div id="modal-container" style="background: white; width: 100%; max-width: 500px; border-radius: 16px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"></div>
     </div>
 
     <script>
@@ -313,58 +58,57 @@
             selectedIdx: null,
             tab: "logs",
             searchKey: "",
-            searchDate: "",
 
-            init() {
-                this.render();
-            },
+            init() { this.render(); },
 
-            setMainView(v) {
-                this.view = v;
-                this.render();
-            },
+            setMainView(v) { this.view = v; this.render(); },
+
+            setFilter(f) { this.filter = f; this.render(); },
+
+            setTab(t) { this.tab = t; this.render(); },
 
             render() {
                 const main = document.getElementById('main-content');
                 const sidebar = document.getElementById('sidebar');
                 const userDisp = document.getElementById('user-display');
                 
-                sidebar.classList.toggle('hidden', this.view === 'welcome');
+                sidebar.style.display = this.view === 'welcome' ? 'none' : 'flex';
                 if (this.data.userName) userDisp.innerText = this.data.userName;
 
-                // Sync navigation highlight
-                const navs = ['dashboard', 'mailbox', 'filter'];
-                navs.forEach(id => {
+                // Nav highlight simulation
+                ['dashboard', 'mailbox', 'filter'].forEach(id => {
                     const el = document.getElementById('nav-' + id);
-                    if (el) el.classList.toggle('active', this.view === id || (this.view === 'details' && id === 'dashboard'));
+                    if (el) {
+                        const isActive = (this.view === id || (this.view === 'details' && id === 'dashboard'));
+                        el.style.background = isActive ? '#eff6ff' : 'none';
+                        el.style.color = isActive ? '#2563eb' : '#64748b';
+                    }
                 });
 
-                switch(this.view) {
-                    case 'welcome': main.innerHTML = this.tplWelcome(); break;
-                    case 'dashboard': main.innerHTML = this.tplDashboard(); break;
-                    case 'mailbox': main.innerHTML = this.tplMailbox(); break;
-                    case 'filter': main.innerHTML = this.tplFilter(); break;
-                    case 'details': main.innerHTML = this.tplDetails(); break;
-                    case 'export': main.innerHTML = this.tplExport(); break;
-                }
+                if (this.view === 'welcome') main.innerHTML = this.tplWelcome();
+                else if (this.view === 'dashboard') main.innerHTML = this.tplDashboard();
+                else if (this.view === 'mailbox') main.innerHTML = this.tplMailbox();
+                else if (this.view === 'filter') main.innerHTML = this.tplFilter();
+                else if (this.view === 'details') main.innerHTML = this.tplDetails();
+                else if (this.view === 'export') main.innerHTML = this.tplExport();
             },
 
             tplWelcome() {
                 return `
-                    <div style="max-width: 400px; margin: 100px auto; text-align: center;">
-                        <div style="width: 64px; height: 64px; background: var(--primary); color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin: 0 auto 24px;">N</div>
+                    <div style="max-width: 400px; margin: 100px auto; text-align: center; direction: ltr;">
+                        <div style="width: 64px; height: 64px; background: #2563eb; color: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin: 0 auto 24px;">N</div>
                         <h1 style="font-size: 32px; margin-bottom: 8px;">Nexus Workspace</h1>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">Self-contained offline productivity tracker.</p>
-                        <div style="background: white; padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow);">
-                            <div class="form-group">
-                                <label>Your Name</label>
-                                <input type="text" id="init-name" placeholder="John Doe">
+                        <p style="color: #64748b; margin-bottom: 32px;">Self-contained offline productivity tracker.</p>
+                        <div style="background: white; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            <div style="margin-bottom: 16px; text-align: left;">
+                                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #64748b;">Your Name</label>
+                                <input type="text" id="init-name" placeholder="John Doe" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px;">
                             </div>
-                            <div class="form-group">
-                                <label>Restore Data (JSON)</label>
-                                <textarea id="init-json" style="height: 100px; font-size: 10px;"></textarea>
+                            <div style="margin-bottom: 16px; text-align: left;">
+                                <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #64748b;">Restore JSON (Optional)</label>
+                                <textarea id="init-json" style="width: 100%; height: 80px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 10px; font-family: monospace;"></textarea>
                             </div>
-                            <button onclick="app.handleInit()" class="btn-primary" style="width: 100%; justify-content: center;">Enter Workspace</button>
+                            <button onclick="app.handleInit()" style="width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;">Enter Workspace</button>
                         </div>
                     </div>
                 `;
@@ -377,163 +121,78 @@
                     return true;
                 });
 
-                const todos = [];
-                this.data.projects.forEach((p, pi) => {
-                    p.todos?.filter(t => !t.finished).forEach((t, ti) => todos.push({...t, pi, ti, pTitle: p.title}));
-                });
-
                 return `
-                    <div class="header-flex">
-                        <div class="title-group">
-                            <h1>Project Dashboard</h1>
-                            <p>Overview of current initiatives and priorities.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+                        <div>
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Project Dashboard</h1>
+                            <p style="margin: 4px 0 0; color: #64748b;">Manage your current initiatives.</p>
                         </div>
-                        <button onclick="app.openProjectModal()" class="btn-primary">
+                        <button onclick="app.openProjectModal()" style="background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             New Project
                         </button>
                     </div>
 
-                    <div class="dashboard-grid">
-                        <div>
-                            <div class="stats-row">
-                                <div class="stat-card">
-                                    <div class="stat-label">Active</div>
-                                    <div class="stat-value">${this.data.projects.filter(p=>p.status==='Active').length}</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                        ${projects.map((p, i) => `
+                            <div onclick="app.openDetails(${this.data.projects.indexOf(p)})" style="background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.2s;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="background: #eff6ff; color: #2563eb; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${p.type}</span>
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${p.status==='Active'?'#10b981':'#cbd5e1'}"></div>
                                 </div>
-                                <div class="stat-card">
-                                    <div class="stat-label">Completed</div>
-                                    <div class="stat-value">${this.data.projects.filter(p=>p.status==='Finished').length}</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-label">Logs</div>
-                                    <div class="stat-value">${this.data.projects.reduce((acc, p) => acc + (p.logs?.length || 0), 0)}</div>
+                                <h3 style="margin: 0 0 8px 0; font-size: 18px;">${p.title}</h3>
+                                <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; height: 3em; overflow: hidden;">${p.description}</p>
+                                <div style="padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; font-size: 11px; font-weight: 700; color: #94a3b8;">
+                                    <span>${p.logs?.length || 0} LOGS</span>
+                                    <span>${p.todos?.filter(t=>!t.finished).length || 0} TASKS</span>
                                 </div>
                             </div>
-
-                            <div class="filter-bar">
-                                <button onclick="app.setFilter('all')" class="filter-btn ${this.filter==='all'?'active':''}">All</button>
-                                <button onclick="app.setFilter('active')" class="filter-btn ${this.filter==='active'?'active':''}">Active</button>
-                                <button onclick="app.setFilter('finished')" class="filter-btn ${this.filter==='finished'?'active':''}">Finished</button>
-                            </div>
-
-                            <div class="project-list">
-                                ${projects.map((p, i) => `
-                                    <div onclick="app.openDetails(${this.data.projects.indexOf(p)})" class="project-card">
-                                        <div class="flex-between" style="margin-bottom: 12px;">
-                                            <span class="type-tag">${p.type}</span>
-                                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${p.status==='Active'?'#10b981':'#cbd5e1'}"></div>
-                                        </div>
-                                        <h3 style="margin: 0 0 8px 0; font-size: 18px;">${p.title}</h3>
-                                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-clamp: 2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 3em;">${p.description}</p>
-                                        <div style="padding-top: 12px; border-top: 1px solid var(--border); display: flex; gap: 12px; font-size: 11px; font-weight: 700; color: #94a3b8;">
-                                            <span>${p.logs?.length || 0} LOGS</span>
-                                            <span>${p.todos?.filter(t=>!t.finished).length || 0} TASKS</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="widget">
-                                <div class="widget-title">Pending Tasks</div>
-                                ${todos.length === 0 ? '<p style="font-size: 13px; color: #64748b;">No items pending.</p>' : todos.slice(0, 10).map(t => `
-                                    <div class="todo-item-compact">
-                                        <input type="checkbox" onclick="event.stopPropagation(); app.toggleTodo(${t.pi}, ${t.ti})" style="width: 16px; height: 16px; margin-top: 2px;">
-                                        <div>
-                                            <div class="todo-text">${t.text}</div>
-                                            <span class="todo-subtext">${t.pTitle}</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            },
-
-            tplMailbox() {
-                return `
-                    <div class="header-flex">
-                        <div class="title-group">
-                            <h1>Mailbox Library</h1>
-                            <p>Stored answers for high-frequency queries.</p>
-                        </div>
-                        <button onclick="app.openMailboxModal()" class="btn-primary">Add Entry</button>
-                    </div>
-                    <div style="max-width: 800px;">
-                        ${this.data.mailbox.map((m, i) => `
-                            <div class="project-card" style="margin-bottom: 16px; cursor: default;">
-                                <div class="flex-between" style="margin-bottom: 12px;">
-                                    <h3 style="margin: 0;">${m.subject}</h3>
-                                    <span style="font-size: 11px; color: var(--text-muted);">${m.date}</span>
-                                </div>
-                                <div style="background: var(--bg); padding: 16px; border-radius: var(--radius-md); font-size: 14px; white-space: pre-wrap;">${m.solution}</div>
-                                <button onclick="app.deleteMailbox(${i})" style="margin-top: 12px; background: none; border: none; color: #ef4444; font-size: 11px; font-weight: 700; cursor: pointer; padding: 0;">DELETE ENTRY</button>
-                            </div>
-                        `).reverse().join('')}
+                        `).join('')}
                     </div>
                 `;
             },
 
             tplFilter() {
-                const results = [];
-                const q = (this.searchKey || "").toLowerCase().trim();
-                const d = this.searchDate;
+                return `
+                    <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Search & Audit</h1>
+                    <div style="background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 32px;">
+                        <input type="text" id="search-input" placeholder="Type to search logs, SQL, or mailbox..." oninput="app.searchKey = this.value; app.runSearch();" style="width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; direction: ltr; text-align: left;">
+                    </div>
+                    <div id="search-results"></div>
+                `;
+            },
 
+            runSearch() {
+                const resultsArea = document.getElementById('search-results');
+                if(!resultsArea) return;
+                const q = this.searchKey.toLowerCase().trim();
+                if(!q) { resultsArea.innerHTML = ""; return; }
+
+                let html = "";
                 this.data.projects.forEach(p => {
                     p.logs?.forEach(l => {
-                        const dateMatch = !d || l.date === new Date(d).toLocaleDateString();
-                        const keyMatch = !q || l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q);
-                        if(dateMatch && keyMatch) results.push({ type: 'Log', project: p.title, title: l.title, date: l.date, content: l.content });
-                    });
-                    p.queries?.forEach(s => {
-                        const dateMatch = !d || s.date === new Date(d).toLocaleDateString();
-                        const keyMatch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
-                        if(dateMatch && keyMatch) results.push({ type: 'SQL', project: p.title, title: s.name, date: s.date, content: s.code });
+                        if(l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q)) {
+                            html += this.tplSearchResult('Log', p.title, l.title, l.content);
+                        }
                     });
                 });
-
                 this.data.mailbox.forEach(m => {
-                    const dateMatch = !d || m.date === new Date(d).toLocaleDateString();
-                    const keyMatch = !q || m.subject.toLowerCase().includes(q) || m.solution.toLowerCase().includes(q);
-                    if(dateMatch && keyMatch) results.push({ type: 'Mailbox', project: 'N/A', title: m.subject, date: m.date, content: m.solution });
+                    if(m.subject.toLowerCase().includes(q) || m.solution.toLowerCase().includes(q)) {
+                        html += this.tplSearchResult('Mailbox', 'Global', m.subject, m.solution);
+                    }
                 });
+                resultsArea.innerHTML = html || "<p style='text-align:center; color:#64748b;'>No matches found.</p>";
+            },
 
+            tplSearchResult(type, project, title, content) {
                 return `
-                    <div class="header-flex">
-                        <div class="title-group">
-                            <h1>History & Audit</h1>
-                            <p>Search across all historical logs and data.</p>
+                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                        <div style="display:flex; gap:8px; margin-bottom:8px;">
+                            <span style="font-size:10px; font-weight:800; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${type}</span>
+                            <span style="font-size:10px; font-weight:800; background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:4px;">${project}</span>
                         </div>
-                    </div>
-
-                    <div style="background: white; padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 32px; display: flex; gap: 20px;">
-                        <div style="flex-grow: 1;">
-                            <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px;">Keyword Search</label>
-                            <input type="text" id="audit-key" value="${this.searchKey}" oninput="app.updateAuditKey(event)" placeholder="Search anything...">
-                        </div>
-                        <div style="width: 200px;">
-                            <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px;">Filter Date</label>
-                            <input type="date" value="${this.searchDate}" onchange="app.updateAuditDate(this.value)">
-                        </div>
-                    </div>
-
-                    <div class="result-container" id="search-results-list">
-                        ${results.length === 0 ? '<p style="text-align: center; color: var(--text-muted); padding: 40px;">No matching records found.</p>' : results.map(r => `
-                            <div class="project-card" style="cursor: default;">
-                                <div class="flex-between" style="margin-bottom: 8px;">
-                                    <div style="display: flex; gap: 8px;">
-                                        <span class="type-tag" style="background: #e2e8f0; color: #475569;">${r.type}</span>
-                                        <span class="type-tag">${r.project}</span>
-                                    </div>
-                                    <span style="font-size: 11px; color: var(--text-muted);">${r.date}</span>
-                                </div>
-                                <h4 style="margin: 0 0 12px 0;">${r.title}</h4>
-                                <div style="font-size: 13px; color: var(--text-main); background: var(--bg); padding: 12px; border-radius: 8px; white-space: pre-wrap;">${r.content}</div>
-                            </div>
-                        `).join('')}
+                        <h4 style="margin:0 0 8px 0;">${title}</h4>
+                        <div style="font-size:13px; color:#475569; background:#f8fafc; padding:12px; border-radius:8px; white-space:pre-wrap;">${content}</div>
                     </div>
                 `;
             },
@@ -541,207 +200,66 @@
             tplDetails() {
                 const p = this.data.projects[this.selectedIdx];
                 return `
-                    <button onclick="app.setMainView('dashboard')" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; margin-bottom: 24px;">← BACK TO DASHBOARD</button>
-                    
-                    <div style="background: white; padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 32px;">
-                        <div class="flex-between" style="margin-bottom: 12px;">
-                            <span class="type-tag">${p.type}</span>
-                            <select onchange="app.updateStatus(${this.selectedIdx}, this.value)" style="width: auto; padding: 4px 12px; font-weight: 700;">
-                                <option ${p.status==='Active'?'selected':''}>Active</option>
-                                <option ${p.status==='Finished'?'selected':''}>Finished</option>
-                            </select>
-                        </div>
-                        <h1 style="margin: 0 0 12px 0; font-size: 32px; font-weight: 800;">${p.title}</h1>
-                        <p style="color: var(--text-muted); margin: 0; font-size: 16px;">${p.description}</p>
+                    <button onclick="app.setMainView('dashboard')" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; margin-bottom: 24px;">← BACK</button>
+                    <div style="background: white; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+                        <h1 style="margin: 0 0 8px 0;">${p.title}</h1>
+                        <p style="color: #64748b; margin: 0;">${p.description}</p>
                     </div>
-
-                    <div class="filter-bar">
-                        <button onclick="app.setTab('logs')" class="filter-btn ${this.tab==='logs'?'active':''}">ACTIVITY LOG</button>
-                        <button onclick="app.setTab('sql')" class="filter-btn ${this.tab==='sql'?'active':''}">SQL REPOSITORY</button>
-                        <button onclick="app.setTab('todos')" class="filter-btn ${this.tab==='todos'?'active':''}">REQUIREMENTS</button>
+                    <div style="display: flex; gap: 8px; margin-bottom: 24px; background: #f1f5f9; padding: 4px; border-radius: 10px; width: fit-content;">
+                        <button onclick="app.setTab('logs')" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='logs'?'white':'none'}; color:${this.tab==='logs'?'#2563eb':'#64748b'}">LOGS</button>
+                        <button onclick="app.setTab('sql')" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='sql'?'white':'none'}; color:${this.tab==='sql'?'#2563eb':'#64748b'}">SQL</button>
                     </div>
-
-                    <div style="margin-top: 32px;">
-                        ${this.renderTabContent(p)}
-                    </div>
+                    <div id="tab-content">${this.renderLogs(p)}</div>
                 `;
             },
 
-            renderTabContent(p) {
-                if(this.tab === 'logs') {
-                    return `
-                        <div class="flex-between" style="margin-bottom: 24px;">
-                            <h3 style="margin:0;">Project Updates</h3>
-                            <button onclick="app.openLogModal()" class="btn-primary">Add Update</button>
-                        </div>
-                        ${p.logs.map(l => `
-                            <div class="project-card" style="margin-bottom: 16px; cursor: default;">
-                                <div class="flex-between" style="margin-bottom: 8px;">
-                                    <h4 style="margin:0;">${l.title}</h4>
-                                    <span style="font-size: 11px; color: var(--text-muted);">${l.date}</span>
-                                </div>
-                                <div style="font-size: 14px; white-space: pre-wrap;">${l.content}</div>
-                            </div>
-                        `).reverse().join('')}
-                    `;
-                }
-                if(this.tab === 'sql') {
-                    return `
-                        <div class="flex-between" style="margin-bottom: 24px;">
-                            <h3 style="margin:0;">Stored Queries</h3>
-                            <button onclick="app.openSqlModal()" class="btn-primary">New Query</button>
-                        </div>
-                        ${p.queries.map(q => `
-                            <div class="project-card" style="margin-bottom: 16px; cursor: default;">
-                                <div class="flex-between" style="margin-bottom: 12px;">
-                                    <h4 style="margin:0;">${q.name}</h4>
-                                    <button onclick="app.copyText('${q.code.replace(/'/g, "\\'")}')" style="font-size: 10px; font-weight: 800; color: var(--primary); border: none; background: none; cursor: pointer;">COPY SQL</button>
-                                </div>
-                                <pre><code>${q.code}</code></pre>
-                            </div>
-                        `).reverse().join('')}
-                    `;
-                }
-                if(this.tab === 'todos') {
-                    return `
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-                            <div style="background: white; padding: 32px; border-radius: var(--radius-lg); border: 1px solid var(--border);">
-                                <h3 style="margin: 0 0 20px 0;">New Task</h3>
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="text" id="new-todo" placeholder="Requirement description...">
-                                    <button onclick="app.addTodo()" class="btn-primary">Add</button>
-                                </div>
-                                <div style="margin-top: 32px;">
-                                    <label class="user-badge-label">Active Tasks</label>
-                                    ${p.todos.filter(t=>!t.finished).map(t => `
-                                        <div class="todo-item-compact" style="background: var(--bg); color: var(--text-main);">
-                                            <input type="checkbox" onclick="app.toggleTodo(${this.selectedIdx}, ${p.todos.indexOf(t)})" style="width: 18px; height: 18px;">
-                                            <span class="todo-text">${t.text}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            <div style="opacity: 0.6;">
-                                <h3 style="margin: 0 0 20px 0;">Archived</h3>
-                                ${p.todos.filter(t=>t.finished).map(t => `
-                                    <div class="todo-item-compact" style="background: #e2e8f0; color: var(--text-muted); text-decoration: line-through;">
-                                        <input type="checkbox" checked onclick="app.toggleTodo(${this.selectedIdx}, ${p.todos.indexOf(t)})" style="width: 18px; height: 18px;">
-                                        <span class="todo-text">${t.text}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
+            renderLogs(p) {
+                if(this.tab === 'sql') return `<button onclick="app.openSqlModal()" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add SQL</button>` + p.queries.map(q => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><h4 style="margin:0 0 8px 0;">${q.name}</h4><pre style="background:#0f172a; color:#38bdf8; padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:0;">${q.code}</pre></div>`).join('');
+                return `<button onclick="app.openLogModal()" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add Update</button>` + p.logs.map(l => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><h4 style="margin:0;">${l.title}</h4><small style="color:#94a3b8;">${l.date}</small></div><div style="font-size:14px;">${l.content}</div></div>`).reverse().join('');
+            },
+
+            tplMailbox() {
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+                        <h1 style="margin:0; font-size:28px; font-weight:800;">Mailbox</h1>
+                        <button onclick="app.openMailboxModal()" style="background:#2563eb; color:white; border:none; padding:12px 24px; border-radius:12px; font-weight:600; cursor:pointer;">Add Entry</button>
+                    </div>
+                    ${this.data.mailbox.map(m => `<div style="background:white; padding:24px; border-radius:16px; border:1px solid #e2e8f0; margin-bottom:16px;"><h3 style="margin:0 0 12px 0;">${m.subject}</h3><div style="background:#f8fafc; padding:16px; border-radius:12px; font-size:14px; white-space:pre-wrap;">${m.solution}</div></div>`).reverse().join('')}
+                `;
             },
 
             tplExport() {
-                return `
-                    <div style="max-width: 600px; margin: 0 auto; text-align: center;">
-                        <h1 style="font-size: 32px; margin-bottom: 8px;">Backup Data</h1>
-                        <p style="color: var(--text-muted); margin-bottom: 24px;">Copy this JSON to another instance of Nexus to restore your session.</p>
-                        <textarea readonly style="width: 100%; height: 300px; font-family: monospace; font-size: 11px; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">${JSON.stringify(this.data, null, 2)}</textarea>
-                        <button onclick="app.setMainView('dashboard')" class="btn-primary" style="margin: 24px auto;">Back to Workspace</button>
-                    </div>
-                `;
+                return `<h1 style="text-align:center;">Data Backup</h1><textarea readonly style="width:100%; height:300px; padding:16px; border-radius:12px; border:1px solid #e2e8f0; font-family:monospace; font-size:11px;">${JSON.stringify(this.data, null, 2)}</textarea>`;
             },
 
-            // LOGIC Handlers
             handleInit() {
                 const name = document.getElementById('init-name').value;
                 const json = document.getElementById('init-json').value;
-                if(json.trim()) {
-                    try { this.data = JSON.parse(json); this.view = 'dashboard'; } catch(e) { alert("Invalid JSON"); return; }
-                } else if(name.trim()) {
-                    this.data.userName = name;
-                    this.view = 'dashboard';
-                }
+                if(json.trim()) { try { this.data = JSON.parse(json); } catch(e) { alert("Invalid JSON"); return; } }
+                if(name.trim()) this.data.userName = name;
+                this.view = 'dashboard';
                 this.render();
             },
 
-            updateAuditKey(event) { 
-                this.searchKey = event.target.value;
-                // Live update the search results without full re-render (keeps cursor in place)
-                const resultsArea = document.getElementById('search-results-list');
-                if (resultsArea) {
-                    const results = this.getFilteredResults();
-                    resultsArea.innerHTML = results.length === 0 ? '<p style="text-align: center; color: var(--text-muted); padding: 40px;">No matching records found.</p>' : results.map(r => `
-                        <div class="project-card" style="cursor: default;">
-                            <div class="flex-between" style="margin-bottom: 8px;">
-                                <div style="display: flex; gap: 8px;">
-                                    <span class="type-tag" style="background: #e2e8f0; color: #475569;">${r.type}</span>
-                                    <span class="type-tag">${r.project}</span>
-                                </div>
-                                <span style="font-size: 11px; color: var(--text-muted);">${r.date}</span>
-                            </div>
-                            <h4 style="margin: 0 0 12px 0;">${r.title}</h4>
-                            <div style="font-size: 13px; color: var(--text-main); background: var(--bg); padding: 12px; border-radius: 8px; white-space: pre-wrap;">${r.content}</div>
-                        </div>
-                    `).join('');
-                }
-            },
-
-            getFilteredResults() {
-                const results = [];
-                const q = (this.searchKey || "").toLowerCase().trim();
-                const d = this.searchDate;
-
-                this.data.projects.forEach(p => {
-                    p.logs?.forEach(l => {
-                        const dateMatch = !d || l.date === new Date(d).toLocaleDateString();
-                        const keyMatch = !q || l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q);
-                        if(dateMatch && keyMatch) results.push({ type: 'Log', project: p.title, title: l.title, date: l.date, content: l.content });
-                    });
-                    p.queries?.forEach(s => {
-                        const dateMatch = !d || s.date === new Date(d).toLocaleDateString();
-                        const keyMatch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
-                        if(dateMatch && keyMatch) results.push({ type: 'SQL', project: p.title, title: s.name, date: s.date, content: s.code });
-                    });
-                });
-
-                this.data.mailbox.forEach(m => {
-                    const dateMatch = !d || m.date === new Date(d).toLocaleDateString();
-                    const keyMatch = !q || m.subject.toLowerCase().includes(q) || m.solution.toLowerCase().includes(q);
-                    if(dateMatch && keyMatch) results.push({ type: 'Mailbox', project: 'N/A', title: m.subject, date: m.date, content: m.solution });
-                });
-                return results;
-            },
-
-            updateAuditDate(v) { this.searchDate = v; this.render(); },
-            setFilter(f) { this.filter = f; this.render(); },
-            setTab(t) { this.tab = t; this.render(); },
             openDetails(i) { this.selectedIdx = i; this.view = 'details'; this.tab = 'logs'; this.render(); },
-            updateStatus(i, v) { this.data.projects[i].status = v; this.render(); },
-
-            addTodo() {
-                const val = document.getElementById('new-todo').value;
-                if(!val.trim()) return;
-                const p = this.data.projects[this.selectedIdx];
-                if(!p.todos) p.todos = [];
-                p.todos.push({ text: val, finished: false, date: new Date().toLocaleDateString() });
-                this.render();
-            },
-
-            toggleTodo(pi, ti) {
-                this.data.projects[pi].todos[ti].finished = !this.data.projects[pi].todos[ti].finished;
-                this.render();
-            },
 
             openModal(html) {
                 document.getElementById('modal-container').innerHTML = html;
                 document.getElementById('modal-overlay').style.display = 'flex';
             },
+
             closeModal() { document.getElementById('modal-overlay').style.display = 'none'; },
 
             openProjectModal() {
                 this.openModal(`
-                    <h2 style="margin-top:0;">New Initiative</h2>
-                    <div class="form-group"><label>Project Title</label><input type="text" id="p-title"></div>
-                    <div class="form-group"><label>Context / Description</label><textarea id="p-desc"></textarea></div>
-                    <div class="form-group"><label>Classification</label><select id="p-type"><option>Feasibility</option><option>Prep PI</option><option>Bugfix</option></select></div>
-                    <button onclick="app.saveProject()" class="btn-primary" style="width:100%; justify-content:center;">Create</button>
+                    <h2 style="margin:0 0 20px 0;">New Project</h2>
+                    <input type="text" id="p-title" placeholder="Title" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
+                    <textarea id="p-desc" placeholder="Description" style="width:100%; height:80px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;"></textarea>
+                    <select id="p-type" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"><option>Feasibility</option><option>Prep PI</option><option>Bugfix</option></select>
+                    <button onclick="app.saveProject()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Create</button>
                 `);
             },
+
             saveProject() {
                 const title = document.getElementById('p-title').value;
                 if(!title) return;
@@ -751,12 +269,13 @@
 
             openLogModal() {
                 this.openModal(`
-                    <h2 style="margin-top:0;">Status Update</h2>
-                    <div class="form-group"><label>Subject</label><input type="text" id="l-title"></div>
-                    <div class="form-group"><label>Notes</label><textarea id="l-content" style="height:150px;"></textarea></div>
-                    <button onclick="app.saveLog()" class="btn-primary" style="width:100%; justify-content:center;">Add Log</button>
+                    <h2 style="margin:0 0 20px 0;">Add Log</h2>
+                    <input type="text" id="l-title" placeholder="Subject" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
+                    <textarea id="l-content" style="width:100%; height:120px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
+                    <button onclick="app.saveLog()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Log</button>
                 `);
             },
+
             saveLog() {
                 this.data.projects[this.selectedIdx].logs.push({ title: document.getElementById('l-title').value || 'Update', content: document.getElementById('l-content').value, date: new Date().toLocaleDateString() });
                 this.closeModal(); this.render();
@@ -764,39 +283,30 @@
 
             openSqlModal() {
                 this.openModal(`
-                    <h2 style="margin-top:0;">Query Storage</h2>
-                    <div class="form-group"><label>Reference Name</label><input type="text" id="q-name"></div>
-                    <div class="form-group"><label>SQL Block</label><textarea id="q-code" style="height:200px; font-family:monospace; font-size:12px;"></textarea></div>
-                    <button onclick="app.saveSql()" class="btn-primary" style="width:100%; justify-content:center;">Store SQL</button>
+                    <h2 style="margin:0 0 20px 0;">Add SQL</h2>
+                    <input type="text" id="q-name" placeholder="Query Name" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
+                    <textarea id="q-code" style="width:100%; height:150px; font-family:monospace; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
+                    <button onclick="app.saveSql()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save SQL</button>
                 `);
             },
+
             saveSql() {
-                this.data.projects[this.selectedIdx].queries.push({ name: document.getElementById('q-name').value || 'Query', code: document.getElementById('q-code').value, date: new Date().toLocaleDateString() });
+                this.data.projects[this.selectedIdx].queries.push({ name: document.getElementById('q-name').value || 'Query', code: document.getElementById('q-code').value });
                 this.closeModal(); this.render();
             },
 
             openMailboxModal() {
                 this.openModal(`
-                    <h2 style="margin-top:0;">New Mailbox Entry</h2>
-                    <div class="form-group"><label>Support Question</label><input type="text" id="m-subject"></div>
-                    <div class="form-group"><label>Response / Solution</label><textarea id="m-solution" style="height:150px;"></textarea></div>
-                    <button onclick="app.saveMailbox()" class="btn-primary" style="width:100%; justify-content:center;">Save Entry</button>
+                    <h2 style="margin:0 0 20px 0;">New Mailbox Entry</h2>
+                    <input type="text" id="m-subject" placeholder="Question/Topic" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
+                    <textarea id="m-solution" style="width:100%; height:150px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
+                    <button onclick="app.saveMailbox()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Entry</button>
                 `);
             },
-            saveMailbox() {
-                this.data.mailbox.push({ subject: document.getElementById('m-subject').value, solution: document.getElementById('m-solution').value, date: new Date().toLocaleDateString() });
-                this.closeModal(); this.render();
-            },
-            deleteMailbox(i) { if(confirm("Delete record?")) { this.data.mailbox.splice(i, 1); this.render(); } },
 
-            copyText(txt) {
-                const el = document.createElement('textarea');
-                el.value = txt;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                alert("SQL Copied to clipboard");
+            saveMailbox() {
+                this.data.mailbox.push({ subject: document.getElementById('m-subject').value, solution: document.getElementById('m-solution').value });
+                this.closeModal(); this.render();
             }
         };
 
