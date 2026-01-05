@@ -16,15 +16,15 @@
             </div>
 
             <nav style="list-style: none; padding: 0; margin: 0; flex-grow: 1;">
-                <button onclick="app.setMainView('dashboard')" id="nav-dashboard" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                <button data-action="nav-dashboard" id="nav-dashboard" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
                     Projects
                 </button>
-                <button onclick="app.setMainView('mailbox')" id="nav-mailbox" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                <button data-action="nav-mailbox" id="nav-mailbox" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                     Mailbox
                 </button>
-                <button onclick="app.setMainView('filter')" id="nav-filter" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
+                <button data-action="nav-filter" id="nav-filter" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: #64748b; font-weight: 500; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; transition: 0.2s;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     Search
                 </button>
@@ -35,7 +35,7 @@
                     <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">User Session</div>
                     <div id="user-display" style="font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">---</div>
                 </div>
-                <button onclick="app.setMainView('export')" style="background: none; border: none; color: #64748b; font-size: 11px; cursor: pointer; padding: 4px;">Export Backup</button>
+                <button data-action="nav-export" style="background: none; border: none; color: #64748b; font-size: 11px; cursor: pointer; padding: 4px;">Export Backup</button>
             </div>
         </aside>
 
@@ -46,7 +46,7 @@
     </div>
 
     <!-- Modal Overlay -->
-    <div id="modal-overlay" onclick="if(event.target === this) app.closeModal()" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
+    <div id="modal-overlay" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
         <div id="modal-container" style="background: white; width: 100%; max-width: 500px; border-radius: 16px; padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"></div>
     </div>
 
@@ -59,12 +59,41 @@
             tab: "logs",
             searchKey: "",
 
-            init() { this.render(); },
+            init() { 
+                // Using event delegation because Confluence often strips 'onclick' attributes
+                document.addEventListener('click', (e) => {
+                    const target = e.target.closest('[data-action]');
+                    if (!target) {
+                        // Handle modal background click separately
+                        if (e.target.id === 'modal-overlay') this.closeModal();
+                        return;
+                    }
+
+                    const action = target.getAttribute('data-action');
+                    const value = target.getAttribute('data-value');
+
+                    if (action === 'enter-workspace') this.handleInit();
+                    if (action === 'nav-dashboard') this.setMainView('dashboard');
+                    if (action === 'nav-mailbox') this.setMainView('mailbox');
+                    if (action === 'nav-filter') this.setMainView('filter');
+                    if (action === 'nav-export') this.setMainView('export');
+                    if (action === 'open-project-modal') this.openProjectModal();
+                    if (action === 'open-details') this.openDetails(parseInt(value));
+                    if (action === 'set-tab') this.setTab(value);
+                    if (action === 'open-log-modal') this.openLogModal();
+                    if (action === 'open-sql-modal') this.openSqlModal();
+                    if (action === 'open-mailbox-modal') this.openMailboxModal();
+                    if (action === 'save-project') this.saveProject();
+                    if (action === 'save-log') this.saveLog();
+                    if (action === 'save-sql') this.saveSql();
+                    if (action === 'save-mailbox') this.saveMailbox();
+                    if (action === 'close-modal') this.closeModal();
+                });
+
+                this.render(); 
+            },
 
             setMainView(v) { this.view = v; this.render(); },
-
-            setFilter(f) { this.filter = f; this.render(); },
-
             setTab(t) { this.tab = t; this.render(); },
 
             render() {
@@ -75,7 +104,6 @@
                 sidebar.style.display = this.view === 'welcome' ? 'none' : 'flex';
                 if (this.data.userName) userDisp.innerText = this.data.userName;
 
-                // Nav highlight simulation
                 ['dashboard', 'mailbox', 'filter'].forEach(id => {
                     const el = document.getElementById('nav-' + id);
                     if (el) {
@@ -108,34 +136,27 @@
                                 <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #64748b;">Restore JSON (Optional)</label>
                                 <textarea id="init-json" style="width: 100%; height: 80px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 10px; font-family: monospace;"></textarea>
                             </div>
-                            <button onclick="app.handleInit()" style="width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;">Enter Workspace</button>
+                            <button data-action="enter-workspace" style="width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;">Enter Workspace</button>
                         </div>
                     </div>
                 `;
             },
 
             tplDashboard() {
-                const projects = this.data.projects.filter(p => {
-                    if(this.filter === 'active') return p.status === 'Active';
-                    if(this.filter === 'finished') return p.status === 'Finished';
-                    return true;
-                });
-
                 return `
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
                         <div>
                             <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Project Dashboard</h1>
                             <p style="margin: 4px 0 0; color: #64748b;">Manage your current initiatives.</p>
                         </div>
-                        <button onclick="app.openProjectModal()" style="background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <button data-action="open-project-modal" style="background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             New Project
                         </button>
                     </div>
-
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                        ${projects.map((p, i) => `
-                            <div onclick="app.openDetails(${this.data.projects.indexOf(p)})" style="background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.2s;">
+                        ${this.data.projects.map((p, i) => `
+                            <div data-action="open-details" data-value="${i}" style="background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.2s;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                     <span style="background: #eff6ff; color: #2563eb; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">${p.type}</span>
                                     <div style="width: 8px; height: 8px; border-radius: 50%; background: ${p.status==='Active'?'#10b981':'#cbd5e1'}"></div>
@@ -144,7 +165,7 @@
                                 <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; height: 3em; overflow: hidden;">${p.description}</p>
                                 <div style="padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; font-size: 11px; font-weight: 700; color: #94a3b8;">
                                     <span>${p.logs?.length || 0} LOGS</span>
-                                    <span>${p.todos?.filter(t=>!t.finished).length || 0} TASKS</span>
+                                    <span>${p.queries?.length || 0} SQL</span>
                                 </div>
                             </div>
                         `).join('')}
@@ -156,73 +177,38 @@
                 return `
                     <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Search & Audit</h1>
                     <div style="background: white; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 32px;">
-                        <input type="text" id="search-input" placeholder="Type to search logs, SQL, or mailbox..." oninput="app.searchKey = this.value; app.runSearch();" style="width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; direction: ltr; text-align: left;">
+                        <input type="text" id="search-input" placeholder="Type to search logs, SQL, or mailbox..." oninput="app.searchKey = this.value; app.runSearch();" style="width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 16px; direction: ltr;">
                     </div>
                     <div id="search-results"></div>
-                `;
-            },
-
-            runSearch() {
-                const resultsArea = document.getElementById('search-results');
-                if(!resultsArea) return;
-                const q = this.searchKey.toLowerCase().trim();
-                if(!q) { resultsArea.innerHTML = ""; return; }
-
-                let html = "";
-                this.data.projects.forEach(p => {
-                    p.logs?.forEach(l => {
-                        if(l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q)) {
-                            html += this.tplSearchResult('Log', p.title, l.title, l.content);
-                        }
-                    });
-                });
-                this.data.mailbox.forEach(m => {
-                    if(m.subject.toLowerCase().includes(q) || m.solution.toLowerCase().includes(q)) {
-                        html += this.tplSearchResult('Mailbox', 'Global', m.subject, m.solution);
-                    }
-                });
-                resultsArea.innerHTML = html || "<p style='text-align:center; color:#64748b;'>No matches found.</p>";
-            },
-
-            tplSearchResult(type, project, title, content) {
-                return `
-                    <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
-                        <div style="display:flex; gap:8px; margin-bottom:8px;">
-                            <span style="font-size:10px; font-weight:800; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${type}</span>
-                            <span style="font-size:10px; font-weight:800; background:#eff6ff; color:#2563eb; padding:2px 6px; border-radius:4px;">${project}</span>
-                        </div>
-                        <h4 style="margin:0 0 8px 0;">${title}</h4>
-                        <div style="font-size:13px; color:#475569; background:#f8fafc; padding:12px; border-radius:8px; white-space:pre-wrap;">${content}</div>
-                    </div>
                 `;
             },
 
             tplDetails() {
                 const p = this.data.projects[this.selectedIdx];
                 return `
-                    <button onclick="app.setMainView('dashboard')" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; margin-bottom: 24px;">← BACK</button>
+                    <button data-action="nav-dashboard" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; margin-bottom: 24px;">← BACK</button>
                     <div style="background: white; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
                         <h1 style="margin: 0 0 8px 0;">${p.title}</h1>
                         <p style="color: #64748b; margin: 0;">${p.description}</p>
                     </div>
                     <div style="display: flex; gap: 8px; margin-bottom: 24px; background: #f1f5f9; padding: 4px; border-radius: 10px; width: fit-content;">
-                        <button onclick="app.setTab('logs')" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='logs'?'white':'none'}; color:${this.tab==='logs'?'#2563eb':'#64748b'}">LOGS</button>
-                        <button onclick="app.setTab('sql')" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='sql'?'white':'none'}; color:${this.tab==='sql'?'#2563eb':'#64748b'}">SQL</button>
+                        <button data-action="set-tab" data-value="logs" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='logs'?'white':'none'}; color:${this.tab==='logs'?'#2563eb':'#64748b'}">LOGS</button>
+                        <button data-action="set-tab" data-value="sql" style="border:none; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:${this.tab==='sql'?'white':'none'}; color:${this.tab==='sql'?'#2563eb':'#64748b'}">SQL</button>
                     </div>
                     <div id="tab-content">${this.renderLogs(p)}</div>
                 `;
             },
 
             renderLogs(p) {
-                if(this.tab === 'sql') return `<button onclick="app.openSqlModal()" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add SQL</button>` + p.queries.map(q => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><h4 style="margin:0 0 8px 0;">${q.name}</h4><pre style="background:#0f172a; color:#38bdf8; padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:0;">${q.code}</pre></div>`).join('');
-                return `<button onclick="app.openLogModal()" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add Update</button>` + p.logs.map(l => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><h4 style="margin:0;">${l.title}</h4><small style="color:#94a3b8;">${l.date}</small></div><div style="font-size:14px;">${l.content}</div></div>`).reverse().join('');
+                if(this.tab === 'sql') return `<button data-action="open-sql-modal" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add SQL</button>` + p.queries.map(q => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><h4 style="margin:0 0 8px 0;">${q.name}</h4><pre style="background:#0f172a; color:#38bdf8; padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; margin:0;">${q.code}</pre></div>`).join('');
+                return `<button data-action="open-log-modal" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:8px; margin-bottom:20px; cursor:pointer;">Add Update</button>` + p.logs.map(l => `<div style="background:white; padding:16px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;"><div style="display:flex; justify-content:space-between; margin-bottom:8px;"><h4 style="margin:0;">${l.title}</h4><small style="color:#94a3b8;">${l.date}</small></div><div style="font-size:14px;">${l.content}</div></div>`).reverse().join('');
             },
 
             tplMailbox() {
                 return `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
                         <h1 style="margin:0; font-size:28px; font-weight:800;">Mailbox</h1>
-                        <button onclick="app.openMailboxModal()" style="background:#2563eb; color:white; border:none; padding:12px 24px; border-radius:12px; font-weight:600; cursor:pointer;">Add Entry</button>
+                        <button data-action="open-mailbox-modal" style="background:#2563eb; color:white; border:none; padding:12px 24px; border-radius:12px; font-weight:600; cursor:pointer;">Add Entry</button>
                     </div>
                     ${this.data.mailbox.map(m => `<div style="background:white; padding:24px; border-radius:16px; border:1px solid #e2e8f0; margin-bottom:16px;"><h3 style="margin:0 0 12px 0;">${m.subject}</h3><div style="background:#f8fafc; padding:16px; border-radius:12px; font-size:14px; white-space:pre-wrap;">${m.solution}</div></div>`).reverse().join('')}
                 `;
@@ -233,10 +219,10 @@
             },
 
             handleInit() {
-                const name = document.getElementById('init-name').value;
-                const json = document.getElementById('init-json').value;
-                if(json.trim()) { try { this.data = JSON.parse(json); } catch(e) { alert("Invalid JSON"); return; } }
-                if(name.trim()) this.data.userName = name;
+                const name = document.getElementById('init-name')?.value;
+                const json = document.getElementById('init-json')?.value;
+                if(json && json.trim()) { try { this.data = JSON.parse(json); } catch(e) { console.error("Invalid JSON"); } }
+                if(name && name.trim()) this.data.userName = name;
                 this.view = 'dashboard';
                 this.render();
             },
@@ -256,14 +242,14 @@
                     <input type="text" id="p-title" placeholder="Title" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
                     <textarea id="p-desc" placeholder="Description" style="width:100%; height:80px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;"></textarea>
                     <select id="p-type" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"><option>Feasibility</option><option>Prep PI</option><option>Bugfix</option></select>
-                    <button onclick="app.saveProject()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Create</button>
+                    <button data-action="save-project" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Create</button>
                 `);
             },
 
             saveProject() {
                 const title = document.getElementById('p-title').value;
                 if(!title) return;
-                this.data.projects.push({ title, description: document.getElementById('p-desc').value, type: document.getElementById('p-type').value, status: 'Active', logs: [], queries: [], todos: [] });
+                this.data.projects.push({ title, description: document.getElementById('p-desc').value, type: document.getElementById('p-type').value, status: 'Active', logs: [], queries: [] });
                 this.closeModal(); this.render();
             },
 
@@ -272,7 +258,7 @@
                     <h2 style="margin:0 0 20px 0;">Add Log</h2>
                     <input type="text" id="l-title" placeholder="Subject" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
                     <textarea id="l-content" style="width:100%; height:120px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
-                    <button onclick="app.saveLog()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Log</button>
+                    <button data-action="save-log" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Log</button>
                 `);
             },
 
@@ -286,7 +272,7 @@
                     <h2 style="margin:0 0 20px 0;">Add SQL</h2>
                     <input type="text" id="q-name" placeholder="Query Name" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
                     <textarea id="q-code" style="width:100%; height:150px; font-family:monospace; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
-                    <button onclick="app.saveSql()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save SQL</button>
+                    <button data-action="save-sql" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save SQL</button>
                 `);
             },
 
@@ -298,15 +284,31 @@
             openMailboxModal() {
                 this.openModal(`
                     <h2 style="margin:0 0 20px 0;">New Mailbox Entry</h2>
-                    <input type="text" id="m-subject" placeholder="Question/Topic" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
+                    <input type="text" id="m-subject" placeholder="Topic" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px;">
                     <textarea id="m-solution" style="width:100%; height:150px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:20px;"></textarea>
-                    <button onclick="app.saveMailbox()" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Entry</button>
+                    <button data-action="save-mailbox" style="width:100%; background:#2563eb; color:white; border:none; padding:14px; border-radius:12px; font-weight:600; cursor:pointer;">Save Entry</button>
                 `);
             },
 
             saveMailbox() {
                 this.data.mailbox.push({ subject: document.getElementById('m-subject').value, solution: document.getElementById('m-solution').value });
                 this.closeModal(); this.render();
+            },
+
+            runSearch() {
+                const resultsArea = document.getElementById('search-results');
+                if(!resultsArea) return;
+                const q = this.searchKey.toLowerCase().trim();
+                if(!q) { resultsArea.innerHTML = ""; return; }
+                let html = "";
+                this.data.projects.forEach(p => {
+                    p.logs?.forEach(l => {
+                        if(l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q)) {
+                            html += `<div style="background:white; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;"><small style="color:#2563eb; font-weight:700;">${p.title}</small><h4>${l.title}</h4><p style="font-size:13px;">${l.content}</p></div>`;
+                        }
+                    });
+                });
+                resultsArea.innerHTML = html || "<p style='color:#64748b; text-align:center;'>No results.</p>";
             }
         };
 
