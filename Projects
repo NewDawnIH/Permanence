@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .project-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -10px rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-[#1e293b]">
+
+    <div id="app-root" class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col sticky top-0 h-screen">
+            <div class="p-6 flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">N</div>
+                <span class="text-xl font-bold tracking-tight">Nexus</span>
+            </div>
+            
+            <nav class="flex-grow px-4 space-y-2 mt-4">
+                <button onclick="app.setMainView('dashboard')" id="side-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-slate-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="Wait for it..."></path><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2"/></svg>
+                    <span class="font-medium">Projects</span>
+                </button>
+                <button onclick="app.setMainView('mailbox')" id="side-mailbox" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-slate-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <span class="font-medium">Mailbox</span>
+                </button>
+                <button onclick="app.setMainView('filter')" id="side-filter" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-slate-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <span class="font-medium">Search</span>
+                </button>
+            </nav>
+
+            <div class="p-4 mt-auto border-t border-slate-100">
+                <div class="bg-slate-50 rounded-xl p-4">
+                    <p class="text-xs text-slate-500 font-semibold uppercase mb-1" id="user-label">Current User</p>
+                    <p class="text-sm font-bold truncate" id="user-display">---</p>
+                </div>
+                <button onclick="app.setMainView('export')" class="w-full mt-3 text-xs text-slate-400 hover:text-blue-600 transition-colors py-2 text-left px-2">Export Data</button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="flex-grow flex flex-col min-w-0">
+            <!-- Top Mobile Bar -->
+            <header class="md:hidden bg-white border-b p-4 flex justify-between items-center">
+                <span class="font-bold text-lg">Nexus</span>
+                <button onclick="app.setMainView('dashboard')" class="p-2 rounded-lg bg-slate-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+                </button>
+            </header>
+
+            <main id="main-content" class="p-6 md:p-10 max-w-6xl w-full mx-auto">
+                <!-- Content injected here -->
+            </main>
+        </div>
+
+        <!-- Global Modals -->
+        <div id="modal-overlay" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div id="modal-container" class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"></div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: { userName: "", projects: [], mailbox: [] },
+            view: "welcome", 
+            projectStatusFilter: "all",
+            selectedProjectIdx: null,
+            projectTab: 'logs', 
+            searchQuery: "",
+            searchDate: "",
+
+            init() { 
+                this.render(); 
+            },
+
+            setMainView(v) {
+                this.view = v;
+                this.render();
+            },
+
+            render() {
+                const main = document.getElementById('main-content');
+                const sidebar = document.getElementById('sidebar');
+                const userDisp = document.getElementById('user-display');
+                
+                sidebar.classList.toggle('hidden', this.view === 'welcome');
+                if (this.data.userName) userDisp.innerText = this.data.userName;
+
+                // Update Active Link Styles
+                const navMap = { 'dashboard': 'side-dashboard', 'mailbox': 'side-mailbox', 'filter': 'side-filter', 'details': 'side-dashboard' };
+                document.querySelectorAll('aside nav button').forEach(btn => {
+                    btn.classList.remove('bg-blue-50', 'text-blue-600');
+                    btn.classList.add('text-slate-600');
+                });
+                const activeId = navMap[this.view];
+                if(activeId) {
+                    const el = document.getElementById(activeId);
+                    el.classList.add('bg-blue-50', 'text-blue-600');
+                    el.classList.remove('text-slate-600');
+                }
+
+                switch(this.view) {
+                    case 'welcome': main.innerHTML = this.tplWelcome(); break;
+                    case 'dashboard': main.innerHTML = this.tplDashboard(); break;
+                    case 'mailbox': main.innerHTML = this.tplMailbox(); break;
+                    case 'filter': main.innerHTML = this.tplFilter(); break;
+                    case 'details': main.innerHTML = this.tplProjectDetails(); break;
+                    case 'export': main.innerHTML = this.tplExport(); break;
+                }
+            },
+
+            tplWelcome() {
+                return `
+                    <div class="max-w-md mx-auto mt-20 text-center">
+                        <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white text-3xl font-bold">N</div>
+                        <h1 class="text-3xl font-bold mb-2">Welcome to Nexus</h1>
+                        <p class="text-slate-500 mb-8">Your private project tracker and workspace log.</p>
+                        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+                            <input type="text" id="init-name" placeholder="What's your name?" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 transition-all">
+                            <textarea id="init-json" placeholder="Optional: Paste backup JSON here" class="w-full h-32 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none mb-6 font-mono text-xs"></textarea>
+                            <button onclick="app.handleInit()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">Start Session</button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            tplDashboard() {
+                const projects = this.data.projects.filter(p => {
+                    if(this.projectStatusFilter === 'active') return p.status === 'Active';
+                    if(this.projectStatusFilter === 'finished') return p.status === 'Finished';
+                    return true;
+                });
+
+                const allTodos = [];
+                this.data.projects.forEach((p, pIdx) => {
+                    if (p.todos) {
+                        p.todos.forEach((t, tIdx) => {
+                            if (!t.finished) allTodos.push({ ...t, pTitle: p.title, pIdx, tIdx });
+                        });
+                    }
+                });
+
+                return `
+                    <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <h2 class="text-3xl font-bold tracking-tight">Project Dashboard</h2>
+                            <p class="text-slate-500 mt-1">Manage your active workstreams and requirements.</p>
+                        </div>
+                        <button onclick="app.openProjectModal()" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            New Project
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Left Column: Summary & Filtering -->
+                        <div class="lg:col-span-2 space-y-8">
+                            <!-- Stats bar -->
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active</p>
+                                    <p class="text-2xl font-bold mt-1">${this.data.projects.filter(p=>p.status==='Active').length}</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Completed</p>
+                                    <p class="text-2xl font-bold mt-1">${this.data.projects.filter(p=>p.status==='Finished').length}</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mailbox</p>
+                                    <p class="text-2xl font-bold mt-1">${this.data.mailbox.length}</p>
+                                </div>
+                            </div>
+
+                            <!-- Project List Area -->
+                            <div>
+                                <div class="flex items-center gap-2 mb-6 bg-slate-100/50 p-1 rounded-xl w-fit">
+                                    ${['all', 'active', 'finished'].map(f => `
+                                        <button onclick="app.setProjFilter('${f}')" class="px-5 py-1.5 rounded-lg text-sm font-semibold transition-all ${this.projectStatusFilter === f ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}">${f.charAt(0).toUpperCase() + f.slice(1)}</button>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${projects.map((p, idx) => {
+                                        const actualIdx = this.data.projects.indexOf(p);
+                                        return `
+                                        <div onclick="app.openProjectDetails(${actualIdx})" class="project-card group bg-white p-6 rounded-2xl border border-slate-200 cursor-pointer transition-all duration-300">
+                                            <div class="flex justify-between items-start mb-4">
+                                                <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded-md">${p.type}</span>
+                                                <div class="flex gap-1">
+                                                    <span class="w-2 h-2 rounded-full ${p.status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}"></span>
+                                                </div>
+                                            </div>
+                                            <h3 class="font-bold text-lg mb-2 group-hover:text-blue-600 transition-colors">${p.title}</h3>
+                                            <p class="text-slate-500 text-sm line-clamp-2 mb-6">${p.description}</p>
+                                            <div class="flex items-center gap-4 text-xs text-slate-400 pt-4 border-t border-slate-50">
+                                                <span class="flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    ${p.logs?.length || 0}
+                                                </span>
+                                                <span class="flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                    ${p.todos?.filter(t => !t.finished).length || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `}).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Sidebar Widgets -->
+                        <div class="space-y-6">
+                            <div class="bg-[#1e293b] text-white p-6 rounded-2xl shadow-xl">
+                                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Upcoming Tasks</h3>
+                                <div class="space-y-3">
+                                    ${allTodos.length === 0 ? '<p class="text-slate-500 text-sm">No pending tasks.</p>' : allTodos.slice(0, 8).map(t => `
+                                        <div class="group flex items-start gap-3 p-3 bg-slate-800/40 rounded-xl hover:bg-slate-800 transition-all border border-slate-700/30">
+                                            <input type="checkbox" onclick="event.stopPropagation(); app.toggleTodo(${t.pIdx}, ${t.tIdx})" class="mt-1 w-4 h-4 rounded border-slate-600 text-blue-500 bg-transparent">
+                                            <div class="flex-grow min-w-0">
+                                                <p class="text-sm font-medium leading-tight mb-1 truncate">${t.text}</p>
+                                                <button onclick="app.openProjectDetails(${t.pIdx})" class="text-[10px] font-bold text-blue-400 uppercase tracking-tighter hover:text-white transition-colors">${t.pTitle}</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ${allTodos.length > 8 ? `<p class="text-center text-[10px] text-slate-500 mt-4">+ ${allTodos.length - 8} more hidden</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            tplMailbox() {
+                return `
+                    <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <h2 class="text-3xl font-bold tracking-tight">Mailbox Logs</h2>
+                            <p class="text-slate-500 mt-1">Quick-reference solutions for frequent support queries.</p>
+                        </div>
+                        <button onclick="app.openMailboxModal()" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            Add Entry
+                        </button>
+                    </div>
+
+                    <div class="space-y-4 max-w-4xl">
+                        ${this.data.mailbox.length === 0 ? `
+                            <div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+                                <p class="text-slate-400 font-medium">No records found. Start documenting solutions.</p>
+                            </div>
+                        ` : this.data.mailbox.map((m, idx) => `
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 group transition-all">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h3 class="font-bold text-lg">${m.subject}</h3>
+                                    <span class="text-xs font-medium text-slate-400">${m.date}</span>
+                                </div>
+                                <div class="text-slate-600 text-sm leading-relaxed mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">${m.solution}</div>
+                                <div class="flex justify-end">
+                                    <button onclick="app.deleteMailbox(${idx})" class="text-xs font-bold text-red-400 hover:text-red-600 transition-colors uppercase tracking-widest">Delete Entry</button>
+                                </div>
+                            </div>
+                        `).reverse().join('')}
+                    </div>
+                `;
+            },
+
+            tplFilter() {
+                const results = [];
+                const q = this.searchQuery.toLowerCase().trim();
+                const d = this.searchDate;
+
+                const normalizeDate = (dateStr) => {
+                    try {
+                        const dateObj = new Date(dateStr);
+                        if (isNaN(dateObj.getTime())) return null;
+                        return dateObj.toISOString().split('T')[0];
+                    } catch(e) { return null; }
+                };
+
+                const targetDate = d || null;
+
+                this.data.projects.forEach(p => {
+                    p.logs?.forEach(log => {
+                        const dateMatch = !targetDate || normalizeDate(log.date) === targetDate;
+                        const contentMatch = !q || log.title.toLowerCase().includes(q) || log.content.toLowerCase().includes(q);
+                        if (dateMatch && contentMatch) results.push({ type: 'Project Log', project: p.title, title: log.title, date: log.date, content: log.content });
+                    });
+                    p.queries?.forEach(sql => {
+                        const dateMatch = !targetDate || normalizeDate(sql.date) === targetDate;
+                        const contentMatch = !q || sql.name.toLowerCase().includes(q) || sql.code.toLowerCase().includes(q);
+                        if (dateMatch && contentMatch) results.push({ type: 'SQL Query', project: p.title, title: sql.name, date: sql.date, content: sql.code });
+                    });
+                });
+
+                this.data.mailbox.forEach(m => {
+                    const dateMatch = !targetDate || normalizeDate(m.date) === targetDate;
+                    const contentMatch = !q || m.subject.toLowerCase().includes(q) || m.solution.toLowerCase().includes(q);
+                    if (dateMatch && contentMatch) results.push({ type: 'Mailbox', project: 'N/A', title: m.subject, date: m.date, content: m.solution });
+                });
+
+                return `
+                    <div class="mb-10">
+                        <h2 class="text-3xl font-bold tracking-tight">Search & History</h2>
+                        <p class="text-slate-500 mt-1">Audit across all projects and support logs.</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm mb-10 flex flex-col md:flex-row gap-6">
+                        <div class="flex-grow">
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Keyword</label>
+                            <div class="relative">
+                                <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input type="text" id="search-input" value="${this.searchQuery}" oninput="app.handleSearchInput(this.value)" placeholder="Search anything..." class="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            </div>
+                        </div>
+                        <div class="w-full md:w-64">
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Specific Date</label>
+                            <input type="date" id="date-input" value="${this.searchDate}" onchange="app.handleDateInput(this.value)" class="w-full px-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-blue-500 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <p class="text-sm font-medium text-slate-500 ml-1">Found ${results.length} results ${targetDate ? `from ${targetDate}` : ''}</p>
+                        ${results.map(r => `
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded">${r.type}</span>
+                                    ${r.project !== 'N/A' ? `<span class="px-2 py-0.5 bg-blue-50 text-blue-500 text-[10px] font-bold uppercase rounded">${r.project}</span>` : ''}
+                                    <span class="ml-auto text-xs text-slate-400 font-medium">${r.date}</span>
+                                </div>
+                                <h4 class="font-bold mb-3">${r.title}</h4>
+                                <div class="text-sm text-slate-600 whitespace-pre-wrap line-clamp-4 bg-slate-50/50 p-4 rounded-xl italic border-l-4 border-slate-200">${r.content}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            },
+
+            tplProjectDetails() {
+                const p = this.data.projects[this.selectedProjectIdx];
+                if(!p) return `<p>Project not found.</p>`;
+                const activeTab = this.projectTab;
+
+                return `
+                    <div class="mb-8">
+                        <button onclick="app.setMainView('dashboard')" class="flex items-center gap-2 text-sm font-bold text-blue-600 hover:gap-3 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            Back to Dashboard
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-8">
+                        <div class="flex flex-col md:flex-row justify-between items-start gap-4">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black uppercase rounded-md tracking-wider">${p.type}</span>
+                                    <h1 class="text-4xl font-black tracking-tighter">${p.title}</h1>
+                                </div>
+                                <p class="text-slate-500 max-w-2xl text-lg font-medium">${p.description}</p>
+                            </div>
+                            <div class="bg-slate-50 p-2 rounded-xl flex items-center gap-2 border border-slate-100">
+                                <span class="text-xs font-bold px-3 text-slate-400">STATUS</span>
+                                <select onchange="app.updateStatus(${this.selectedProjectIdx}, this.value)" class="bg-white border-none text-sm font-bold px-4 py-2 rounded-lg shadow-sm focus:ring-0">
+                                    <option ${p.status === 'Active' ? 'selected' : ''}>Active</option>
+                                    <option ${p.status === 'Finished' ? 'selected' : ''}>Finished</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mb-8 bg-slate-200/50 p-1.5 rounded-2xl w-fit">
+                        ${['logs', 'sql', 'todos'].map(t => `
+                            <button onclick="app.setProjTab('${t}')" class="px-8 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === t ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}">
+                                ${t.toUpperCase()}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <div class="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        ${this.renderActiveTabContent(p)}
+                    </div>
+                `;
+            },
+
+            renderActiveTabContent(p) {
+                switch(this.projectTab) {
+                    case 'logs': return this.tplProjLogs(p);
+                    case 'sql': return this.tplProjSql(p);
+                    case 'todos': return this.tplProjTodos(p);
+                }
+            },
+
+            tplProjLogs(p) {
+                return `
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Activity Log</h3>
+                        <button onclick="app.openLogModal()" class="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all">+ Add Update</button>
+                    </div>
+                    <div class="space-y-4">
+                        ${p.logs.length === 0 ? '<p class="text-slate-400 py-10 text-center">No logs recorded yet.</p>' : p.logs.map((l, i) => `
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-lg text-slate-800">${l.title}</h4>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">${l.date}</span>
+                                </div>
+                                <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">${l.content}</div>
+                            </div>
+                        `).reverse().join('')}
+                    </div>
+                `;
+            },
+
+            tplProjSql(p) {
+                return `
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Query Library</h3>
+                        <button onclick="app.openSqlModal()" class="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-all">+ New Query</button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${p.queries.length === 0 ? '<p class="text-slate-400 py-10 text-center">No stored SQL.</p>' : p.queries.map((q, i) => `
+                            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                                    <h4 class="font-bold text-slate-700">${q.name}</h4>
+                                    <button onclick="app.copyToClipboard('${q.code.replace(/'/g, "\\'")}')" class="text-[10px] font-black text-blue-600 uppercase">Copy SQL</button>
+                                </div>
+                                <pre class="p-6 bg-slate-900 text-blue-300 font-mono text-xs overflow-x-auto leading-loose"><code>${q.code}</code></pre>
+                            </div>
+                        `).reverse().join('')}
+                    </div>
+                `;
+            },
+
+            tplProjTodos(p) {
+                const pending = (p.todos || []).filter(t => !t.finished);
+                const finished = (p.todos || []).filter(t => t.finished);
+
+                return `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-xl mb-6">Task Master</h3>
+                            <div class="flex gap-2 mb-8">
+                                <input id="new-todo-text" type="text" placeholder="Add a new requirement..." class="flex-grow px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+                                <button onclick="app.addTodo()" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">In Progress (${pending.length})</p>
+                                ${pending.map(t => `
+                                    <div class="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-200 transition-all group">
+                                        <input type="checkbox" onclick="app.toggleTodo(${this.selectedProjectIdx}, ${p.todos.indexOf(t)})" class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 transition-all cursor-pointer">
+                                        <span class="text-sm font-semibold text-slate-700">${t.text}</span>
+                                    </div>
+                                `).join('')}
+                                ${pending.length === 0 ? '<p class="text-sm text-slate-400">All tasks completed.</p>' : ''}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/50 p-8 rounded-3xl border border-slate-200">
+                            <h3 class="font-bold text-xl mb-6 text-slate-400">Archived</h3>
+                            <div class="space-y-3 opacity-60">
+                                ${finished.map(t => `
+                                    <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
+                                        <input type="checkbox" checked onclick="app.toggleTodo(${this.selectedProjectIdx}, ${p.todos.indexOf(t)})" class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                        <span class="text-sm font-medium text-slate-400 line-through">${t.text}</span>
+                                    </div>
+                                `).join('')}
+                                ${finished.length === 0 ? '<p class="text-sm text-slate-300 italic">No completed tasks yet.</p>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            tplExport() {
+                return `
+                    <div class="max-w-2xl mx-auto py-10 text-center">
+                        <h2 class="text-3xl font-black mb-2">Export Workspace</h2>
+                        <p class="text-slate-500 mb-8">Copy this JSON blob to save your session or move to another device.</p>
+                        <div class="bg-white p-2 rounded-3xl border border-slate-200 shadow-xl overflow-hidden mb-6">
+                            <textarea readonly class="w-full h-96 p-6 font-mono text-[10px] leading-relaxed border-none focus:ring-0 bg-transparent text-slate-700">${JSON.stringify(this.data, null, 2)}</textarea>
+                        </div>
+                        <button onclick="app.setMainView('dashboard')" class="px-8 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">Done</button>
+                    </div>
+                `;
+            },
+
+            handleInit() {
+                const name = document.getElementById('init-name').value;
+                const json = document.getElementById('init-json').value;
+                if(json.trim()) {
+                    try { this.data = JSON.parse(json); this.view = "dashboard"; } catch(e) { alert("Invalid JSON"); return; }
+                } else if(name.trim()) {
+                    this.data.userName = name;
+                    this.view = "dashboard";
+                }
+                this.render();
+            },
+
+            handleSearchInput(val) {
+                this.searchQuery = val;
+                this.render();
+                const input = document.getElementById('search-input');
+                if(input) {
+                    input.focus();
+                    input.setSelectionRange(val.length, val.length);
+                }
+            },
+
+            handleDateInput(val) {
+                this.searchDate = val;
+                this.render();
+            },
+
+            setProjFilter(f) { this.projectStatusFilter = f; this.render(); },
+            setProjTab(t) { this.projectTab = t; this.render(); },
+            openProjectDetails(idx) { this.selectedProjectIdx = idx; this.view = "details"; this.projectTab = "logs"; this.render(); },
+            updateStatus(idx, val) { this.data.projects[idx].status = val; this.render(); },
+
+            addTodo() {
+                const input = document.getElementById('new-todo-text');
+                if (!input.value.trim()) return;
+                const p = this.data.projects[this.selectedProjectIdx];
+                if (!p.todos) p.todos = [];
+                p.todos.push({ text: input.value, finished: false, date: new Date().toISOString().split('T')[0] });
+                input.value = "";
+                this.render();
+            },
+
+            toggleTodo(pIdx, tIdx) {
+                const p = this.data.projects[pIdx];
+                p.todos[tIdx].finished = !p.todos[tIdx].finished;
+                this.render();
+            },
+
+            showModal(content) {
+                const modal = document.getElementById('modal-overlay');
+                document.getElementById('modal-container').innerHTML = `
+                    <div class="p-8">
+                        ${content}
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            },
+            closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); },
+
+            openProjectModal() {
+                this.showModal(`
+                    <h3 class="text-2xl font-black tracking-tight mb-2">Kickstart Project</h3>
+                    <p class="text-slate-500 text-sm mb-6">Set the foundation for your new initiative.</p>
+                    <div class="space-y-4">
+                        <input id="p-title" type="text" placeholder="Project Name" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all">
+                        <textarea id="p-desc" placeholder="Brief description of goals..." class="w-full h-24 px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
+                        <select id="p-type" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm font-bold">
+                            <option>Feasibility</option><option>Prep PI</option><option>Bugfix</option>
+                        </select>
+                        <div class="flex gap-3 pt-4">
+                            <button onclick="app.saveProject()" class="flex-grow bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Create Project</button>
+                            <button onclick="app.closeModal()" class="px-6 bg-slate-100 text-slate-500 font-bold py-4 rounded-xl hover:bg-slate-200 transition-all">Cancel</button>
+                        </div>
+                    </div>
+                `);
+            },
+            saveProject() {
+                const title = document.getElementById('p-title').value;
+                if(!title) return;
+                this.data.projects.push({
+                    title, description: document.getElementById('p-desc').value,
+                    type: document.getElementById('p-type').value,
+                    status: 'Active', logs: [], queries: [], todos: []
+                });
+                this.closeModal(); this.render();
+            },
+
+            openLogModal() {
+                this.showModal(`
+                    <h3 class="text-2xl font-black mb-6">Status Update</h3>
+                    <div class="space-y-4">
+                        <input id="l-title" type="text" placeholder="Subject" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold">
+                        <textarea id="l-content" placeholder="What happened today?" class="w-full h-48 px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm"></textarea>
+                        <div class="flex gap-3">
+                            <button onclick="app.saveLog()" class="flex-grow bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 shadow-xl transition-all">Publish Update</button>
+                            <button onclick="app.closeModal()" class="px-6 bg-slate-100 text-slate-500 font-bold rounded-xl">Discard</button>
+                        </div>
+                    </div>
+                `);
+            },
+            saveLog() {
+                const project = this.data.projects[this.selectedProjectIdx];
+                project.logs.push({ title: document.getElementById('l-title').value || "Update", content: document.getElementById('l-content').value, date: new Date().toLocaleDateString() });
+                this.closeModal(); this.render();
+            },
+
+            openSqlModal() {
+                this.showModal(`
+                    <h3 class="text-2xl font-black mb-6">Document SQL</h3>
+                    <div class="space-y-4">
+                        <input id="q-name" type="text" placeholder="Query Reference Name" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold">
+                        <textarea id="q-code" placeholder="SELECT * FROM..." class="w-full h-64 px-4 py-3 bg-slate-900 text-blue-300 font-mono text-xs border-none rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+                        <div class="flex gap-3">
+                            <button onclick="app.saveSql()" class="flex-grow bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow-xl">Store Query</button>
+                            <button onclick="app.closeModal()" class="px-6 bg-slate-100 text-slate-500 font-bold rounded-xl">Cancel</button>
+                        </div>
+                    </div>
+                `);
+            },
+            saveSql() {
+                const project = this.data.projects[this.selectedProjectIdx];
+                project.queries.push({ name: document.getElementById('q-name').value || "Query", code: document.getElementById('q-code').value, date: new Date().toLocaleDateString() });
+                this.closeModal(); this.render();
+            },
+
+            openMailboxModal() {
+                this.showModal(`
+                    <h3 class="text-2xl font-black mb-6">Mailbox Entry</h3>
+                    <div class="space-y-4">
+                        <input id="m-subject" type="text" placeholder="Support Subject / Question" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold">
+                        <textarea id="m-solution" placeholder="Solution / Final Response..." class="w-full h-48 px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm"></textarea>
+                        <div class="flex gap-3">
+                            <button onclick="app.saveMailbox()" class="flex-grow bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg">Save Solution</button>
+                            <button onclick="app.closeModal()" class="px-6 bg-slate-100 text-slate-500 font-bold rounded-xl">Cancel</button>
+                        </div>
+                    </div>
+                `);
+            },
+            saveMailbox() {
+                this.data.mailbox.push({ subject: document.getElementById('m-subject').value, solution: document.getElementById('m-solution').value, date: new Date().toLocaleDateString() });
+                this.closeModal(); this.render();
+            },
+            deleteMailbox(idx) { if(confirm("Permanently delete this entry?")) { this.data.mailbox.splice(idx,1); this.render(); } },
+            
+            copyToClipboard(text) {
+                const el = document.createElement('textarea');
+                el.value = text;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "COPIED!";
+                setTimeout(() => btn.innerText = originalText, 2000);
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
