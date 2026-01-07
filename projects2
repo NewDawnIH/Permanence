@@ -123,8 +123,6 @@
 
         renderDashboard: function(container) {
             var projects = this.data.projects || [];
-            
-            // Gather all pending todos
             var allTodos = [];
             var activeProjects = [];
             var doneProjects = [];
@@ -151,8 +149,6 @@
             }
 
             var html = '<div style="padding: 20px;">';
-
-            // Global To-Do Section
             if (allTodos.length > 0) {
                 html += '<div style="margin-bottom: 30px; background: ' + (this.theme === 'dark' ? '#111' : '#f0fdf4') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#bbf7d0') + '; border-radius: 8px; padding: 16px;">' +
                         '<h3 style="margin: 0 0 12px 0; font-size: 14px; color: ' + this.data.config.themeColor + '; text-transform: uppercase; letter-spacing: 1px;">Global To-Do List</h3>' +
@@ -181,7 +177,6 @@
                     var p = activeProjects[i];
                     var statusCol = this.statusColors[p.status] || '#333';
                     var pendingCount = (p.todos || []).filter(t => !t.done).length;
-                    
                     html += '<div style="background: ' + (this.theme === 'dark' ? '#111' : '#f9f9f9') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#eee') + '; border-left: 4px solid ' + statusCol + '; border-radius: 6px; padding: 16px; cursor: pointer; position: relative;" onclick="app.openProject(' + p.id + ')">' +
                             (pendingCount > 0 ? '<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid ' + (this.theme === 'dark' ? '#0a0a0a' : '#fff') + '">' + pendingCount + '</div>' : '') +
                             '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
@@ -194,14 +189,12 @@
                 html += '</div>';
             }
 
-            // ARCHIVE SECTION
             if (doneProjects.length > 0) {
                 html += '<div style="margin-top: 60px;">' +
                         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;">' +
                         '<h2 style="margin:0; font-size: 20px;">Completed Projects Archive</h2>' +
                         '<input type="text" placeholder="Filter archive..." value="' + (this.archiveFilter || '') + '" oninput="app.archiveFilter = this.value; app.render();" style="' + this.getInputStyle() + ' width: 200px; margin-bottom: 0;">' +
                         '</div>';
-                
                 html += '<div style="overflow-x: auto;">' +
                         '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
                         '<thead style="background: ' + (this.theme === 'dark' ? '#111' : '#f8f9fa') + '; border-bottom: 2px solid #333;">' +
@@ -212,13 +205,11 @@
                         '</tr>' +
                         '</thead>' +
                         '<tbody>';
-                
                 var filteredArchive = doneProjects.filter(p => {
                     if (!this.archiveFilter) return true;
                     var term = this.archiveFilter.toLowerCase();
                     return p.name.toLowerCase().includes(term) || (p.intro && p.intro.toLowerCase().includes(term));
                 });
-
                 for (var k = 0; k < filteredArchive.length; k++) {
                     var ap = filteredArchive[k];
                     var lastLog = (ap.logs && ap.logs.length > 0) ? ap.logs[ap.logs.length-1].date : 'N/A';
@@ -228,14 +219,11 @@
                             '<td style="padding: 12px; color: #666; font-size: 11px;">' + lastLog + '</td>' +
                             '</tr>';
                 }
-                
                 if (filteredArchive.length === 0) {
                     html += '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #555;">No archived projects match your filter.</td></tr>';
                 }
-
                 html += '</tbody></table></div></div>';
             }
-
             html += '</div>';
             container.innerHTML = html;
         },
@@ -252,8 +240,6 @@
                        '<div style="display: flex; gap: 30px; align-items: flex-start;">' +
                        '<div style="flex: 1;">' +
                        '<h2 style="margin: 0 0 15px 0; color: ' + this.data.config.themeColor + '">' + p.name + '</h2>' +
-                       
-                       // Editable Status
                        '<div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">' +
                        '<label style="font-size: 11px; color: #888; font-weight: bold;">STATUS:</label>' +
                        '<select onchange="app.updateProjectField(\'status\', this.value)" style="background:' + (this.statusColors[p.status] || '#333') + '; color:#000; border:none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;">';
@@ -262,8 +248,6 @@
                 html += '<option value="' + this.statuses[s] + '"' + sel + '>' + this.statuses[s] + '</option>';
             }
             html += '</select></div>' +
-
-                       // To-Do Section (Internal)
                        '<div style="margin-bottom: 30px; background: ' + (this.theme === 'dark' ? '#111' : '#f9f9f9') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#eee') + '; border-radius: 8px; padding: 16px;">' +
                        '<h4 style="margin: 0 0 12px 0; font-size: 12px; color: #888; text-transform: uppercase;">To-Dos</h4>' +
                        '<div style="display: flex; gap: 8px; margin-bottom: 12px;">' +
@@ -285,16 +269,12 @@
                 }
             }
             html += '</div></div>' +
-                       
-                       // Editable Intro
                        '<div style="margin-bottom: 30px;">' +
                        '<label style="display: block; font-size: 11px; color: #888; font-weight: bold; margin-bottom: 5px;">PROJECT INTRO / DESCRIPTION</label>' +
                        '<textarea onblur="app.updateProjectField(\'intro\', this.value)" style="' + this.getInputStyle() + ' height: 80px; margin-bottom: 0; line-height: 1.5; resize: vertical;">' + (p.intro || '') + '</textarea>' +
                        '</div>' +
-                       
                        '<h3 style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 15px;">Activity Logs</h3>' +
                        '<div id="logs-list" style="margin-bottom: 20px;">';
-            
             if (!p.logs || p.logs.length === 0) {
                 html += '<p style="font-size: 12px; color: #666;">No logs available.</p>';
             } else {
@@ -310,15 +290,17 @@
                     '<div style="text-align: right;"><button style="' + this.getBtnStyle(true) + '" onclick="app.addLog()">Post Update</button></div>' +
                     '</div>';
 
-            // RESOURCES PANEL
-            html += '<div style="width: 280px; background: ' + (this.theme === 'dark' ? '#111' : '#f9f9f9') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#eee') + '; padding: 16px; border-radius: 8px;">' +
-                    '<h4 style="margin: 0 0 15px 0; text-transform: uppercase; font-size: 11px; color: #888; letter-spacing: 1px;">Resources</h4>';
-            
-            html += this.renderResInput('Programs', 'prog-in', 'programs', p) +
+            // RESOURCES
+            html += '<div style="width: 320px; display: flex; flex-direction: column; gap: 20px;">' +
+                    '<div style="background: ' + (this.theme === 'dark' ? '#111' : '#f9f9f9') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#eee') + '; padding: 16px; border-radius: 8px;">' +
+                    '<h4 style="margin: 0 0 15px 0; text-transform: uppercase; font-size: 11px; color: #888; letter-spacing: 1px;">Resources</h4>' +
+                    this.renderResInput('Programs', 'prog-in', 'programs', p) +
                     this.renderResInput('Tables', 'table-in', 'tables', p) +
-                    this.renderResInput('Jira Link / Ticket', 'jira-in', 'jira', p);
+                    this.renderResInput('Jira Link / Ticket', 'jira-in', 'jira', p) +
+                    '</div>' +
+                    '</div>';
 
-            html += '</div></div></div>';
+            html += '</div></div>';
             container.innerHTML = html;
         },
 
