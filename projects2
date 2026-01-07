@@ -426,6 +426,8 @@
 
         openModal: function(type) {
             var modal = document.getElementById('modal-container');
+            if (!modal) return; // Prevent "null" style access
+            
             modal.style.display = 'flex';
             var html = '<div style="background: ' + (this.theme === 'dark' ? '#111' : '#fff') + '; border: 1px solid ' + (this.theme === 'dark' ? '#333' : '#ddd') + '; width: 400px; padding: 24px; border-radius: 8px;">';
             if (type === 'new-project') {
@@ -461,7 +463,10 @@
             this.render();
         },
 
-        closeModal: function() { document.getElementById('modal-container').style.display = 'none'; }
+        closeModal: function() { 
+            var modal = document.getElementById('modal-container');
+            if (modal) modal.style.display = 'none'; 
+        }
     };
 
     window.onload = function() { app.init(); };
