@@ -13,8 +13,11 @@
             <h1 style="margin: 0; font-size: 22px; color: #1a73e8; letter-spacing: 0.5px; font-weight: 600;">MDock</h1>
         </div>
         <div style="flex-grow: 1; padding: 16px 0;">
-            <div id="nav-projects" onclick="showTab('projects')" style="padding: 12px 24px; cursor: pointer; background-color: #e8f0fe; color: #1a73e8; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
+            <div id="nav-projects" onclick="showTab('projects')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
                 <span style="margin-right: 12px;">📁</span> Projects
+            </div>
+            <div id="nav-programs" onclick="showTab('programs')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
+                <span style="margin-right: 12px;">💻</span> Programs
             </div>
             <div id="nav-tables" onclick="showTab('tables')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
                 <span style="margin-right: 12px;">📊</span> Tables
@@ -27,7 +30,6 @@
         
         <!-- PROJECTS TAB -->
         <div id="tab-projects" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: block;">
-            <!-- GLOBAL TODOS SECTION -->
             <div id="global-todos-container" style="margin-bottom: 40px; display: none;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                     <h4 style="margin: 0; font-size: 14px; color: #5f6368; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Pending To-Dos</h4>
@@ -119,6 +121,61 @@
             </div>
         </div>
 
+        <!-- PROGRAMS TAB -->
+        <div id="tab-programs" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                <h2 style="margin: 0; font-size: 28px; font-weight: 400;">Programs</h2>
+                <button onclick="openNewProgramModal()" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: background 0.2s;">
+                    + NEW PROGRAM
+                </button>
+            </div>
+            <div id="program-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <div id="program-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px; color: #70757a; background: white; border-radius: 8px; border: 1px dashed #ccc;">
+                    No programs documented yet. Add your first program to begin.
+                </div>
+            </div>
+        </div>
+
+        <!-- PROGRAM DETAIL VIEW -->
+        <div id="tab-program-detail" style="padding: 40px; max-width: 1100px; margin: 0 auto; display: none;">
+            <div style="margin-bottom: 32px;">
+                <button onclick="showTab('programs')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; margin-bottom: 16px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 18px;">←</span> Back to Programs
+                </button>
+                <div style="display: flex; align-items: flex-start; gap: 24px; background: white; padding: 32px; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="background: #1a73e8; color: white; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; flex-shrink: 0;">PR</div>
+                    <div style="flex: 1;">
+                        <h2 id="program-detail-name" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 500; color: #202124;">Program Name</h2>
+                        <input id="program-detail-ext-input" oninput="saveProgramExtName(this.value)" placeholder="Extended description..." style="width: 100%; border: none; font-size: 16px; color: #5f6368; padding: 4px 0; background: transparent; outline: none; border-bottom: 1px solid transparent;" onfocus="this.style.borderBottom='1px solid #dadce0'">
+                    </div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 24px;">
+                    <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Program Flow</h3>
+                    <textarea id="program-flow-input" oninput="saveProgramFlow(this.value)" placeholder="Document the program logic and process flow here..." style="width: 100%; min-height: 400px; border: 1px solid #dadce0; border-radius: 4px; padding: 16px; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.6; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 20px;">
+                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Read Resources</h3>
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" id="add-read-table-input" placeholder="Table name..." style="flex: 1; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 13px;">
+                            <button onclick="addProgramResource('reads')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add</button>
+                        </div>
+                        <div id="program-reads-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                    </div>
+                    <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 20px;">
+                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Write Resources</h3>
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" id="add-write-table-input" placeholder="Table name..." style="flex: 1; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 13px;">
+                            <button onclick="addProgramResource('writes')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add</button>
+                        </div>
+                        <div id="program-writes-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- TABLES TAB -->
         <div id="tab-tables" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
@@ -134,33 +191,49 @@
             </div>
         </div>
 
-        <!-- TABLE DETAIL VIEW -->
-        <div id="tab-table-detail" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <button onclick="showTab('tables')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; display: flex; align-items: center; font-weight: 500;">
-                    ← Back to Tables
+        <!-- REDESIGNED TABLE DETAIL VIEW -->
+        <div id="tab-table-detail" style="padding: 40px; max-width: 1100px; margin: 0 auto; display: none;">
+            <div style="margin-bottom: 32px;">
+                <button onclick="showTab('tables')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; margin-bottom: 16px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 18px;">←</span> Back to Tables
                 </button>
-                <h1 style="margin: 0; font-size: 18px; color: #5f6368; font-weight: 500;">Table Dictionary</h1>
+                <div style="display: flex; align-items: flex-start; gap: 24px; background: white; padding: 32px; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="background: #1a73e8; color: white; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; flex-shrink: 0;">TB</div>
+                    <div style="flex: 1;">
+                        <h2 id="table-detail-name" style="margin: 0 0 8px 0; font-size: 32px; font-weight: 400; color: #202124;">Table Name</h2>
+                        <textarea id="table-detail-desc-input" oninput="saveTableDescription(this.value)" placeholder="Enter a high-level description for this table..." style="width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 8px; font-family: inherit; font-size: 16px; color: #5f6368; resize: vertical; min-height: 40px; background: transparent; transition: all 0.2s;" onfocus="this.style.border='1px solid #dadce0'; this.style.background='#fff'" onblur="this.style.border='1px solid transparent'; this.style.background='transparent'"></textarea>
+                    </div>
+                </div>
             </div>
-            <div style="background: white; border-radius: 8px; border: 1px solid #e0e0e0; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <h2 id="table-detail-name" style="margin: 0 0 12px 0; font-size: 32px; font-weight: 400;">Table Name</h2>
-                <p id="table-detail-desc" style="color: #5f6368; font-size: 16px; margin-bottom: 32px; line-height: 1.5;"></p>
-                
-                <h3 style="font-size: 18px; margin: 0 0 16px 0; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px;">Fields Documentation</h3>
+
+            <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden;">
+                <div style="padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #dadce0; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase; letter-spacing: 0.5px;">Field Dictionary</h3>
+                    </div>
+                    <div style="display: flex; gap: 8px; background: white; border: 1px solid #dadce0; border-radius: 20px; padding: 4px 8px; align-items: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+                        <span style="color: #1a73e8; font-weight: bold; font-size: 18px; margin-left: 8px;">+</span>
+                        <input type="text" id="field-quick-add" onkeydown="if(event.key === 'Enter') handleFieldAddFromToolbar()" placeholder="Quick add field name..." style="border: none; outline: none; padding: 6px; font-size: 13px; width: 240px; background: transparent;">
+                        <button onclick="handleFieldAddFromToolbar()" style="background: #1a73e8; color: white; border: none; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Add Field</button>
+                    </div>
+                </div>
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                         <thead>
-                            <tr style="text-align: left; background: #f8f9fa;">
-                                <th style="padding: 12px; border: 1px solid #e0e0e0; font-size: 13px; color: #5f6368; width: 25%;">Field Name</th>
-                                <th style="padding: 12px; border: 1px solid #e0e0e0; font-size: 13px; color: #5f6368; width: 45%;">Description</th>
-                                <th style="padding: 12px; border: 1px solid #e0e0e0; font-size: 13px; color: #5f6368; width: 25%;">Example</th>
-                                <th style="padding: 12px; border: 1px solid #e0e0e0; width: 40px;"></th>
+                            <tr style="text-align: left; background: #fafafa; border-bottom: 1px solid #dadce0;">
+                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; width: 25%; font-weight: 600;">FIELD NAME</th>
+                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; font-weight: 600;">DEFINITION</th>
+                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; width: 20%; font-weight: 600;">EXAMPLE</th>
+                                <th style="padding: 12px 24px; width: 60px; text-align: center;"></th>
                             </tr>
                         </thead>
-                        <tbody id="field-list-body">
-                            <!-- Rows generated here -->
-                        </tbody>
+                        <tbody id="field-list-body"></tbody>
                     </table>
+                </div>
+                <div id="field-empty-message" style="display: none; padding: 64px 24px; text-align: center; color: #9aa0a6; background: white;">
+                    <div style="font-size: 40px; margin-bottom: 16px;">📇</div>
+                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 4px;">No fields documented yet</div>
+                    <div style="font-size: 13px;">Start your dictionary by using the "Quick Add" bar above.</div>
                 </div>
             </div>
         </div>
@@ -177,15 +250,15 @@
             <div style="padding: 24px;">
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">PROJECT NAME</label>
-                    <input type="text" id="proj-name" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
+                    <input type="text" id="proj-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">DESCRIPTION</label>
-                    <textarea id="proj-desc" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
+                    <textarea id="proj-desc-input" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">STATUS</label>
-                    <select id="proj-status" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; background: white;">
+                    <select id="proj-status-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; background: white;">
                         <option value="ANA">ANA</option>
                         <option value="DEV">DEV</option>
                         <option value="APB">APB</option>
@@ -199,6 +272,28 @@
             </div>
         </div>
 
+        <!-- Program Modal -->
+        <div id="program-modal" style="display:none; background: white; width: 90%; max-width: 600px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow-y: auto; flex-direction: column;">
+            <div style="padding: 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 20px;">New Program</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            <div style="padding: 24px;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">PROGRAM NAME (e.g. Z_MDOCK_SYNC)</label>
+                    <input type="text" id="prog-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">EXTENDED NAME / TITLE</label>
+                    <input type="text" id="prog-ext-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
+                </div>
+            </div>
+            <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px;">
+                <button onclick="closeModal()" style="background: none; border: 1px solid #dadce0; color: #5f6368; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <button onclick="saveProgram()" style="background: #1a73e8; border: none; color: white; padding: 8px 24px; border-radius: 4px; cursor: pointer;">Add Program</button>
+            </div>
+        </div>
+
         <!-- Table Modal -->
         <div id="table-modal" style="display:none; background: white; width: 90%; max-width: 700px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow-y: auto; flex-direction: column;">
             <div style="padding: 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
@@ -208,11 +303,11 @@
             <div style="padding: 24px;">
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">TABLE NAME (e.g. USR_PROFILE)</label>
-                    <input type="text" id="table-name" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
+                    <input type="text" id="table-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
                 </div>
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">DESCRIPTION</label>
-                    <textarea id="table-desc" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
+                    <textarea id="table-desc-input" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
                 </div>
             </div>
             <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px;">
@@ -225,8 +320,10 @@
     <script>
         let projects = [];
         let tables = [];
+        let programs = [];
         let currentProjectId = null;
         let currentTableId = null;
+        let currentProgramId = null;
         
         const statusColors = {
             'ANA': { bg: '#e8f0fe', text: '#1967d2' },
@@ -236,38 +333,42 @@
         };
 
         function showTab(tabName) {
-            const tabs = ['projects', 'tables', 'project-detail', 'table-detail'];
+            const tabs = ['projects', 'programs', 'tables', 'project-detail', 'program-detail', 'table-detail'];
             tabs.forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 if (el) el.style.display = (tabName === t) ? 'block' : 'none';
             });
 
-            const navProjects = document.getElementById('nav-projects');
-            const navTables = document.getElementById('nav-tables');
-            
-            navProjects.style.backgroundColor = (tabName === 'projects' || tabName === 'project-detail') ? '#e8f0fe' : 'transparent';
-            navProjects.style.color = (tabName === 'projects' || tabName === 'project-detail') ? '#1a73e8' : '#5f6368';
-            
-            navTables.style.backgroundColor = (tabName === 'tables' || tabName === 'table-detail') ? '#e8f0fe' : 'transparent';
-            navTables.style.color = (tabName === 'tables' || tabName === 'table-detail') ? '#1a73e8' : '#5f6368';
+            // Handle nav highlighting
+            ['nav-projects', 'nav-programs', 'nav-tables'].forEach(n => {
+                const el = document.getElementById(n);
+                if (!el) return;
+                const isActive = (n === 'nav-projects' && tabName.includes('project')) ||
+                                 (n === 'nav-programs' && tabName.includes('program')) ||
+                                 (n === 'nav-tables' && tabName.includes('table'));
+                el.style.backgroundColor = isActive ? '#e8f0fe' : 'transparent';
+                el.style.color = isActive ? '#1a73e8' : '#5f6368';
+            });
 
             if(tabName === 'projects') renderProjects();
+            if(tabName === 'programs') renderPrograms();
             if(tabName === 'tables') renderTables();
         }
 
         function closeModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             document.getElementById('project-modal').style.display = 'none';
+            document.getElementById('program-modal').style.display = 'none';
             document.getElementById('table-modal').style.display = 'none';
             resetForms();
         }
 
         function resetForms() {
-            document.getElementById('proj-name').value = '';
-            document.getElementById('proj-desc').value = '';
-            document.getElementById('proj-status').value = 'ANA';
-            document.getElementById('table-name').value = '';
-            document.getElementById('table-desc').value = '';
+            const ids = ['proj-name-input', 'proj-desc-input', 'proj-status-input', 'prog-name-input', 'prog-ext-name-input', 'table-name-input', 'table-desc-input'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = (id === 'proj-status-input') ? 'ANA' : '';
+            });
         }
 
         // --- PROJECTS LOGIC ---
@@ -277,19 +378,15 @@
         }
 
         function saveProject() {
-            const name = document.getElementById('proj-name').value;
+            const name = document.getElementById('proj-name-input').value;
             if (!name) return;
-            const newProj = {
+            projects.push({
                 id: Date.now(),
-                name: name,
-                description: document.getElementById('proj-desc').value,
-                status: document.getElementById('proj-status').value,
-                programs: [],
-                tables: [],
-                logs: [],
-                todos: []
-            };
-            projects.push(newProj);
+                name,
+                description: document.getElementById('proj-desc-input').value,
+                status: document.getElementById('proj-status-input').value,
+                programs: [], tables: [], logs: [], todos: []
+            });
             renderProjects();
             closeModal();
         }
@@ -319,13 +416,15 @@
                 project.status = newStatus;
                 renderProjects();
                 if (currentProjectId == pid) {
-                    document.getElementById('detail-status-select').value = newStatus;
+                    const statusSelect = document.getElementById('detail-status-select');
+                    if (statusSelect) statusSelect.value = newStatus;
                 }
             }
         }
 
         function renderDetailResources() {
             const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
             document.getElementById('detail-programs-list').innerHTML = project.programs.map(p => `<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 4px; font-size: 13px;">${p}</span>`).join('');
             document.getElementById('detail-tables-list').innerHTML = project.tables.map(t => `<span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 4px; font-size: 13px;">${t}</span>`).join('');
         }
@@ -343,6 +442,7 @@
 
         function renderDetailTodos() {
             const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
             document.getElementById('detail-todo-list').innerHTML = project.todos.map((t, idx) => `
                 <div style="display: flex; align-items: center; gap: 10px; background: #fafafa; padding: 8px 12px; border-radius: 4px; border: 1px solid #eee;">
                     <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${project.id}, ${idx})">
@@ -363,6 +463,7 @@
                 project.todos.push({ text, done: false, timestamp });
                 document.getElementById('add-todo-input').value = '';
                 renderDetailTodos();
+                renderProjects();
             }
         }
 
@@ -370,15 +471,14 @@
             const project = projects.find(p => p.id == projId);
             if (project) {
                 project.todos[todoIdx].done = !project.todos[todoIdx].done;
-                if (currentProjectId == projId && document.getElementById('tab-project-detail').style.display === 'block') {
-                    renderDetailTodos();
-                }
+                if (currentProjectId == projId && document.getElementById('tab-project-detail').style.display === 'block') renderDetailTodos();
                 renderProjects();
             }
         }
 
         function renderDetailLogs() {
             const project = projects.find(p => p.id === currentProjectId);
+            if (!project) return;
             document.getElementById('detail-log-list').innerHTML = project.logs.slice().reverse().map(l => `
                 <div style="border-left: 3px solid #1a73e8; padding-left: 16px; margin-bottom: 8px;">
                     <div style="font-size: 11px; color: #9aa0a6; margin-bottom: 4px;">${l.date}</div>
@@ -405,14 +505,12 @@
             const emptyState = document.getElementById('empty-state');
             if (!list) return;
             if (overviewTimestamp) overviewTimestamp.innerText = "Last update: " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
             let allPendingTodos = [];
-            projects.forEach(p => {
-                p.todos.forEach((t, idx) => {
-                    if (!t.done) allPendingTodos.push({ ...t, projectName: p.name, projId: p.id, todoIdx: idx });
-                });
-            });
-            if (allPendingTodos.length > 0) {
-                globalTodoContainer.style.display = 'block';
+            projects.forEach(p => p.todos.forEach((t, idx) => { if (!t.done) allPendingTodos.push({ ...t, projectName: p.name, projId: p.id, todoIdx: idx }); }));
+            
+            if (globalTodoContainer) globalTodoContainer.style.display = allPendingTodos.length > 0 ? 'block' : 'none';
+            if (allPendingTodos.length > 0 && globalTodoList) {
                 globalTodoList.innerHTML = allPendingTodos.map(t => `
                     <div style="background: #fff; border-left: 4px solid #f4b400; padding: 12px 16px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
@@ -425,38 +523,144 @@
                         <span style="font-size: 11px; color: #70757a; background: #f1f3f4; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">${t.projectName}</span>
                     </div>
                 `).join('');
-            } else { globalTodoContainer.style.display = 'none'; }
+            }
+            
             if (emptyState) emptyState.style.display = projects.length > 0 ? 'none' : 'block';
             list.innerHTML = '';
-            if (projects.length === 0 && emptyState) list.appendChild(emptyState);
-            projects.forEach(p => {
-                const color = statusColors[p.status];
-                const card = document.createElement('div');
-                card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; position: relative;`;
-                card.onclick = (e) => {
-                    if (e.target.tagName !== 'SELECT' && e.target.type !== 'checkbox' && e.target.tagName !== 'TEXTAREA') openProjectDetail(p.id);
-                };
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 4px 0; font-size: 18px;">${p.name}</h3>
-                            <p style="margin: 0; font-size: 14px; color: #5f6368; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${p.description || 'No description'}</p>
+            if (projects.length === 0 && emptyState) {
+                list.appendChild(emptyState);
+            } else {
+                projects.forEach(p => {
+                    const color = statusColors[p.status];
+                    const card = document.createElement('div');
+                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; position: relative;`;
+                    card.onclick = (e) => { if (e.target.tagName !== 'SELECT' && e.target.type !== 'checkbox') openProjectDetail(p.id); };
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 4px 0; font-size: 18px;">${p.name}</h3>
+                                <p style="margin: 0; font-size: 14px; color: #5f6368;">${p.description || 'No description'}</p>
+                            </div>
+                            <select onchange="updateProjectStatus(this.value, ${p.id})" style="background-color: ${color.bg}; color: ${color.text}; padding: 4px 8px; border: none; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer;">
+                                <option value="ANA" ${p.status === 'ANA' ? 'selected' : ''}>ANA</option>
+                                <option value="DEV" ${p.status === 'DEV' ? 'selected' : ''}>DEV</option>
+                                <option value="APB" ${p.status === 'APB' ? 'selected' : ''}>APB</option>
+                                <option value="DONE" ${p.status === 'DONE' ? 'selected' : ''}>DONE</option>
+                            </select>
                         </div>
-                        <select onchange="updateProjectStatus(this.value, ${p.id})" style="background-color: ${color.bg}; color: ${color.text}; padding: 4px 8px; border: none; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; outline: none; margin-left: 10px;">
-                            <option value="ANA" ${p.status === 'ANA' ? 'selected' : ''}>ANA</option>
-                            <option value="DEV" ${p.status === 'DEV' ? 'selected' : ''}>DEV</option>
-                            <option value="APB" ${p.status === 'APB' ? 'selected' : ''}>APB</option>
-                            <option value="DONE" ${p.status === 'DONE' ? 'selected' : ''}>DONE</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 24px; font-size: 12px; color: #70757a; border-top: 1px solid #f1f3f4; padding-top: 12px;">
-                        <span><strong>Programs:</strong> ${p.programs.length}</span>
-                        <span><strong>Tables:</strong> ${p.tables.length}</span>
-                        <span><strong>Pending Tasks:</strong> ${p.todos.filter(t => !t.done).length}</span>
-                    </div>
-                `;
-                list.appendChild(card);
+                        <div style="display: flex; gap: 24px; font-size: 12px; color: #70757a; border-top: 1px solid #f1f3f4; padding-top: 12px;">
+                            <span><strong>Programs:</strong> ${p.programs.length}</span>
+                            <span><strong>Tables:</strong> ${p.tables.length}</span>
+                            <span><strong>Pending Tasks:</strong> ${p.todos.filter(t => !t.done).length}</span>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            }
+        }
+
+        // --- PROGRAMS LOGIC ---
+        function openNewProgramModal() {
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('program-modal').style.display = 'flex';
+        }
+
+        function saveProgram() {
+            const name = document.getElementById('prog-name-input').value.trim();
+            if (!name) return;
+            programs.push({
+                id: Date.now(),
+                name,
+                extName: document.getElementById('prog-ext-name-input').value.trim(),
+                flow: '',
+                reads: [],
+                writes: []
             });
+            renderPrograms();
+            closeModal();
+        }
+
+        function renderPrograms() {
+            const list = document.getElementById('program-list');
+            const empty = document.getElementById('program-empty-state');
+            if (!list) return;
+            if (empty) empty.style.display = programs.length > 0 ? 'none' : 'block';
+            list.innerHTML = '';
+            if (programs.length === 0 && empty) {
+                list.appendChild(empty);
+            } else {
+                programs.forEach(p => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; cursor: pointer; transition: transform 0.1s; display: flex; flex-direction: column; gap: 8px;`;
+                    card.onclick = () => openProgramDetail(p.id);
+                    card.innerHTML = `
+                        <h3 style="margin: 0; font-size: 18px; color: #1a73e8; font-family: monospace;">${p.name}</h3>
+                        <p style="margin: 0; font-size: 14px; color: #5f6368;">${p.extName || 'No title'}</p>
+                        <div style="margin-top: 12px; font-size: 12px; color: #9aa0a6;">Flow: ${p.flow ? '✅' : '❌'} | Reads: ${p.reads.length} | Writes: ${p.writes.length}</div>
+                    `;
+                    list.appendChild(card);
+                });
+            }
+        }
+
+        function openProgramDetail(id) {
+            currentProgramId = id;
+            const prog = programs.find(p => p.id === id);
+            if (!prog) return;
+            document.getElementById('program-detail-name').innerText = prog.name;
+            document.getElementById('program-detail-ext-input').value = prog.extName || "";
+            document.getElementById('program-flow-input').value = prog.flow || "";
+            renderProgramResources();
+            showTab('program-detail');
+        }
+
+        function saveProgramExtName(val) {
+            const p = programs.find(x => x.id === currentProgramId);
+            if (p) p.extName = val;
+        }
+
+        function saveProgramFlow(val) {
+            const p = programs.find(x => x.id === currentProgramId);
+            if (p) p.flow = val;
+        }
+
+        function renderProgramResources() {
+            const p = programs.find(x => x.id === currentProgramId);
+            if (!p) return;
+            const render = (listId, data) => {
+                const el = document.getElementById(listId);
+                if (!el) return;
+                el.innerHTML = data.map((item, idx) => `
+                    <span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                        ${item}
+                        <button onclick="removeProgramResource('${listId.includes('reads') ? 'reads' : 'writes'}', ${idx})" style="border:none; background:none; color:#ccc; cursor:pointer; font-weight:bold;">&times;</button>
+                    </span>
+                `).join('');
+            };
+            render('program-reads-list', p.reads);
+            render('program-writes-list', p.writes);
+        }
+
+        function addProgramResource(key) {
+            const inputId = key === 'reads' ? 'add-read-table-input' : 'add-write-table-input';
+            const valInput = document.getElementById(inputId);
+            const val = valInput.value.trim();
+            if (val) {
+                const p = programs.find(x => x.id === currentProgramId);
+                if (p) {
+                    p[key].push(val);
+                    valInput.value = '';
+                    renderProgramResources();
+                }
+            }
+        }
+
+        function removeProgramResource(key, idx) {
+            const p = programs.find(x => x.id === currentProgramId);
+            if (p) {
+                p[key].splice(idx, 1);
+                renderProgramResources();
+            }
         }
 
         // --- TABLES LOGIC ---
@@ -466,44 +670,37 @@
         }
 
         function saveTable() {
-            const name = document.getElementById('table-name').value.trim();
+            const name = document.getElementById('table-name-input').value.trim();
             if (!name) return;
-            const newTable = {
-                id: Date.now(),
-                name: name,
-                description: document.getElementById('table-desc').value,
-                fields: []
-            };
-            tables.push(newTable);
+            tables.push({ id: Date.now(), name, description: document.getElementById('table-desc-input').value, fields: [] });
             renderTables();
             closeModal();
         }
 
         function renderTables() {
             const list = document.getElementById('table-list');
-            const emptyState = document.getElementById('table-empty-state');
+            const empty = document.getElementById('table-empty-state');
             if (!list) return;
-            if (emptyState) emptyState.style.display = tables.length > 0 ? 'none' : 'block';
+            if (empty) empty.style.display = tables.length > 0 ? 'none' : 'block';
             list.innerHTML = '';
-            if (tables.length === 0 && emptyState) list.appendChild(emptyState);
-            tables.forEach(t => {
-                const card = document.createElement('div');
-                card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; display: flex; flex-direction: column; gap: 12px;`;
-                card.onmouseover = () => card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                card.onmouseout = () => card.style.boxShadow = 'none';
-                card.onclick = () => openTableDetail(t.id);
-                card.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="background: #f1f3f4; padding: 6px; border-radius: 4px; font-size: 18px;">📄</span>
-                        <h3 style="margin: 0; font-size: 18px; color: #1a73e8;">${t.name}</h3>
-                    </div>
-                    <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${t.description || 'No description provided.'}</p>
-                    <div style="margin-top: auto; font-size: 12px; color: #9aa0a6;">
-                        ${t.fields.length} fields documented
-                    </div>
-                `;
-                list.appendChild(card);
-            });
+            if (tables.length === 0 && empty) {
+                list.appendChild(empty);
+            } else {
+                tables.forEach(t => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 12px;`;
+                    card.onclick = () => openTableDetail(t.id);
+                    card.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="background: #f1f3f4; padding: 6px; border-radius: 4px; font-size: 18px;">📄</span>
+                            <h3 style="margin: 0; font-size: 18px; color: #1a73e8;">${t.name}</h3>
+                        </div>
+                        <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.4;">${t.description || 'No description provided.'}</p>
+                        <div style="margin-top: auto; font-size: 12px; color: #9aa0a6;">${t.fields.length} fields documented</div>
+                    `;
+                    list.appendChild(card);
+                });
+            }
         }
 
         function openTableDetail(id) {
@@ -511,87 +708,60 @@
             const table = tables.find(t => t.id === id);
             if (!table) return;
             document.getElementById('table-detail-name').innerText = table.name;
-            document.getElementById('table-detail-desc').innerText = table.description;
+            document.getElementById('table-detail-desc-input').value = table.description || "";
             renderFields();
             showTab('table-detail');
         }
 
+        function saveTableDescription(val) {
+            const table = tables.find(t => t.id === currentTableId);
+            if (table) table.description = val;
+        }
+
+        function handleFieldAddFromToolbar() {
+            const input = document.getElementById('field-quick-add');
+            const name = input.value.trim();
+            if (!name) return;
+            const table = tables.find(t => t.id === currentTableId);
+            if (table) {
+                table.fields.push({ name, description: '', example: '' });
+                input.value = '';
+                renderFields();
+            }
+        }
+
         function renderFields() {
             const table = tables.find(t => t.id === currentTableId);
+            if (!table) return;
             const tbody = document.getElementById('field-list-body');
+            const emptyMsg = document.getElementById('field-empty-message');
+            if (!tbody) return;
             tbody.innerHTML = '';
-            
+            if (emptyMsg) emptyMsg.style.display = table.fields.length === 0 ? 'block' : 'none';
             table.fields.forEach((f, idx) => {
                 const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f1f3f4';
                 tr.innerHTML = `
-                    <td style="padding: 0; border: 1px solid #e0e0e0;">
-                        <input type="text" value="${f.name}" onchange="updateField(${idx}, 'name', this.value)" style="width: 100%; border: none; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 13px;" placeholder="Name...">
-                    </td>
-                    <td style="padding: 0; border: 1px solid #e0e0e0;">
-                        <input type="text" value="${f.description}" onchange="updateField(${idx}, 'description', this.value)" style="width: 100%; border: none; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 13px;" placeholder="What is this field?">
-                    </td>
-                    <td style="padding: 0; border: 1px solid #e0e0e0;">
-                        <input type="text" value="${f.example}" onchange="updateField(${idx}, 'example', this.value)" style="width: 100%; border: none; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 13px;" placeholder="e.g. 12345">
-                    </td>
-                    <td style="padding: 0; border: 1px solid #e0e0e0; text-align: center; background: #fff;">
-                        <button onclick="removeField(${idx})" style="border: none; background: none; color: #d93025; cursor: pointer; padding: 8px; font-size: 16px;">&times;</button>
-                    </td>
+                    <td style="padding: 4px 24px;"><input value="${f.name}" onchange="updateField(${idx}, 'name', this.value)" style="width: 100%; border: none; font-weight: 600; font-size: 13px; background:transparent;"></td>
+                    <td style="padding: 4px 24px;"><input value="${f.description}" onchange="updateField(${idx}, 'description', this.value)" placeholder="Enter definition..." style="width: 100%; border: none; font-size: 13px; color: #5f6368; background:transparent;"></td>
+                    <td style="padding: 4px 24px;"><input value="${f.example}" onchange="updateField(${idx}, 'example', this.value)" placeholder="e.g. 'Active'" style="width: 100%; border: none; font-size: 13px; font-style: italic; color: #70757a; background:transparent;"></td>
+                    <td style="text-align: center;"><button onclick="removeField(${idx})" style="border: none; background: none; color: #dadce0; cursor: pointer; font-size: 20px;">&times;</button></td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            const autoRow = document.createElement('tr');
-            autoRow.innerHTML = `
-                <td style="padding: 0; border: 1px solid #e0e0e0;">
-                    <input type="text" id="new-field-name" 
-                        onkeydown="if(event.key === 'Enter') handleFieldAdd(this)" 
-                        onblur="handleFieldAdd(this)"
-                        style="width: 100%; border: none; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fffbe6;" 
-                        placeholder="Type field name and press Enter...">
-                </td>
-                <td style="padding: 0; border: 1px solid #e0e0e0; background: #fffbe6;"><div style="padding: 12px; color: #ccc; font-size: 13px;">...</div></td>
-                <td style="padding: 0; border: 1px solid #e0e0e0; background: #fffbe6;"><div style="padding: 12px; color: #ccc; font-size: 13px;">...</div></td>
-                <td style="padding: 0; border: 1px solid #e0e0e0; background: #fffbe6;"></td>
-            `;
-            tbody.appendChild(autoRow);
-        }
-
-        function handleFieldAdd(input) {
-            const val = input.value.trim();
-            if (val.length > 0) {
-                const table = tables.find(t => t.id === currentTableId);
-                table.fields.push({ name: val, description: '', example: '' });
-                input.value = ''; // Clear input before re-render
-                renderFields();
-                // Find the inputs in the newly rendered table
-                const rows = document.querySelectorAll('#field-list-body tr');
-                if (rows.length > 1) {
-                    // Focus the description input of the row we just added (the last one before the auto-row)
-                    const lastDataRow = rows[rows.length - 2];
-                    const inputs = lastDataRow.querySelectorAll('input');
-                    if (inputs.length > 1) inputs[1].focus(); 
-                }
-            }
         }
 
         function updateField(idx, key, val) {
             const table = tables.find(t => t.id === currentTableId);
-            if (table && table.fields[idx]) {
-                table.fields[idx][key] = val;
-            }
+            if (table && table.fields[idx]) table.fields[idx][key] = val;
         }
 
         function removeField(idx) {
             const table = tables.find(t => t.id === currentTableId);
-            if (table) {
-                table.fields.splice(idx, 1);
-                renderFields();
-            }
+            if (table) { table.fields.splice(idx, 1); renderFields(); }
         }
 
-        window.onload = () => {
-            showTab('projects');
-        };
+        window.onload = () => showTab('projects');
     </script>
 </body>
 </html>
