@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MariusDoc</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: transparent; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+<div id="marius-doc-app" class="theme-dark">
+    
+    <style>
+        #marius-doc-app {
+            --md-accent: #00ff9d;
+            --md-accent-dim: rgba(0, 255, 157, 0.1);
+            --md-danger: #ff4d4d;
+            --md-danger-dim: rgba(255, 77, 77, 0.1);
+            --md-bg: #0a0a0a;
+            --md-panel-bg: #111111;
+            --md-text: #e0e0e0;
+            --md-text-muted: #888888;
+            --md-border: #333333;
+            
+            --status-done: #00ff9d;
+            --status-dev: #3b82f6;
+            --status-prep: #a855f7;
+            --status-fea: #6366f1;
+            --status-apb: #f59e0b;
+            --status-dor: #64748b;
+            --status-dod: #ef4444;
+
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--md-bg);
+            color: var(--md-text);
+            display: flex; flex-direction: column;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #marius-doc-app.theme-light {
+            --md-bg: #ffffff;
+            --md-panel-bg: #f8f9fa;
+            --md-text: #1a1a1a;
+            --md-text-muted: #666666;
+            --md-border: #e2e8f0;
+            --md-accent: #059669;
+            --md-accent-dim: rgba(5, 150, 105, 0.1);
+        }
+
+        #marius-doc-app * { box-sizing: border-box; }
+
+        .md-btn {
+            background: transparent; border: 1px solid var(--md-border);
+            color: var(--md-text); padding: 8px 16px; cursor: pointer;
+            border-radius: 4px; font-size: 13px; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .md-btn:hover { border-color: var(--md-accent); color: var(--md-accent); background: var(--md-accent-dim); }
+        .md-btn-primary { background: var(--md-accent); color: #000; border-color: var(--md-accent); font-weight: bold; }
+        
+        .md-input {
+            background: var(--md-bg); border: 1px solid var(--md-border);
+            color: var(--md-text); padding: 8px; border-radius: 4px;
+            width: 100%; margin-bottom: 10px; font-family: inherit;
+        }
+        .md-input:focus { outline: none; border-color: var(--md-accent); }
+        
+        .md-label {
+            display: block; font-size: 11px; color: var(--md-text-muted);
+            margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold;
+        }
+
+        .md-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 20px; }
+
+        .md-card {
+            background: var(--md-panel-bg); border: 1px solid var(--md-border);
+            border-radius: 6px; padding: 16px; cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .md-card:hover { border-color: var(--md-accent); transform: translateY(-2px); }
+        
+        .md-tag {
+            font-size: 10px; padding: 2px 6px; border-radius: 4px;
+            background: var(--md-border); color: var(--md-text-muted);
+            text-transform: uppercase; font-weight: bold;
+            text-decoration: none; display: inline-block;
+        }
+        .md-tag-link:hover { color: var(--md-accent); border-color: var(--md-accent); }
+
+        .status-pill { color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }
+        .bg-DONE { background-color: var(--status-done); color: #000; }
+        .bg-DEV { background-color: var(--status-dev); }
+        .bg-PREP { background-color: var(--status-prep); }
+        .bg-FEA { background-color: var(--status-fea); }
+        .bg-APB { background-color: var(--status-apb); color: #000; }
+        .bg-DOR { background-color: var(--status-dor); }
+        .bg-DOD { background-color: var(--status-dod); }
+
+        .card-DONE { border-left: 4px solid var(--status-done); }
+        .card-DEV { border-left: 4px solid var(--status-dev); }
+        .card-PREP { border-left: 4px solid var(--status-prep); }
+        .card-FEA { border-left: 4px solid var(--status-fea); }
+        .card-APB { border-left: 4px solid var(--status-apb); }
+        .card-DOR { border-left: 4px solid var(--status-dor); }
+        .card-DOD { border-left: 4px solid var(--status-dod); }
+
+        .md-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .md-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--md-border); color: var(--md-text-muted); font-size: 11px; text-transform: uppercase; }
+        .md-table td { padding: 12px; border-bottom: 1px solid var(--md-border); vertical-align: middle; }
+        .md-table tr:hover { background: var(--md-accent-dim); cursor: pointer; }
+
+        .md-modal-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); display: flex; justify-content: center;
+            align-items: center; z-index: 100; backdrop-filter: blur(2px);
+        }
+        .md-modal { background: var(--md-panel-bg); border: 1px solid var(--md-border); width: 500px; max-width: 90%; border-radius: 8px; padding: 24px; }
+
+        .md-nav-item { padding: 12px 20px; cursor: pointer; border-left: 3px solid transparent; color: var(--md-text-muted); }
+        .md-nav-item.active { border-left-color: var(--md-accent); color: var(--md-accent); background: var(--md-accent-dim); }
+
+        .md-log-entry { border-bottom: 1px solid var(--md-border); padding: 16px 0; }
+        .md-log-date { font-size: 10px; color: var(--md-text-muted); margin-bottom: 6px; }
+    </style>
+
+    <header style="height: 60px; border-bottom: 1px solid var(--md-border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 20px; height: 20px; background: var(--md-accent); transform: rotate(45deg);"></div>
+            <h1 style="font-size: 18px; margin: 0; font-weight: 800; letter-spacing: 1px;">Marius<span style="color: var(--md-accent);">Doc</span></h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="md-btn" onclick="app.exportData()">Export</button>
+            <button class="md-btn" onclick="app.toggleTheme()">☀/☾</button>
+        </div>
+    </header>
+
+    <div style="display: flex; flex: 1; overflow: hidden;">
+        <aside style="width: 200px; border-right: 1px solid var(--md-border); padding-top: 20px; flex-shrink: 0;">
+            <div class="md-nav-item active" onclick="app.navigate('projects')" id="nav-projects">Projects</div>
+            <div class="md-nav-item" onclick="app.navigate('tables')" id="nav-tables">Tables</div>
+            <div class="md-nav-item" onclick="app.navigate('programs')" id="nav-programs">Programs</div>
+            <div class="md-nav-item" onclick="app.navigate('queries')" id="nav-queries">Queries</div>
+            <div class="md-nav-item" onclick="app.navigate('config')" id="nav-config">Configuration</div>
+        </aside>
+
+        <main id="main-content" style="flex: 1; overflow-y: auto; background: var(--md-bg);">
+        </main>
+    </div>
+
+    <div id="modal-container" style="display: none;"></div>
+</div>
+
+<script>
+    const app = {
+        data: {
+            projects: [],
+            tables: [],
+            programs: [],
+            queries: [],
+            config: { companyName: 'My Company' }
+        },
+        currentView: 'projects',
+        currentProjectId: null,
+        tableFilter: '',
+        theme: 'dark',
+        statuses: ['PREP', 'DEV', 'APB', 'FEA', 'DOR', 'DOD', 'DONE'],
+
+        init: function() {
+            const savedData = prompt("Paste your JSON data string to load previous work, or leave empty.");
+            if (savedData && savedData.trim() !== "") {
+                try { this.data = JSON.parse(atob(savedData)); } catch (e) { alert("Invalid data."); }
+            }
+            this.render();
+        },
+
+        navigate: function(view) {
+            this.currentView = view;
+            this.currentProjectId = null;
+            document.querySelectorAll('.md-nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${view}`).classList.add('active');
+            this.render();
+        },
+
+        toggleTheme: function() {
+            this.theme = this.theme === 'dark' ? 'light' : 'dark';
+            document.getElementById('marius-doc-app').className = `theme-${this.theme}`;
+        },
+
+        exportData: function() {
+            const base64Str = btoa(JSON.stringify(this.data));
+            this.showModal(`
+                <h3>Export Data</h3>
+                <textarea class="md-input" style="height: 100px; font-size:10px;">${base64Str}</textarea>
+                <button class="md-btn md-btn-primary" onclick="app.closeModal()">Close</button>
+            `);
+        },
+
+        render: function() {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+
+            if (this.currentProjectId !== null) {
+                this.renderProjectDetail(container);
+                return;
+            }
+
+            const header = document.createElement('div');
+            header.style.padding = '20px 20px 0 20px';
+            header.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h2 style="margin: 0; text-transform: capitalize;">${this.currentView}</h2>
+                    <button class="md-btn md-btn-primary" onclick="app.openAddModal('${this.currentView}')">+ New ${this.currentView.slice(0, -1)}</button>
+                </div>
+            `;
+            container.appendChild(header);
+
+            if (this.currentView === 'projects') {
+                this.renderProjectsDashboard(container);
+            } else {
+                const grid = document.createElement('div');
+                grid.className = 'md-grid';
+                if (this.currentView === 'tables') this.renderTables(grid);
+                else if (this.currentView === 'programs') this.renderPrograms(grid);
+                else if (this.currentView === 'queries') this.renderQueries(grid);
+                else if (this.currentView === 'config') this.renderConfig(grid);
+                container.appendChild(grid);
+            }
+        },
+
+        renderProjectsDashboard: function(container) {
+            const ongoing = this.data.projects.filter(p => p.status !== 'DONE');
+            const finished = this.data.projects.filter(p => p.status === 'DONE');
+
+            const ongoingSection = document.createElement('div');
+            ongoingSection.innerHTML = `<h3 style="padding: 0 20px; font-size: 14px; color: var(--md-text-muted); text-transform: uppercase;">Active Projects</h3>`;
+            const grid = document.createElement('div');
+            grid.className = 'md-grid';
+            ongoing.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `md-card card-${p.status}`;
+                card.onclick = () => { this.currentProjectId = p.id; this.render(); };
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 15px;">${p.name}</h3>
+                        <span class="md-tag status-pill bg-${p.status}">${p.status}</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--md-text-muted); line-height: 1.4;">${p.intro || 'No intro.'}</p>
+                `;
+                grid.appendChild(card);
+            });
+            ongoingSection.appendChild(grid);
+            container.appendChild(ongoingSection);
+
+            const finishedSection = document.createElement('div');
+            finishedSection.style.padding = '0 20px 40px 20px';
+            finishedSection.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; border-bottom: 1px solid var(--md-border); padding-bottom: 10px;">
+                    <h3 style="margin:0; font-size: 14px; color: var(--md-text-muted); text-transform: uppercase;">Archive (DONE)</h3>
+                    <input class="md-input" placeholder="Filter finished projects..." style="width: 250px; margin:0;" oninput="app.tableFilter = this.value; app.renderTableRows()">
+                </div>
+                <table class="md-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%">Project</th>
+                            <th>Intro</th>
+                            <th style="width: 180px">Last Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="finished-table-body"></tbody>
+                </table>
+            `;
+            container.appendChild(finishedSection);
+            this.renderTableRows();
+        },
+
+        renderTableRows: function() {
+            const tbody = document.getElementById('finished-table-body');
+            if(!tbody) return;
+            const finished = this.data.projects.filter(p => p.status === 'DONE');
+            const filtered = finished.filter(p => 
+                p.name.toLowerCase().includes(this.tableFilter.toLowerCase()) || 
+                p.intro.toLowerCase().includes(this.tableFilter.toLowerCase())
+            );
+
+            tbody.innerHTML = filtered.length ? '' : '<tr><td colspan="3" style="text-align:center; color:var(--md-text-muted)">No projects found.</td></tr>';
+            
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => { this.currentProjectId = p.id; this.render(); };
+                const lastLog = p.logs.length ? p.logs[p.logs.length-1].date : '-';
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: var(--md-accent)">${p.name}</td>
+                    <td style="color: var(--md-text-muted)">${p.intro || '-'}</td>
+                    <td style="font-size: 11px; opacity: 0.6">${lastLog}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        },
+
+        renderProjectDetail: function(container) {
+            const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
+            // Ensure jira array exists
+            if (!p.jira) p.jira = [];
+
+            container.innerHTML = `
+                <div style="padding: 20px;">
+                    <button class="md-btn" onclick="app.navigate('projects')" style="margin-bottom: 20px;">← Back to Projects</button>
+                    
+                    <div style="display: flex; gap: 30px; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <label class="md-label">Project Name</label>
+                            <input class="md-input" style="font-size: 24px; font-weight: bold; background: transparent; border: none; padding: 0; color: var(--md-text);" value="${p.name}" onchange="app.updateProjectField('name', this.value)">
+                            
+                            <div style="display: flex; gap: 10px; margin: 15px 0;">
+                                <div>
+                                    <label class="md-label">Status</label>
+                                    <select class="md-input status-pill bg-${p.status}" style="font-weight:bold; border:none; padding: 4px 10px;" onchange="app.updateProjectField('status', this.value); app.render();">
+                                        ${this.statuses.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''} style="background: var(--md-panel-bg); color: var(--md-text);">${s}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label class="md-label">Project Intro</label>
+                            <textarea class="md-input" style="height: 60px;" onchange="app.updateProjectField('intro', this.value)">${p.intro || ''}</textarea>
+
+                            <h3 style="margin-top: 40px; border-bottom: 1px solid var(--md-border); padding-bottom: 8px;">Activity Logs</h3>
+                            <div id="log-list" style="margin-bottom: 10px; width: 100%;">
+                                ${p.logs.length === 0 ? '<p style="color: var(--md-text-muted); font-size: 12px;">No logs yet.</p>' : 
+                                    p.logs.slice().reverse().map(l => `
+                                        <div class="md-log-entry">
+                                            <div class="md-log-date">${l.date}</div>
+                                            <div style="font-size: 14px; line-height:1.6; white-space: pre-wrap; word-break: break-word;">${l.text}</div>
+                                        </div>
+                                    `).join('')}
+                            </div>
+                            <div style="margin-top: 25px;">
+                                <label class="md-label">Add New Activity</label>
+                                <textarea id="new-log-txt" class="md-input" style="height: 100px; resize: vertical;" placeholder="Add multi-line updates here..."></textarea>
+                                <div style="display: flex; justify-content: flex-end;">
+                                    <button class="md-btn md-btn-primary" onclick="app.addLog()">Post Log Entry</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="width: 280px; background: var(--md-panel-bg); border: 1px solid var(--md-border); padding: 16px; border-radius: 8px; flex-shrink: 0;">
+                            <h4 style="margin: 0 0 15px 0; border-bottom: 1px solid var(--md-border); padding-bottom: 5px;">Resources</h4>
+                            
+                            <label class="md-label">Jira Links</label>
+                            <div style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${p.jira.map(j => `
+                                    <a href="${j.startsWith('http') ? j : 'https://'+j}" target="_blank" class="md-tag md-tag-link" style="background: var(--md-bg); border: 1px solid var(--md-border);">
+                                        Jira Link
+                                    </a>
+                                `).join('')}
+                                <input class="md-input" style="font-size:11px; margin-top:5px; height: 28px;" placeholder="+ Add Jira URL" onkeydown="if(event.key==='Enter'){app.addLink('jira', this.value); this.value=''}">
+                            </div>
+
+                            <label class="md-label">Programs</label>
+                            <div style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${p.programs.map(pr => `<div class="md-tag" style="background: var(--md-bg);">${pr}</div>`).join('')}
+                                <input class="md-input" style="font-size:11px; margin-top:5px; height: 28px;" placeholder="+ Add Program" onkeydown="if(event.key==='Enter'){app.addLink('programs', this.value); this.value=''}">
+                            </div>
+
+                            <label class="md-label">Tables</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${p.tables.map(tb => `<div class="md-tag" style="background: var(--md-bg);">${tb}</div>`).join('')}
+                                <input class="md-input" style="font-size:11px; margin-top:5px; height: 28px;" placeholder="+ Add Table" onkeydown="if(event.key==='Enter'){app.addLink('tables', this.value); this.value=''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+
+        updateProjectField: function(field, val) {
+            const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
+            p[field] = val;
+        },
+
+        addLog: function() {
+            const input = document.getElementById('new-log-txt');
+            if(!input.value.trim()) return;
+            const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
+            p.logs.push({ date: new Date().toLocaleString(), text: input.value });
+            this.render();
+        },
+
+        addLink: function(type, val) {
+            if(!val) return;
+            const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
+            if(!p[type]) p[type] = [];
+            if(!p[type].includes(val)) p[type].push(val);
+            this.render();
+        },
+
+        openAddModal: function(type) {
+            if (type === 'projects') {
+                this.showModal(`
+                    <h3>New Project</h3>
+                    <label class="md-label">Name</label>
+                    <input id="new-p-name" class="md-input" placeholder="Project title...">
+                    <label class="md-label">Initial Status</label>
+                    <select id="new-p-status" class="md-input">
+                        ${this.statuses.map(s => `<option value="${s}">${s}</option>`).join('')}
+                    </select>
+                    <label class="md-label">Brief Intro</label>
+                    <textarea id="new-p-intro" class="md-input" style="height:60px;"></textarea>
+                    <button class="md-btn md-btn-primary" style="width:100%" onclick="app.saveNewProject()">Create Project</button>
+                    <button class="md-btn" style="width:100%; margin-top:10px; border:none;" onclick="app.closeModal()">Cancel</button>
+                `);
+            }
+        },
+
+        saveNewProject: function() {
+            const name = document.getElementById('new-p-name').value;
+            if(!name) return;
+            this.data.projects.push({
+                id: Date.now(),
+                name: name,
+                status: document.getElementById('new-p-status').value,
+                intro: document.getElementById('new-p-intro').value,
+                logs: [],
+                programs: [],
+                tables: [],
+                jira: []
+            });
+            this.closeModal();
+            this.render();
+        },
+
+        showModal: function(html) {
+            const modal = document.getElementById('modal-container');
+            modal.style.display = 'flex';
+            modal.className = 'md-modal-overlay';
+            modal.innerHTML = `<div class="md-modal">${html}</div>`;
+        },
+        closeModal: function() { document.getElementById('modal-container').style.display = 'none'; },
+
+        renderTables: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Tables Management</div>`; },
+        renderPrograms: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Programs Management</div>`; },
+        renderQueries: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Queries Management</div>`; },
+        renderConfig: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Configuration Panel</div>`; }
+    };
+
+    window.onload = () => app.init();
+</script>
+</body>
+</html>
