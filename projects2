@@ -124,7 +124,7 @@
     </style>
 
     <header style="height: 60px; border-bottom: 1px solid var(--md-border); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0;">
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;" onclick="app.navigate('projects')">
             <div style="width: 20px; height: 20px; background: var(--md-accent); transform: rotate(45deg);"></div>
             <h1 style="font-size: 18px; margin: 0; font-weight: 800; letter-spacing: 1px;">Marius<span style="color: var(--md-accent);">Doc</span></h1>
         </div>
@@ -136,9 +136,6 @@
     <div style="display: flex; flex: 1; overflow: hidden;">
         <aside style="width: 200px; border-right: 1px solid var(--md-border); padding-top: 20px; flex-shrink: 0;">
             <div class="md-nav-item active" onclick="app.navigate('projects')" id="nav-projects">Projects</div>
-            <div class="md-nav-item" onclick="app.navigate('tables')" id="nav-tables">Tables</div>
-            <div class="md-nav-item" onclick="app.navigate('programs')" id="nav-programs">Programs</div>
-            <div class="md-nav-item" onclick="app.navigate('queries')" id="nav-queries">Queries</div>
             <div class="md-nav-item" onclick="app.navigate('config')" id="nav-config">Configuration</div>
         </aside>
 
@@ -153,9 +150,6 @@
     const app = {
         data: {
             projects: [],
-            tables: [],
-            programs: [],
-            queries: [],
             config: { 
                 themeColor: '#00ff9d'
             }
@@ -199,27 +193,15 @@
         importData: function(base64Str) {
             if (!base64Str || base64Str.trim() === "") return;
             try { 
-                this.data = JSON.parse(atob(base64Str));
+                const decoded = JSON.parse(atob(base64Str));
+                this.data = decoded;
                 if (!this.data.config) this.data.config = { themeColor: '#00ff9d' };
+                if (!this.data.projects) this.data.projects = [];
                 this.applyThemeColor();
                 this.render();
             } catch (e) { 
                 alert("Invalid data format."); 
             }
-        },
-
-        downloadData: function() {
-            const currentData = JSON.stringify(this.data, null, 2);
-            const blob = new Blob([currentData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const date = new Date().toISOString().slice(0, 10);
-            a.href = url;
-            a.download = `mariusdoc-backup-${date}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         },
 
         render: function() {
@@ -236,7 +218,7 @@
             header.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h2 style="margin: 0; text-transform: capitalize;">${this.currentView}</h2>
-                    ${this.currentView !== 'config' ? `<button class="md-btn md-btn-primary" onclick="app.openAddModal('${this.currentView}')">+ New ${this.currentView.slice(0, -1)}</button>` : ''}
+                    ${this.currentView === 'projects' ? `<button class="md-btn md-btn-primary" onclick="app.openAddModal('projects')">+ New Project</button>` : ''}
                 </div>
             `;
             container.appendChild(header);
@@ -245,24 +227,22 @@
                 this.renderProjectsDashboard(container);
             } else if (this.currentView === 'config') {
                 this.renderConfig(container);
-            } else {
-                const grid = document.createElement('div');
-                grid.className = 'md-grid';
-                if (this.currentView === 'tables') this.renderTables(grid);
-                else if (this.currentView === 'programs') this.renderPrograms(grid);
-                else if (this.currentView === 'queries') this.renderQueries(grid);
-                container.appendChild(grid);
             }
         },
 
         renderProjectsDashboard: function(container) {
-            const ongoing = this.data.projects.filter(p => p.status !== 'DONE');
-            const finished = this.data.projects.filter(p => p.status === 'DONE');
+            const ongoing = (this.data.projects || []).filter(p => p.status !== 'DONE');
+            const finished = (this.data.projects || []).filter(p => p.status === 'DONE');
 
             const ongoingSection = document.createElement('div');
             ongoingSection.innerHTML = `<h3 style="padding: 0 20px; font-size: 14px; color: var(--md-text-muted); text-transform: uppercase;">Active Projects</h3>`;
             const grid = document.createElement('div');
             grid.className = 'md-grid';
+            
+            if (ongoing.length === 0) {
+                grid.innerHTML = `<p style="padding: 0 20px; color: var(--md-text-muted); font-size: 13px;">No active projects.</p>`;
+            }
+
             ongoing.forEach(p => {
                 const card = document.createElement('div');
                 card.className = `md-card card-${p.status}`;
@@ -304,10 +284,10 @@
         renderTableRows: function() {
             const tbody = document.getElementById('finished-table-body');
             if(!tbody) return;
-            const finished = this.data.projects.filter(p => p.status === 'DONE');
+            const finished = (this.data.projects || []).filter(p => p.status === 'DONE');
             const filtered = finished.filter(p => 
-                p.name.toLowerCase().includes(this.tableFilter.toLowerCase()) || 
-                p.intro.toLowerCase().includes(this.tableFilter.toLowerCase())
+                (p.name || '').toLowerCase().includes(this.tableFilter.toLowerCase()) || 
+                (p.intro || '').toLowerCase().includes(this.tableFilter.toLowerCase())
             );
 
             tbody.innerHTML = filtered.length ? '' : '<tr><td colspan="3" style="text-align:center; color:var(--md-text-muted)">No projects found.</td></tr>';
@@ -315,7 +295,7 @@
             filtered.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => { this.currentProjectId = p.id; this.render(); };
-                const lastLog = p.logs.length ? p.logs[p.logs.length-1].date : '-';
+                const lastLog = p.logs && p.logs.length ? p.logs[p.logs.length-1].date : '-';
                 tr.innerHTML = `
                     <td style="font-weight: bold; color: var(--md-accent)">${p.name}</td>
                     <td style="color: var(--md-text-muted)">${p.intro || '-'}</td>
@@ -328,6 +308,9 @@
         renderProjectDetail: function(container) {
             const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
             if (!p.jira) p.jira = [];
+            if (!p.programs) p.programs = [];
+            if (!p.tables) p.tables = [];
+            if (!p.logs) p.logs = [];
 
             container.innerHTML = `
                 <div style="padding: 20px;">
@@ -401,15 +384,17 @@
 
         updateProjectField: function(field, val) {
             const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
-            p[field] = val;
+            if(p) p[field] = val;
         },
 
         addLog: function() {
             const input = document.getElementById('new-log-txt');
             if(!input.value.trim()) return;
             const p = this.data.projects.find(proj => proj.id === this.currentProjectId);
-            p.logs.push({ date: new Date().toLocaleString(), text: input.value });
-            this.render();
+            if(p) {
+                p.logs.push({ date: new Date().toLocaleString(), text: input.value });
+                this.render();
+            }
         },
 
         addLink: function(type, val) {
@@ -475,20 +460,13 @@
 
                     <div style="background: var(--md-panel-bg); border: 1px solid var(--md-border); padding: 24px; border-radius: 8px; margin-bottom: 24px;">
                         <h3 style="margin-top: 0;">Data Management</h3>
-                        <p style="font-size: 13px; color: var(--md-text-muted); margin-bottom: 20px;">Backup your projects or restore a previously exported session.</p>
+                        <p style="font-size: 13px; color: var(--md-text-muted); margin-bottom: 20px;">Restore a previously exported session or copy your current session string.</p>
                         
-                        <div style="display: flex; gap: 10px; margin-bottom: 24px;">
-                            <button class="md-btn md-btn-primary" style="flex: 1" onclick="app.downloadData()">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                Download Backup (.json)
-                            </button>
-                        </div>
-
                         <label class="md-label">Import Data (Paste String)</label>
                         <textarea id="import-json-area" class="md-input" style="height: 80px; font-size: 10px; margin-bottom: 12px;" placeholder="Paste base64 JSON string here..."></textarea>
-                        <button class="md-btn" style="width: 100%; margin-bottom: 24px;" onclick="app.importData(document.getElementById('import-json-area').value)">Restore from String</button>
+                        <button class="md-btn md-btn-primary" style="width: 100%; margin-bottom: 24px;" onclick="app.importData(document.getElementById('import-json-area').value)">Restore from String</button>
 
-                        <label class="md-label">Raw Export String</label>
+                        <label class="md-label">Current Session String (Copy for backup)</label>
                         <textarea readonly class="md-input" style="height: 60px; font-size: 10px; background: var(--md-bg); color: var(--md-accent); cursor: text;">${currentBase64}</textarea>
                     </div>
                 </div>
@@ -502,11 +480,7 @@
             modal.className = 'md-modal-overlay';
             modal.innerHTML = `<div class="md-modal">${html}</div>`;
         },
-        closeModal: function() { document.getElementById('modal-container').style.display = 'none'; },
-
-        renderTables: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Tables Management (Planned)</div>`; },
-        renderPrograms: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Programs Management (Planned)</div>`; },
-        renderQueries: (grid) => { grid.innerHTML = `<div style="padding: 20px;">Queries Management (Planned)</div>`; }
+        closeModal: function() { document.getElementById('modal-container').style.display = 'none'; }
     };
 
     window.onload = () => app.init();
