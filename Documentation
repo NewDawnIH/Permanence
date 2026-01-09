@@ -3,765 +3,1797 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDock</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; color: #333; display: flex; height: 100vh; overflow: hidden;">
+    <title>MDoc - Documentation</title>
+    <style>
+        /* --- MATERIAL DESIGN 3 THEME & CSS VARIABLES --- */
+       :root {
+			/* Palette (Slate & Steel based) */
+			--md-sys-color-primary: #334155; /* Deep Slate Blue */
+			--md-sys-color-on-primary: #ffffff;
+			--md-sys-color-primary-container: #eaddff; 
+			--md-sys-color-on-primary-container: #f1f5f9;
+			
+			--md-sys-color-secondary: #475569; /* Cool Steel Gray */
+			--md-sys-color-secondary-container: #cbd5e1;
+			
+			--md-sys-color-background: #f8fafc; /* Very light slate gray */
+			--md-sys-color-on-background: #0f172a;
+			
+			--md-sys-color-surface: #ffffff; /* Card bg */
+			--md-sys-color-surface-variant: #e2e8f0; /* Sidebar/Input bg - subtle gray */
+			--md-sys-color-on-surface: #0f172a;
+			--md-sys-color-on-surface-variant: #334155;
+			
+			--md-sys-color-outline: #94a3b8;
+			--md-sys-color-outline-variant: #cbd5e1;
+			--md-sys-color-error: #991b1b; /* Deep Crimson */
 
-    <!-- SIDE NAVIGATION -->
-    <nav id="sidebar" style="width: 260px; background-color: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10;">
-        <div style="padding: 24px; border-bottom: 1px solid #f0f0f0;">
-            <h1 style="margin: 0; font-size: 22px; color: #1a73e8; letter-spacing: 0.5px; font-weight: 600;">MDock</h1>
-        </div>
-        <div style="flex-grow: 1; padding: 16px 0;">
-            <div id="nav-projects" onclick="showTab('projects')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
-                <span style="margin-right: 12px;">📁</span> Projects
-            </div>
-            <div id="nav-programs" onclick="showTab('programs')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
-                <span style="margin-right: 12px;">💻</span> Programs
-            </div>
-            <div id="nav-tables" onclick="showTab('tables')" style="padding: 12px 24px; cursor: pointer; color: #5f6368; font-weight: 500; display: flex; align-items: center; transition: background 0.2s;">
-                <span style="margin-right: 12px;">📊</span> Tables
-            </div>
+			/* Status Colors (More saturated/industrial tones) */
+			--status-ana: #2563eb; /* Cobalt Blue */
+			--status-dev: #b45309; /* Burnt Amber */
+			--status-apb: #c2410c; /* Deep Rust Orange */
+			--status-done: #15803d; /* Forest Green */
+
+			/* Elevation & Shape (Sharper, more defined shadows) */
+			--md-sys-elevation-1: 0px 2px 4px 0px rgba(15, 23, 42, 0.1);
+			--md-sys-elevation-2: 0px 8px 16px -4px rgba(15, 23, 42, 0.15);
+			--md-sys-shape-corner-medium: 12px; 
+			--md-sys-shape-corner-large: 16px;
+			
+			--font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+		}
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- LAYOUT --- */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background-color: var(--md-sys-color-surface-variant);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-right: 1px solid var(--md-sys-color-outline);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 1rem;
+            padding-left: 12px;
+        }
+
+        .nav-item {
+            padding: 0 16px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            border-radius: 28px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+            transition: background 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(29, 27, 31, 0.08);
+        }
+
+        .nav-item.active {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--md-sys-color-outline);
+            padding-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        /* --- COMPONENTS --- */
+        
+        /* Buttons */
+        .btn {
+            border: none;
+            padding: 0 24px;
+            height: 40px;
+            border-radius: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            transition: box-shadow 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+        }
+        .btn-primary:hover { box-shadow: var(--md-sys-elevation-1); }
+
+        .btn-tonal {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+
+        .btn-outlined {
+            background: transparent;
+            border: 1px solid var(--md-sys-color-outline);
+            color: var(--md-sys-color-primary);
+        }
+
+        .btn-small { height: 32px; padding: 0 16px; font-size: 0.85rem; }
+        .btn-danger { background-color: var(--md-sys-color-error); color: white; }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.75rem;
+            color: var(--md-sys-color-primary);
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        input[type="text"], textarea, select {
+            height: 56px;
+            border-radius: 4px 4px 0 0;
+            border: none;
+            border-bottom: 1px solid var(--md-sys-color-outline);
+            background-color: var(--md-sys-color-surface-variant);
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 1rem;
+            width: 100%;
+        }
+        
+        textarea { height: auto; min-height: 100px; padding-top: 16px; }
+        input:focus, textarea:focus { outline: none; border-bottom: 2px solid var(--md-sys-color-primary); }
+
+        /* Tables Page Design */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--md-sys-color-outline-variant);
+            background: var(--md-sys-color-surface);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface-variant);
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--md-sys-color-outline-variant);
+        }
+
+        .data-table td {
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(103, 80, 164, 0.04);
+        }
+
+        .table-inline-input {
+            width: 100% !important;
+            height: 36px !important;
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            font-size: 0.9rem !important;
+        }
+
+        .table-inline-input:focus {
+            background: var(--md-sys-color-surface-variant) !important;
+            border-color: var(--md-sys-color-primary) !important;
+            outline: none;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            background: var(--md-sys-color-surface-variant);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            height: 40px !important;
+            border-radius: 20px !important;
+            border: 1px solid var(--md-sys-color-outline) !important;
+            background: var(--md-sys-color-surface) !important;
+        }
+
+        /* Cards Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 1.5rem;
+            box-shadow: var(--md-sys-elevation-1);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: var(--md-sys-elevation-2);
+            border-color: var(--md-sys-color-outline);
+        }
+
+        /* Query Specific Card Styles */
+        .card.query-update { border: 2px solid var(--md-sys-color-error); }
+        .card.query-delete { background-color: var(--md-sys-color-error); color: #ffffff; }
+        .card.query-delete h3, .card.query-delete p { color: #ffffff !important; }
+
+        /* Project Status Styling */
+        .card.project-card { border-left-width: 6px; border-left-style: solid; }
+        .status-border-ANA { border-left-color: var(--status-ana) !important; }
+        .status-border-DEV { border-left-color: var(--status-dev) !important; }
+        .status-border-APB { border-left-color: var(--status-apb) !important; }
+        .status-border-DONE { border-left-color: var(--status-done) !important; }
+        .status-border-default { border-left-color: var(--md-sys-color-outline) !important; }
+
+        .status-separator {
+            grid-column: 1 / -1;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid var(--md-sys-color-outline-variant);
+            color: var(--md-sys-color-primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Reference Cards specific for Programs Tab */
+        .ref-card {
+            background-color: var(--md-sys-color-surface);
+            border: 1px solid var(--md-sys-color-outline-variant);
+            border-radius: var(--md-sys-shape-corner-medium);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .ref-card:hover {
+            border-color: var(--md-sys-color-primary);
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .ref-card .ref-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ref-card .ref-title {
+            font-weight: bold;
+            color: var(--md-sys-color-primary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .ref-card .ref-title:hover { text-decoration: underline; }
+
+        .ref-card .ref-desc {
+            font-size: 0.85rem;
+            color: var(--md-sys-color-on-surface-variant);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card.active-timer {
+            border: 2px solid var(--md-sys-color-primary);
+            background-color: var(--md-sys-color-primary-container);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: var(--md-sys-color-primary); }
+            50% { border-color: transparent; }
+            100% { border-color: var(--md-sys-color-primary); }
+        }
+
+        .card h3 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
+        .card p { margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 0.9rem; }
+
+        /* Detail View Styles */
+        .detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--md-sys-color-surface);
+            padding: 2rem;
+            border-radius: var(--md-sys-shape-corner-large);
+            box-shadow: var(--md-sys-elevation-1);
+            position: relative;
+        }
+
+        .section-header {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--md-sys-color-outline);
+            padding-bottom: 0.5rem;
+            color: var(--md-sys-color-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Modals */
+        dialog {
+            border: none;
+            border-radius: var(--md-sys-shape-corner-large);
+            box-shadow: var(--md-sys-elevation-2);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            background: var(--md-sys-color-surface);
+        }
+        
+        dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+
+        /* Chips / Status */
+        .chip {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+        }
+        .status-ANA { background-color: var(--status-ana); }
+        .status-DEV { background-color: var(--status-dev); }
+        .status-APB { background-color: var(--status-apb); }
+        .status-DONE { background-color: var(--status-done); }
+
+        /* Mailbox Specific Chips */
+        .chip-keyword {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            margin: 2px;
+            cursor: default;
+        }
+        .chip-removable {
+            cursor: pointer;
+            padding-right: 8px;
+        }
+        .chip-removable:hover {
+            background-color: #d0bcff;
+        }
+
+        /* Status Slider */
+        .status-slider-container {
+            width: 100%;
+            margin-top: 8px;
+            position: relative;
+        }
+        
+        .status-slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--md-sys-color-primary);
+            margin-bottom: 2px;
+            pointer-events: none;
+        }
+
+        input[type=range].status-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+            cursor: pointer;
+            height: 24px;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        /* Thumb */
+        input[type=range].status-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: var(--md-sys-color-primary);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+        
+        /* Track */
+        input[type=range].status-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--md-sys-color-outline-variant);
+            border-radius: 2px;
+        }
+
+        /* Specific Lists */
+        .dynamic-list-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: start;
+            background: var(--md-sys-color-surface-variant);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .smart-link {
+            color: var(--md-sys-color-primary);
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        /* Timer Block */
+        .timer-display {
+            font-size: 3.5rem;
+            font-family: monospace;
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--md-sys-color-primary);
+            font-weight: bold;
+        }
+
+        /* Todo Card Styling */
+        .todo-card {
+            background: var(--md-sys-color-surface-variant);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .todo-card:hover { border-color: var(--md-sys-color-outline-variant); }
+        .todo-card.done { opacity: 0.6; }
+        .todo-card input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+        /* Work Log Styling */
+        .work-log-entry {
+            border-left: 3px solid var(--md-sys-color-outline-variant);
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .work-log-meta {
+            font-size: 0.75rem;
+            color: var(--md-sys-color-secondary);
+            margin-bottom: 4px;
+        }
+        .work-log-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        /* Smart Reference Tags */
+        .smart-ref {
+            display: inline-block;
+            padding: 0 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin: 0 2px;
+            vertical-align: baseline;
+            cursor: default;
+        }
+        .smart-ref.found {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .smart-ref.found:hover {
+            border-color: var(--md-sys-color-primary);
+        }
+        .smart-ref.missing {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px dashed #b91c1c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="brand">MDoc</div>
+        <div class="nav-item active" onclick="router.navigate('programs')">📦 Programs</div>
+        <div class="nav-item" onclick="router.navigate('tables')">🛢️ Tables</div>
+        <div class="nav-item" onclick="router.navigate('queries')">🔍 Queries</div>
+        <div class="nav-item" onclick="router.navigate('projects')">🗂️ Projects</div>
+        <div class="nav-item" onclick="router.navigate('mailbox')">📬 Mailbox</div>
+        <div class="nav-item" onclick="router.navigate('logwork')">⌛ Log Work</div>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-outlined btn-small" onclick="app.saveToFile()">Save (Export JSON)</button>
+            <button class="btn btn-outlined btn-small" onclick="document.getElementById('fileInput').click()">Load (Import JSON)</button>
+            <input type="file" id="fileInput" style="display:none" onchange="app.loadFromFile(this)">
+            <small style="text-align: center; color: var(--md-sys-color-on-surface-variant)">Documentation System Beta</small>
         </div>
     </nav>
 
-    <!-- MAIN CONTENT AREA -->
-    <main id="main-content" style="flex-grow: 1; overflow-y: auto; position: relative;">
-        
-        <!-- PROJECTS TAB -->
-        <div id="tab-projects" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: block;">
-            <div id="global-todos-container" style="margin-bottom: 40px; display: none;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-                    <h4 style="margin: 0; font-size: 14px; color: #5f6368; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Pending To-Dos</h4>
-                    <span id="overview-timestamp" style="font-size: 11px; color: #9aa0a6;"></span>
-                </div>
-                <div id="global-todo-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
-                <h2 style="margin: 0; font-size: 28px; font-weight: 400;">Projects</h2>
-                <button onclick="openNewProjectModal()" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: background 0.2s;">
-                    + NEW PROJECT
-                </button>
-            </div>
-            <div id="project-list" style="display: flex; flex-direction: column; gap: 16px;">
-                <div id="empty-state" style="text-align: center; padding: 60px; color: #70757a; background: white; border-radius: 8px; border: 1px dashed #ccc;">
-                    No projects found. Create your first project to get started.
-                </div>
-            </div>
-        </div>
-
-        <!-- PROJECT DETAIL VIEW -->
-        <div id="tab-project-detail" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <button onclick="showTab('projects')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; display: flex; align-items: center; font-weight: 500;">
-                    ← Back to Projects
-                </button>
-                <h1 style="margin: 0; font-size: 18px; color: #5f6368; font-weight: 500;">Project Detail</h1>
-            </div>
-            <div style="background: white; border-radius: 8px; border: 1px solid #e0e0e0; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 1px solid #f1f3f4; padding-bottom: 24px;">
-                    <div style="flex: 1;">
-                        <h2 id="detail-name" style="margin: 0 0 12px 0; font-size: 32px; font-weight: 400;">Project Name</h2>
-                        <div style="display: flex; align-items: flex-start; margin-top: 8px;">
-                            <textarea id="detail-desc-input" oninput="saveDescriptionDirectly(this.value)" style="width: 100%; border: 1px solid #dadce0; border-radius: 4px; padding: 12px; font-family: inherit; font-size: 16px; color: #5f6368; line-height: 1.5; resize: vertical; min-height: 80px; box-sizing: border-box; background: #fff;" placeholder="Describe this project..."></textarea>
-                        </div>
-                    </div>
-                    <div style="text-align: right; margin-left: 24px;">
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: #70757a; margin-bottom: 8px;">PROJECT STATUS</label>
-                        <select id="detail-status-select" onchange="updateProjectStatus(this.value)" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #dadce0; background: #fff; font-weight: 600; font-size: 13px; cursor: pointer;">
-                            <option value="ANA">Analysis (ANA)</option>
-                            <option value="DEV">Development (DEV)</option>
-                            <option value="APB">Approval (APB)</option>
-                            <option value="DONE">Done (DONE)</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 40px;">
-                    <div style="display: flex; flex-direction: column; gap: 24px;">
-                        <h3 style="font-size: 18px; margin: 0; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px;">Resources</h3>
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: #70757a; margin-bottom: 8px;">PROGRAMS</label>
-                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                <input type="text" id="add-prog-input" placeholder="Program name..." style="flex: 1; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
-                                <button onclick="addResource('programs')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 12px; border-radius: 4px; cursor: pointer;">Add</button>
-                            </div>
-                            <div id="detail-programs-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: #70757a; margin-bottom: 8px;">TABLES</label>
-                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                <input type="text" id="add-table-input" placeholder="Table name..." style="flex: 1; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
-                                <button onclick="addResource('tables')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 12px; border-radius: 4px; cursor: pointer;">Add</button>
-                            </div>
-                            <div id="detail-tables-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-                        </div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 24px;">
-                        <h3 style="font-size: 18px; margin: 0; border-bottom: 2px solid #f1f3f4; padding-bottom: 8px;">To-Dos</h3>
-                        <div>
-                            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                                <input type="text" id="add-todo-input" placeholder="What needs to be done?" style="flex: 1; padding: 8px; border: 1px solid #dadce0; border-radius: 4px;">
-                                <button onclick="addTodo()" style="background: #1a73e8; color: white; border: none; padding: 0 16px; border-radius: 4px; cursor: pointer;">Add</button>
-                            </div>
-                            <div id="detail-todo-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div style="border-top: 1px solid #f1f3f4; padding-top: 32px;">
-                    <h3 style="font-size: 18px; margin-bottom: 20px;">Research Log</h3>
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
-                        <textarea id="add-log-input" rows="3" placeholder="Log new research findings..." style="width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 14px;"></textarea>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-                            <button onclick="addLog()" style="background: #1a73e8; color: white; border: none; padding: 8px 24px; border-radius: 4px; cursor: pointer; font-weight: 500;">Post Log Entry</button>
-                        </div>
-                    </div>
-                    <div id="detail-log-list" style="display: flex; flex-direction: column; gap: 20px;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PROGRAMS TAB -->
-        <div id="tab-programs" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
-                <h2 style="margin: 0; font-size: 28px; font-weight: 400;">Programs</h2>
-                <button onclick="openNewProgramModal()" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: background 0.2s;">
-                    + NEW PROGRAM
-                </button>
-            </div>
-            <div id="program-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                <div id="program-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px; color: #70757a; background: white; border-radius: 8px; border: 1px dashed #ccc;">
-                    No programs documented yet. Add your first program to begin.
-                </div>
-            </div>
-        </div>
-
-        <!-- PROGRAM DETAIL VIEW -->
-        <div id="tab-program-detail" style="padding: 40px; max-width: 1100px; margin: 0 auto; display: none;">
-            <div style="margin-bottom: 32px;">
-                <button onclick="showTab('programs')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; margin-bottom: 16px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 18px;">←</span> Back to Programs
-                </button>
-                <div style="display: flex; align-items: flex-start; gap: 24px; background: white; padding: 32px; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="background: #1a73e8; color: white; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; flex-shrink: 0;">PR</div>
-                    <div style="flex: 1;">
-                        <h2 id="program-detail-name" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 500; color: #202124;">Program Name</h2>
-                        <input id="program-detail-ext-input" oninput="saveProgramExtName(this.value)" placeholder="Extended description..." style="width: 100%; border: none; font-size: 16px; color: #5f6368; padding: 4px 0; background: transparent; outline: none; border-bottom: 1px solid transparent;" onfocus="this.style.borderBottom='1px solid #dadce0'">
-                    </div>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-                <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 24px;">
-                    <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Program Flow</h3>
-                    <textarea id="program-flow-input" oninput="saveProgramFlow(this.value)" placeholder="Document the program logic and process flow here..." style="width: 100%; min-height: 400px; border: 1px solid #dadce0; border-radius: 4px; padding: 16px; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.6; resize: vertical; box-sizing: border-box;"></textarea>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 24px;">
-                    <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 20px;">
-                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Read Resources</h3>
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <input type="text" id="add-read-table-input" placeholder="Table name..." style="flex: 1; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 13px;">
-                            <button onclick="addProgramResource('reads')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add</button>
-                        </div>
-                        <div id="program-reads-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
-                    </div>
-                    <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 20px;">
-                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase;">Write Resources</h3>
-                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <input type="text" id="add-write-table-input" placeholder="Table name..." style="flex: 1; padding: 6px 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 13px;">
-                            <button onclick="addProgramResource('writes')" style="background: #f1f3f4; border: 1px solid #dadce0; padding: 0 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add</button>
-                        </div>
-                        <div id="program-writes-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TABLES TAB -->
-        <div id="tab-tables" style="padding: 40px; max-width: 1000px; margin: 0 auto; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
-                <h2 style="margin: 0; font-size: 28px; font-weight: 400;">Data Tables</h2>
-                <button onclick="openNewTableModal()" style="background-color: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: background 0.2s;">
-                    + NEW TABLE
-                </button>
-            </div>
-            <div id="table-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
-                <div id="table-empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px; color: #70757a; background: white; border-radius: 8px; border: 1px dashed #ccc;">
-                    No tables documented yet. Add your first data table to begin.
-                </div>
-            </div>
-        </div>
-
-        <!-- REDESIGNED TABLE DETAIL VIEW -->
-        <div id="tab-table-detail" style="padding: 40px; max-width: 1100px; margin: 0 auto; display: none;">
-            <div style="margin-bottom: 32px;">
-                <button onclick="showTab('tables')" style="background: none; border: none; color: #1a73e8; cursor: pointer; padding: 0; font-size: 14px; margin-bottom: 16px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-                    <span style="font-size: 18px;">←</span> Back to Tables
-                </button>
-                <div style="display: flex; align-items: flex-start; gap: 24px; background: white; padding: 32px; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="background: #1a73e8; color: white; width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; flex-shrink: 0;">TB</div>
-                    <div style="flex: 1;">
-                        <h2 id="table-detail-name" style="margin: 0 0 8px 0; font-size: 32px; font-weight: 400; color: #202124;">Table Name</h2>
-                        <textarea id="table-detail-desc-input" oninput="saveTableDescription(this.value)" placeholder="Enter a high-level description for this table..." style="width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 8px; font-family: inherit; font-size: 16px; color: #5f6368; resize: vertical; min-height: 40px; background: transparent; transition: all 0.2s;" onfocus="this.style.border='1px solid #dadce0'; this.style.background='#fff'" onblur="this.style.border='1px solid transparent'; this.style.background='transparent'"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div style="background: white; border-radius: 8px; border: 1px solid #dadce0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden;">
-                <div style="padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #dadce0; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #5f6368; text-transform: uppercase; letter-spacing: 0.5px;">Field Dictionary</h3>
-                    </div>
-                    <div style="display: flex; gap: 8px; background: white; border: 1px solid #dadce0; border-radius: 20px; padding: 4px 8px; align-items: center; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
-                        <span style="color: #1a73e8; font-weight: bold; font-size: 18px; margin-left: 8px;">+</span>
-                        <input type="text" id="field-quick-add" onkeydown="if(event.key === 'Enter') handleFieldAddFromToolbar()" placeholder="Quick add field name..." style="border: none; outline: none; padding: 6px; font-size: 13px; width: 240px; background: transparent;">
-                        <button onclick="handleFieldAddFromToolbar()" style="background: #1a73e8; color: white; border: none; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Add Field</button>
-                    </div>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-                        <thead>
-                            <tr style="text-align: left; background: #fafafa; border-bottom: 1px solid #dadce0;">
-                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; width: 25%; font-weight: 600;">FIELD NAME</th>
-                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; font-weight: 600;">DEFINITION</th>
-                                <th style="padding: 12px 24px; font-size: 12px; color: #70757a; width: 20%; font-weight: 600;">EXAMPLE</th>
-                                <th style="padding: 12px 24px; width: 60px; text-align: center;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="field-list-body"></tbody>
-                    </table>
-                </div>
-                <div id="field-empty-message" style="display: none; padding: 64px 24px; text-align: center; color: #9aa0a6; background: white;">
-                    <div style="font-size: 40px; margin-bottom: 16px;">📇</div>
-                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 4px;">No fields documented yet</div>
-                    <div style="font-size: 13px;">Start your dictionary by using the "Quick Add" bar above.</div>
-                </div>
-            </div>
-        </div>
+    <!-- MAIN AREA -->
+    <main class="main-content" id="mainContent">
+        <!-- Dynamic Content Injected Here -->
     </main>
+</div>
 
-    <!-- MODAL OVERLAYS -->
-    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
-        <!-- Project Modal -->
-        <div id="project-modal" style="display:none; background: white; width: 90%; max-width: 700px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow-y: auto; flex-direction: column;">
-            <div style="padding: 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 20px;">New Project</h3>
-                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+<!-- CREATE MODAL TEMPLATE -->
+<dialog id="createModal">
+    <h2 id="modalTitle">Create New</h2>
+    <form id="modalForm" method="dialog">
+        <div id="modalInputs"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn btn-outlined" onclick="document.getElementById('createModal').close()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- TABLE LINK MODAL -->
+<dialog id="linkModal">
+    <h2>Add Table Link</h2>
+    <form id="linkForm" method="dialog">
+        <input type="hidden" name="fromTableId" id="linkFromTableId">
+        
+        <div class="input-group">
+            <label>Table From</label>
+            <input type="text" id="linkFromTableName" disabled style="opacity: 0.7;">
+        </div>
+        
+        <div class="input-group">
+            <label>Table To (Select or Type New)</label>
+            <input type="text" name="toTable" id="linkToTableInput" list="tableSuggestions" required autocomplete="off" placeholder="Type table name...">
+            <datalist id="tableSuggestions"></datalist>
+        </div>
+        
+        <div class="input-group">
+            <label>Join Statement</label>
+            <textarea name="joinStatement" placeholder="e.g. T1.customer_id = T2.id" style="min-height: 80px;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--md-sys-color-surface-variant); border-radius: 8px;">
+            <input type="checkbox" name="bidirectional" id="linkBidirectional" style="width: 20px; height: 20px; cursor: pointer;">
+            <div>
+                <label for="linkBidirectional" style="margin:0; font-size: 1rem; cursor:pointer; color: var(--md-sys-color-on-surface);">Bi-directional Link</label>
+                <div style="font-size: 0.75rem; color: var(--md-sys-color-secondary);">If checked, this link will also appear on the target table.</div>
             </div>
-            <div style="padding: 24px;">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">PROJECT NAME</label>
-                    <input type="text" id="proj-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-outlined" onclick="document.getElementById('linkModal').close()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Link</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+/**
+ * --- UTILS ---
+ */
+function formatDuration(ms) {
+    const totalSeconds = Math.floor((ms || 0) / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    const pad = (num) => num.toString().padStart(2, '0');
+    
+    if (days > 0) {
+        return `${pad(days)} - ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    } else {
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+}
+
+/**
+ * --- DATA STORE & LOGIC ---
+ */
+class DataStore {
+    constructor() {
+        this.data = {
+            programs: [],
+            tables: [],
+            queries: [],
+            projects: [],
+            mailbox: []
+        };
+        this.loadFromLocalStorage();
+    }
+
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    // CRUD
+    add(type, item) {
+        item.id = this.generateId();
+        item.createdAt = new Date().toISOString();
+        if(type === 'projects') item.timeSpent = 0; // Initialize time
+        this.data[type].push(item);
+        this.save();
+        return item;
+    }
+
+    update(type, id, updates) {
+        const idx = this.data[type].findIndex(x => x.id === id);
+        if (idx !== -1) {
+            this.data[type][idx] = { ...this.data[type][idx], ...updates };
+            this.save();
+        }
+    }
+
+    delete(type, id) {
+        const idx = this.data[type].findIndex(x => x.id === id);
+        if (idx !== -1) {
+            this.data[type].splice(idx, 1);
+            this.save();
+        }
+    }
+
+    get(type, id) {
+        return this.data[type].find(x => x.id === id);
+    }
+
+    getAll(type) {
+        return this.data[type] || [];
+    }
+
+    findByName(type, name) {
+        if (!name) return null;
+        return this.data[type].find(x => {
+            const itemName = x.name || x.shortName || '';
+            return itemName.toLowerCase() === name.toLowerCase();
+        });
+    }
+
+    // Persistence
+    save() {
+        localStorage.setItem('devManagerData', JSON.stringify(this.data));
+    }
+
+    loadFromLocalStorage() {
+        const stored = localStorage.getItem('devManagerData');
+        if (stored) {
+            this.data = JSON.parse(stored);
+        }
+        if(!this.data.mailbox) this.data.mailbox = []; // Ensure migration
+    }
+
+    importData(jsonString) {
+        try {
+            this.data = JSON.parse(jsonString);
+            if(!this.data.mailbox) this.data.mailbox = [];
+            this.save();
+            alert('Data loaded successfully!');
+            location.reload();
+        } catch (e) {
+            alert('Invalid JSON file.');
+        }
+    }
+}
+
+const store = new DataStore();
+
+/**
+ * --- ROUTER & VIEW MANAGER ---
+ */
+class Router {
+    constructor() {
+        this.currentView = 'programs';
+        this.mainEl = document.getElementById('mainContent');
+        this.navItems = document.querySelectorAll('.nav-item');
+        this.searchState = {}; // Stores search queries per view
+    }
+
+    navigate(view, id = null) {
+        this.currentView = view;
+        
+        // Update Sidebar UI
+        this.navItems.forEach(el => el.classList.remove('active'));
+        const activeNav = Array.from(this.navItems).find(el => el.innerText.toLowerCase().replace(' ', '').includes(view));
+        if(activeNav) activeNav.classList.add('active');
+
+        // Render
+        if (id) {
+            this.renderDetail(view, id);
+        } else {
+            this.renderList(view);
+        }
+    }
+
+    renderList(type) {
+        if (type === 'logwork') {
+            renderLogWork();
+            return;
+        }
+
+        const items = store.getAll(type);
+        const titleMap = { programs: 'Programs', tables: 'Tables', queries: 'Queries', projects: 'Projects', mailbox: 'Mailbox' };
+        
+        // --- SEARCH FEATURE ---
+        const currentSearch = this.searchState[type] || '';
+        const filteredItems = items.filter(item => {
+            const raw = JSON.stringify(item).toLowerCase();
+            return raw.includes(currentSearch.toLowerCase());
+        });
+
+        let html = `
+            <div class="header-row">
+                <h1 class="page-title">${titleMap[type]}</h1>
+                <button class="btn btn-primary" onclick="ui.openCreateModal('${type}')">
+                    + New ${titleMap[type].replace('Mailbox', 'Mail/Issue').slice(0, type === 'mailbox' ? 10 : -1)}
+                </button>
+            </div>
+            
+            <!-- Global Search Bar for this Page -->
+            <div class="filter-bar" style="margin-bottom: 1.5rem;">
+                <span style="font-size: 1.2rem;">🔎</span>
+                <input type="text" class="search-input" placeholder="Search ${titleMap[type]}..." 
+                    value="${currentSearch}" 
+                    oninput="router.searchState['${type}'] = this.value; router.renderList('${type}')" 
+                    autofocus>
+            </div>
+        `;
+
+        if (type === 'mailbox') {
+            // Special Layout for Mailbox
+            const openItems = filteredItems.filter(i => i.status !== 'Solved');
+            const solvedItems = filteredItems.filter(i => i.status === 'Solved');
+
+            html += `<h3 style="color:var(--md-sys-color-primary)">Open Issues</h3><div class="card-grid">`;
+            
+            if(openItems.length === 0) html += `<p style="grid-column: 1/-1; opacity:0.6">No open mail items.</p>`;
+
+            openItems.forEach(item => {
+                const keywordsHtml = (item.keywords || []).map(k => `<span class="chip chip-keyword">${k}</span>`).join('');
+                html += `
+                    <div class="card" onclick="router.navigate('mailbox', '${item.id}')" style="border-left: 6px solid var(--md-sys-color-primary)">
+                        <h3 style="margin:0">${item.subject}</h3>
+                        <div style="font-size:0.8rem; color:var(--md-sys-color-secondary); margin-bottom:8px">From: ${item.sender}</div>
+                        <div>${keywordsHtml}</div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+
+            // Solved Table
+            if(solvedItems.length > 0) {
+                html += `
+                    <h3 style="color:var(--status-done); margin-top: 3rem; border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 1rem;">Solved Items</h3>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Subject</th><th>Sender</th><th>Date</th><th></th></tr></thead>
+                            <tbody>
+                                ${solvedItems.map(item => `
+                                    <tr onclick="router.navigate('mailbox', '${item.id}')" style="cursor:pointer">
+                                        <td>${item.subject}</td>
+                                        <td>${item.sender}</td>
+                                        <td>${new Date(item.createdAt).toLocaleDateString()}</td>
+                                        <td><span class="chip" style="background:var(--status-done); color:white; font-size:0.7em">SOLVED</span></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+        } else if (type === 'projects') {
+            html += '<div class="card-grid">';
+            // Defined order
+            const statusOrder = ['ANA', 'DEV', 'APB', 'DONE'];
+            
+            // Render groups
+            statusOrder.forEach(status => {
+                const groupItems = filteredItems.filter(i => (i.status || 'ANA') === status);
+                if (groupItems.length > 0) {
+                    html += `<div class="status-separator">
+                                <span class="chip status-${status}" style="margin-right: 10px;">${status}</span>
+                                <span>Projects</span>
+                             </div>`;
+                    
+                    groupItems.forEach(item => {
+                        html += this.buildCardHtml(type, item, status);
+                    });
+                }
+            });
+
+            // Catch any weird status
+            const others = filteredItems.filter(i => !statusOrder.includes(i.status || 'ANA'));
+            if (others.length > 0) {
+                html += `<div class="status-separator">Uncategorized</div>`;
+                others.forEach(item => html += this.buildCardHtml(type, item, 'default'));
+            }
+            html += '</div>';
+
+        } else {
+            // Standard Grid for other types
+            html += '<div class="card-grid">';
+            if (filteredItems.length === 0) {
+                html += `<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No items found.</p>`;
+            }
+            filteredItems.forEach(item => {
+                html += this.buildCardHtml(type, item);
+            });
+            html += '</div>';
+        }
+
+        this.mainEl.innerHTML = html;
+        
+        // Keep focus on search input if typing
+        const input = document.querySelector('.search-input');
+        if (input && currentSearch) {
+            const len = currentSearch.length;
+            input.setSelectionRange(len, len);
+            input.focus();
+        }
+    }
+
+    buildCardHtml(type, item, status = null) {
+        let extra = '';
+        let cardClasses = 'card';
+        
+        // Status border logic for projects
+        if (type === 'projects') {
+            cardClasses += ' project-card';
+            cardClasses += ` status-border-${status || item.status || 'default'}`;
+        }
+        
+        // Query Special Styling
+        if (type === 'queries') {
+            if (item.updateIndicator === 'U') cardClasses += ' query-update';
+            if (item.updateIndicator === 'D') cardClasses += ' query-delete';
+        }
+
+        if (type === 'projects') {
+            const formattedTime = formatDuration(item.timeSpent);
+            extra = `
+                <div style="margin-top: 15px;">
+                     ${renderStatusSlider(item.id, item.status, true)}
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">DESCRIPTION</label>
-                    <textarea id="proj-desc-input" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
+                <div style="margin-top: 8px; text-align: right;">
+                    <span style="font-size: 0.75rem; color: var(--md-sys-color-primary); font-weight: bold;">${formattedTime} logged</span>
                 </div>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">STATUS</label>
-                    <select id="proj-status-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; background: white;">
-                        <option value="ANA">ANA</option>
-                        <option value="DEV">DEV</option>
-                        <option value="APB">APB</option>
-                        <option value="DONE">Done (DONE)</option>
+            `;
+        }
+        return `
+            <div class="${cardClasses}" onclick="router.navigate('${type}', '${item.id}')">
+                <h3 style="margin:0">${item.name || item.shortName}</h3>
+                <p style="margin-top:4px">${item.description || item.shortDescription || 'No description'}</p>
+                ${extra}
+            </div>
+        `;
+    }
+
+    renderDetail(type, id) {
+        const item = store.get(type, id);
+        if (!item) return this.renderList(type);
+
+        let content = '';
+
+        // Back button
+        content += `
+            <button class="btn btn-outlined btn-small" onclick="router.navigate('${type}')" style="margin-bottom: 1rem;">← Back to List</button>
+            <div class="detail-container">
+                <button class="btn btn-danger btn-small" style="position: absolute; top: 2rem; right: 2rem;" onclick="deleteObject('${type}', '${id}')">Delete</button>
+        `;
+
+        // Render specific editor based on type
+        if (type === 'programs') content += renderProgramDetail(item);
+        if (type === 'tables') content += renderTableDetail(item);
+        if (type === 'queries') content += renderQueryDetail(item);
+        if (type === 'projects') content += renderProjectDetail(item);
+        if (type === 'mailbox') content += renderMailboxDetail(item);
+
+        content += `</div>`;
+        this.mainEl.innerHTML = content;
+    }
+}
+
+/**
+ * --- RENDERERS ---
+ */
+
+// 1. PROGRAMS
+function renderProgramDetail(item) {
+    return `
+        <h1 style="margin-right: 80px;">${item.longName} (${item.shortName})</h1>
+        <p>${item.shortDescription}</p>
+        
+        <div class="section-header">Program Flow</div>
+        <textarea onchange="updateField('programs', '${item.id}', 'flow', this.value)">${item.flow || ''}</textarea>
+
+        <div class="section-header">
+            Related Tables
+            <button class="btn btn-tonal btn-small" onclick="addListItem('programs', '${item.id}', 'linkedTables')">+ Add Table Link</button>
+        </div>
+    
+        <div class="card-grid" id="prog-tables-list" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+            ${(item.linkedTables || []).map((t, idx) => renderReferenceCard('programs', item.id, 'linkedTables', idx, t, 'tables')).join('')}
+        </div>
+
+        <div class="section-header">
+            Related Programs
+            <button class="btn btn-tonal btn-small" onclick="addListItem('programs', '${item.id}', 'linkedPrograms')">+ Add Program Link</button>
+        </div>
+        <div class="card-grid" id="prog-progs-list" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+             ${(item.linkedPrograms || []).map((p, idx) => renderReferenceCard('programs', item.id, 'linkedPrograms', idx, p, 'programs')).join('')}
+        </div>
+    `;
+}
+
+function renderReferenceCard(type, parentId, fieldName, index, value, targetType) {
+    const targetObj = store.findByName(targetType, value);
+    
+    let infoHtml = `
+        <div class="ref-desc" style="font-style: italic; opacity: 0.6;">Object not found in system</div>
+    `;
+    
+    if (targetObj) {
+        const desc = targetObj.description || targetObj.shortDescription || 'No description available';
+        infoHtml = `
+            <div class="ref-desc" title="${desc}">${desc}</div>
+            <div style="margin-top: 4px;">
+                <button class="btn btn-tonal btn-small" style="height: 24px; padding: 0 8px; font-size: 0.7rem;" onclick="router.navigate('${targetType}', '${targetObj.id}')">➜ View ${targetType.slice(0, -1)}</button>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="ref-card">
+            <div class="ref-header">
+                <input class="table-inline-input" type="text" 
+                    style="font-weight: bold; color: var(--md-sys-color-primary); border-bottom: 1px dashed var(--md-sys-color-outline-variant) !important;" 
+                    value="${value}" 
+                    placeholder="Enter name..."
+                    onchange="updateSubItemValue('${type}', '${parentId}', '${fieldName}', ${index}, this.value)">
+                <button class="btn btn-danger btn-small" style="height: 24px; width: 24px; padding: 0;" onclick="removeSubItem('${type}', '${parentId}', '${fieldName}', ${index})">✕</button>
+            </div>
+            ${infoHtml}
+        </div>
+    `;
+}
+
+// 2. TABLES
+let tableFilterQuery = '';
+
+function renderTableDetail(item) {
+    const fields = item.fields || [];
+    const filteredFields = fields.filter(f => 
+        f.name.toLowerCase().includes(tableFilterQuery.toLowerCase()) || 
+        f.desc.toLowerCase().includes(tableFilterQuery.toLowerCase())
+    );
+
+    // --- MIGRATION: Single Link -> Multiple Links ---
+    if (item.linkedTable && (!item.links || item.links.length === 0)) {
+        if (!item.links) item.links = [];
+        item.links.push({
+            id: Date.now().toString(),
+            toTable: item.linkedTable,
+            join: item.linkDesc || '',
+            bidirectional: false
+        });
+        item.linkedTable = null; // Clear old
+        item.linkDesc = null;
+        store.save(); // Persist migration
+    }
+
+    const outgoingLinks = item.links || [];
+
+    // --- DYNAMIC SEARCH: Incoming Bi-Directional Links ---
+    const incomingLinks = store.getAll('tables').flatMap(t => {
+        if (!t.links) return [];
+        return t.links
+            .filter(l => l.toTable.toLowerCase() === item.name.toLowerCase() && l.bidirectional)
+            .map(l => ({
+                fromTable: t.name,
+                join: l.join,
+                isIncoming: true,
+                originalId: t.id
+            }));
+    });
+
+    return `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-right: 80px;">
+            <h1>Table: ${item.name}</h1>
+            <div style="text-align:right">
+                <span class="chip" style="background:#6750a4">${fields.length} Fields</span>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label>Description</label>
+            <input type="text" value="${item.description}" placeholder="General table description..." onchange="updateField('tables', '${item.id}', 'description', this.value)">
+        </div>
+
+        <div class="section-header">
+            Fields Management
+            <button class="btn btn-primary btn-small" onclick="addSubItem('tables', '${item.id}', 'fields', {name:'', desc:'', ex:'', comm:''})">+ New Field</button>
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" class="search-input" placeholder="Search fields by name or description..." value="${tableFilterQuery}" 
+                oninput="tableFilterQuery = this.value; refreshTableFields('${item.id}')">
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Name</th>
+                        <th style="width: 35%">Description</th>
+                        <th style="width: 15%">Example</th>
+                        <th style="width: 20%">Comment</th>
+                        <th style="width: 5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="table-fields-body">
+                    ${renderFieldRows(item.id, filteredFields, fields)}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-header">
+            Table Relationships (Advanced)
+            <button class="btn btn-tonal btn-small" onclick="ui.openLinkModal('${item.id}', '${item.name}')">+ Add Link</button>
+        </div>
+        
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            ${outgoingLinks.map((link, idx) => `
+                <div class="ref-card" style="border-left: 4px solid var(--md-sys-color-primary);">
+                    <div class="ref-header">
+                        <span class="ref-title" onclick="const t = store.findByName('tables', '${link.toTable}'); if(t) router.navigate('tables', t.id);">➜ ${link.toTable}</span>
+                        <button class="btn btn-danger btn-small" style="height:24px;width:24px;padding:0" onclick="removeLink('${item.id}', ${idx})">✕</button>
+                    </div>
+                    <div class="ref-desc" style="white-space:normal; font-family:monospace; color: var(--md-sys-color-secondary); background: rgba(0,0,0,0.05); padding: 4px; border-radius: 4px; margin-top:5px;">
+                        ${link.join || 'No join statement'}
+                    </div>
+                    ${link.bidirectional ? '<span class="chip" style="background:var(--md-sys-color-secondary); font-size: 0.65rem; align-self:start; margin-top:5px;">Bi-directional</span>' : ''}
+                </div>
+            `).join('')}
+
+            ${incomingLinks.map(link => `
+                 <div class="ref-card" style="border-left: 4px solid var(--status-done); background-color: #f0fdf4;">
+                    <div class="ref-header">
+                        <span class="ref-title" onclick="router.navigate('tables', '${link.originalId}')">⬅️ From: ${link.fromTable}</span>
+                        <span class="chip" style="background:var(--status-done); font-size: 0.65rem;">Incoming</span>
+                    </div>
+                    <div class="ref-desc" style="white-space:normal; font-family:monospace; color: var(--md-sys-color-secondary); background: rgba(0,0,0,0.05); padding: 4px; border-radius: 4px; margin-top:5px;">
+                        ${link.join || 'No join statement'}
+                    </div>
+                </div>
+            `).join('')}
+            
+            ${outgoingLinks.length === 0 && incomingLinks.length === 0 ? '<p style="opacity:0.6; font-style:italic;">No links defined.</p>' : ''}
+        </div>
+    `;
+}
+
+function renderFieldRows(id, filtered, allFields) {
+    if (filtered.length === 0) return '<tr><td colspan="5" style="text-align:center; padding: 20px; opacity: 0.5;">No fields match your search.</td></tr>';
+    
+    return filtered.map(f => {
+        const originalIdx = allFields.indexOf(f);
+        return `
+            <tr>
+                <td><input class="table-inline-input" type="text" value="${f.name}" placeholder="field_name" onchange="updateSubField('tables', '${id}', 'fields', ${originalIdx}, 'name', this.value)"></td>
+                <td><input class="table-inline-input" type="text" value="${f.desc}" placeholder="Describe..." onchange="updateSubField('tables', '${id}', 'fields', ${originalIdx}, 'desc', this.value)"></td>
+                <td><input class="table-inline-input" type="text" value="${f.ex}" placeholder="e.g. 123" onchange="updateSubField('tables', '${id}', 'fields', ${originalIdx}, 'ex', this.value)"></td>
+                <td><input class="table-inline-input" type="text" value="${f.comm}" placeholder="..." onchange="updateSubField('tables', '${id}', 'fields', ${originalIdx}, 'comm', this.value)"></td>
+                <td>
+                    <button class="btn btn-danger btn-small" style="padding: 0 8px; height: 28px;" onclick="removeSubItem('tables', '${id}', 'fields', ${originalIdx})">✕</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function refreshTableFields(id) {
+    const item = store.get('tables', id);
+    const body = document.getElementById('table-fields-body');
+    const fields = item.fields || [];
+    const filteredFields = fields.filter(f => 
+        f.name.toLowerCase().includes(tableFilterQuery.toLowerCase()) || 
+        f.desc.toLowerCase().includes(tableFilterQuery.toLowerCase())
+    );
+    body.innerHTML = renderFieldRows(id, filteredFields, fields);
+}
+
+function removeLink(tableId, index) {
+    const item = store.get('tables', tableId);
+    item.links.splice(index, 1);
+    store.update('tables', tableId, { links: item.links });
+    router.renderDetail('tables', tableId);
+}
+
+// 3. QUERIES
+function renderQueryDetail(item) {
+    const regex = /:([a-zA-Z0-9_]+)/g;
+    const matches = [...(item.query || '').matchAll(regex)].map(m => m[1]);
+    const uniqueParams = [...new Set(matches)];
+
+    if (!item.paramDescs) item.paramDescs = {};
+
+    return `
+        <h1 style="margin-right: 80px;">Query: ${item.name}</h1>
+        <div class="input-group">
+            <label>Update Indicator</label>
+            <select onchange="updateField('queries', '${item.id}', 'updateIndicator', this.value)">
+                <option value="R" ${item.updateIndicator === 'R' ? 'selected':''}>Read</option>
+                <option value="C" ${item.updateIndicator === 'C' ? 'selected':''}>Create</option>
+                <option value="U" ${item.updateIndicator === 'U' ? 'selected':''}>Update</option>
+                <option value="D" ${item.updateIndicator === 'D' ? 'selected':''}>Delete</option>
+            </select>
+        </div>
+        
+        <div class="section-header">SQL / Query</div>
+        <textarea style="font-family: monospace; background: #222; color: #bada55;" 
+            onchange="updateField('queries', '${item.id}', 'query', this.value); router.renderDetail('queries', '${item.id}')">${item.query || ''}</textarea>
+
+        <div class="section-header">Detected Parameters</div>
+        ${uniqueParams.length > 0 ? uniqueParams.map(p => `
+            <div class="input-group">
+                <label>:${p}</label>
+                <input type="text" placeholder="Description for ${p}" value="${item.paramDescs[p] || ''}" 
+                    onchange="let pd = store.get('queries', '${item.id}').paramDescs || {}; pd['${p}'] = this.value; updateField('queries', '${item.id}', 'paramDescs', pd)">
+            </div>
+        `).join('') : '<p>No parameters (use :paramName) detected.</p>'}
+    `;
+}
+
+// 4. PROJECTS
+function renderProjectDetail(item) {
+    const formattedTime = formatDuration(item.timeSpent);
+    let logs = item.workLog || [];
+    if (logs.length === 0 && item.notes) {
+        logs.push({ id: 'legacy', timestamp: item.createdAt || new Date().toISOString(), content: item.notes, isLegacy: true });
+    }
+    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    return `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-right: 80px;">
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div style="width: 6px; height: 40px; border-radius:3px; background-color: var(--status-${(item.status || 'ANA').toLowerCase()});"></div>
+                <h1>${item.name}</h1>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:0.8rem; margin-top:5px; color:var(--md-sys-color-primary)">${formattedTime} total</div>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <label>Status (Click & Drag to Change)</label>
+            ${renderStatusSlider(item.id, item.status, false)}
+        </div>
+
+        <div class="section-header">
+            Work Logs
+            <span style="font-size: 0.7rem; font-weight: normal; color: #666;">Use /table{Name} or /program{Name} to reference</span>
+        </div>
+        
+        <div style="background: var(--md-sys-color-surface-variant); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <textarea id="new-log-input" placeholder="What are you working on? (Supports /table{...} and /program{...})" style="min-height: 80px; margin-bottom: 8px;"></textarea>
+            <div style="text-align: right;">
+                <button class="btn btn-primary btn-small" onclick="addWorkLog('${item.id}')">Log Entry</button>
+            </div>
+        </div>
+
+        <div id="project-work-logs">
+            ${logs.map(log => `
+                <div class="work-log-entry">
+                    <div class="work-log-meta">${new Date(log.timestamp).toLocaleString()} ${log.isLegacy ? '(Legacy Note)' : ''}</div>
+                    <div class="work-log-content">${formatWorkLogContent(log.content)}</div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="section-header">To-Do's</div>
+        <div id="todo-list">
+            ${(item.todos || []).map((t, idx) => `
+                <div class="todo-card ${t.done ? 'done' : ''}">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="let todos = store.get('projects', '${item.id}').todos; todos[${idx}].done = this.checked; updateField('projects', '${item.id}', 'todos', todos)">
+                    <input type="text" class="table-inline-input" value="${t.text}" style="flex:1; border-bottom: none !important;" onchange="let todos = store.get('projects', '${item.id}').todos; todos[${idx}].text = this.value; updateField('projects', '${item.id}', 'todos', todos)">
+                    <button class="btn btn-danger btn-small" style="height:28px; width:28px; padding:0" onclick="removeSubItem('projects', '${item.id}', 'todos', ${idx})">✕</button>
+                </div>
+            `).join('')}
+        </div>
+        <button class="btn btn-tonal btn-small" style="margin-top:8px" onclick="addSubItem('projects', '${item.id}', 'todos', {text:'', done:false})">+ Add Task Card</button>
+
+        <div class="section-header">Linked Tables</div>
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+            ${(item.linkedTables || []).map((t, idx) => renderReferenceCard('projects', item.id, 'linkedTables', idx, t, 'tables')).join('')}
+        </div>
+        <button class="btn btn-tonal btn-small" style="margin-top:12px" onclick="addListItem('projects', '${item.id}', 'linkedTables')">+ Link Table</button>
+
+        <div class="section-header">Linked Programs</div>
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+             ${(item.linkedPrograms || []).map((p, idx) => renderReferenceCard('projects', item.id, 'linkedPrograms', idx, p, 'programs')).join('')}
+        </div>
+        <button class="btn btn-tonal btn-small" style="margin-top:12px" onclick="addListItem('projects', '${item.id}', 'linkedPrograms')">+ Link Program</button>
+    `;
+}
+
+// 5. MAILBOX
+function renderMailboxDetail(item) {
+    let logs = item.workLog || [];
+    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const isSolved = item.status === 'Solved';
+    
+    return `
+         <div style="display:flex; justify-content:space-between; align-items:center; margin-right: 80px;">
+            <h1>${item.subject}</h1>
+            <div style="text-align:right">
+                 ${isSolved ? '<span class="chip" style="background:var(--status-done);">SOLVED</span>' : '<span class="chip" style="background:var(--md-sys-color-primary);">OPEN</span>'}
+            </div>
+        </div>
+        <div style="font-size:0.9rem; color:var(--md-sys-color-secondary); margin-bottom:1rem">From: <strong>${item.sender}</strong></div>
+
+        <div class="input-group">
+            <label>Status (Open ⟷ Solved)</label>
+            <div class="status-slider-container">
+                <div class="status-slider-label"><span>Open</span><span>Solved</span></div>
+                <input type="range" min="0" max="1" value="${isSolved ? 1 : 0}" class="status-slider" 
+                    oninput="updateField('mailbox', '${item.id}', 'status', this.value == 1 ? 'Solved' : 'Open'); document.querySelector('.chip').outerHTML = this.value == 1 ? '<span class=\\'chip\\' style=\\'background:var(--status-done);\\'>SOLVED</span>' : '<span class=\\'chip\\' style=\\'background:var(--md-sys-color-primary);\\'>OPEN</span>'">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Keywords</label>
+            <div style="margin-bottom:8px">
+                ${(item.keywords || []).map((k, idx) => `
+                    <span class="chip chip-keyword chip-removable" onclick="removeSubItem('mailbox', '${item.id}', 'keywords', ${idx})">${k} ✕</span>
+                `).join('')}
+            </div>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="addKwInput" placeholder="Add keyword" onkeydown="if(event.key==='Enter') this.nextElementSibling.click()">
+                <button class="btn btn-tonal btn-small" onclick="if(document.getElementById('addKwInput').value) { addListItem('mailbox', '${item.id}', 'keywords'); updateSubItemValue('mailbox', '${item.id}', 'keywords', ${(item.keywords||[]).length}, document.getElementById('addKwInput').value); }">Add</button>
+            </div>
+        </div>
+
+        <div class="section-header">
+            Work Notes
+            <span style="font-size: 0.7rem; font-weight: normal; color: #666;">Log your solution or progress</span>
+        </div>
+        
+        <div style="background: var(--md-sys-color-surface-variant); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <textarea id="mail-log-input" placeholder="Notes... (Supports /table{...} and /program{...})" style="min-height: 80px; margin-bottom: 8px;"></textarea>
+            <div style="text-align: right;">
+                <button class="btn btn-primary btn-small" onclick="addMailboxLog('${item.id}')">Log Note</button>
+            </div>
+        </div>
+
+        <div id="mailbox-logs">
+            ${logs.map(log => `
+                <div class="work-log-entry">
+                    <div class="work-log-meta">${new Date(log.timestamp).toLocaleString()}</div>
+                    <div class="work-log-content">${formatWorkLogContent(log.content)}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function addMailboxLog(id) {
+    const input = document.getElementById('mail-log-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const item = store.get('mailbox', id);
+    const logs = item.workLog || [];
+    
+    logs.push({
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        content: text
+    });
+
+    store.update('mailbox', id, { workLog: logs });
+    router.renderDetail('mailbox', id);
+}
+
+function renderStatusSlider(projectId, currentStatus, stopProp = false) {
+    const steps = ['ANA', 'DEV', 'APB', 'DONE'];
+    let val = steps.indexOf(currentStatus);
+    if (val === -1) val = 0;
+
+    const clickAttr = stopProp ? 'onclick="event.stopPropagation()"' : '';
+
+    return `
+        <div class="status-slider-container" ${clickAttr}>
+            <div class="status-slider-label">
+                <span style="color:var(--status-ana)">ANA</span>
+                <span style="color:var(--status-dev)">DEV</span>
+                <span style="color:var(--status-apb)">APB</span>
+                <span style="color:var(--status-done)">DONE</span>
+            </div>
+            <input type="range" min="0" max="3" value="${val}" class="status-slider" 
+                oninput="updateProjectStatus('${projectId}', this.value)">
+        </div>
+    `;
+}
+
+function updateProjectStatus(projectId, val) {
+    const steps = ['ANA', 'DEV', 'APB', 'DONE'];
+    store.update('projects', projectId, { status: steps[parseInt(val)] });
+}
+
+function deleteObject(type, id) {
+    if(confirm('Are you sure you want to delete this object? This cannot be undone.')) {
+        store.delete(type, id);
+        router.navigate(type);
+    }
+}
+
+function addWorkLog(projectId) {
+    const input = document.getElementById('new-log-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const item = store.get('projects', projectId);
+    const logs = item.workLog || [];
+    
+    logs.push({
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        content: text
+    });
+
+    store.update('projects', projectId, { workLog: logs });
+    
+    if (item.notes) {
+        store.update('projects', projectId, { notes: '' });
+    }
+
+    router.renderDetail('projects', projectId);
+}
+
+function formatWorkLogContent(text) {
+    if(!text) return '';
+    let safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    safeText = safeText.replace(/\n/g, "<br>");
+    safeText = safeText.replace(/\/table\{([^}]+)\}/g, (match, name) => {
+        const found = store.findByName('tables', name);
+        if (found) {
+            return `<span class="smart-ref found" onclick="router.navigate('tables', '${found.id}')">🛢️ ${name}</span>`;
+        } else {
+            return `<span class="smart-ref missing" title="Table '${name}' not found. Create it to link.">⚠️ ${name}</span>`;
+        }
+    });
+    safeText = safeText.replace(/\/program\{([^}]+)\}/g, (match, name) => {
+        const found = store.findByName('programs', name);
+        if (found) {
+            return `<span class="smart-ref found" onclick="router.navigate('programs', '${found.id}')">📦 ${name}</span>`;
+        } else {
+            return `<span class="smart-ref missing" title="Program '${name}' not found. Create it to link.">⚠️ ${name}</span>`;
+        }
+    });
+    return safeText;
+}
+
+// 5. LOG WORK (Timer)
+let timerInterval = null;
+let currentProjectId = null;
+let startTime = null;
+
+function renderLogWork() {
+    const projects = store.getAll('projects').filter(p => p.status !== 'DONE');
+    const mainEl = document.getElementById('mainContent');
+    const activeProject = currentProjectId ? store.get('projects', currentProjectId) : null;
+    
+    let html = `
+        <div class="header-row">
+            <h1 class="page-title">Log Work</h1>
+            ${currentProjectId ? `<button class="btn btn-danger" onclick="stopTimer()">Stop Timer</button>` : ''}
+        </div>
+
+        <div class="detail-container" style="text-align:center; margin-bottom: 2rem;">
+            <p style="margin:0; opacity: 0.7; font-weight: 500;">
+                ${currentProjectId ? `Currently working on: <strong>${activeProject.name}</strong>` : 'Select a project to start logging time'}
+            </p>
+            <div id="timerDisplay" class="timer-display">00:00:00</div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem; color: var(--md-sys-color-on-surface-variant)">Active Projects</h3>
+        <div class="card-grid">
+            ${projects.map(p => {
+                const isActive = currentProjectId === p.id;
+                return `
+                    <div class="card ${isActive ? 'active-timer' : ''} project-card status-border-${p.status}" onclick="handleProjectCardClick('${p.id}')">
+						<div style="display:flex; justify-content: space-between; align-items: flex-start;">
+							<h3 style="margin:0; display: flex; align-items: center; gap: 6px; color: var(--md-sys-color-on-surface, #1d1b20);">
+								<span style="
+									background-color: var(--md-sys-color-on-surface, #1d1b20); 
+									color: #ffffff; 
+									width: 28px; 
+									height: 28px; 
+									display: flex; 
+									align-items: center; 
+									justify-content: center; 
+									border-radius: 6px; 
+									font-size: 0.9em;
+									flex-shrink: 0;
+								">
+									${p.name.charAt(0).toUpperCase()}
+								</span>
+								
+								<span>${p.name}</span>
+							</h3>
+							<span class="chip status-${p.status}">${p.status}</span>
+						</div>
+						
+						<p style="margin-top: 10px;">${p.description || 'No description'}</p>
+						
+						<div style="margin-top: 15px; font-weight: bold; color: var(--md-sys-color-primary)">
+							${isActive ? '● Recording...' : 'Click to start'}
+						</div>
+					</div>
+                `;
+            }).join('')}
+            ${projects.length === 0 ? '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No active projects. Go to Projects to create one!</p>' : ''}
+        </div>
+    `;
+    mainEl.innerHTML = html;
+    
+    if (currentProjectId && startTime) {
+        updateTimerDisplay();
+    }
+}
+
+function handleProjectCardClick(id) {
+    if (currentProjectId === id) {
+        stopTimer();
+    } else {
+        if (currentProjectId) {
+            stopTimer(false); 
+        }
+        startTimer(id);
+    }
+}
+
+function startTimer(projectId) {
+    currentProjectId = projectId;
+    startTime = Date.now();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+    renderLogWork();
+}
+
+function updateTimerDisplay() {
+    if(!startTime) return;
+    const diff = Date.now() - startTime;
+    const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+    const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+    const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+    const el = document.getElementById('timerDisplay');
+    if(el) el.innerText = `${h}:${m}:${s}`;
+}
+
+function stopTimer(shouldRefresh = true) {
+    if (!currentProjectId) return;
+    const endTime = Date.now();
+    const sessionDuration = endTime - startTime;
+    const project = store.get('projects', currentProjectId);
+    const newTotal = (project.timeSpent || 0) + sessionDuration;
+    store.update('projects', currentProjectId, { timeSpent: newTotal });
+    
+    clearInterval(timerInterval);
+    timerInterval = null;
+    currentProjectId = null;
+    startTime = null;
+    
+    if (shouldRefresh) {
+        renderLogWork();
+    }
+}
+
+/**
+ * --- HELPER FUNCTIONS ---
+ */
+
+function updateField(type, id, field, value) {
+    store.update(type, id, { [field]: value });
+    if(field === 'linkedTables' || field === 'linkedPrograms' || field === 'todos' || field === 'keywords') {
+        router.renderDetail(type, id);
+    }
+}
+
+function addListItem(type, id, field) {
+    const item = store.get(type, id);
+    const list = item[field] || [];
+    list.push('');
+    store.update(type, id, { [field]: list });
+    router.renderDetail(type, id);
+}
+
+function updateSubItemValue(type, id, field, index, value) {
+    const item = store.get(type, id);
+    const list = [...item[field]];
+    list[index] = value;
+    store.update(type, id, { [field]: list });
+    router.renderDetail(type, id);
+}
+
+function addSubItem(type, id, field, emptyObj) {
+    const item = store.get(type, id);
+    const list = item[field] || [];
+    list.push(emptyObj);
+    store.update(type, id, { [field]: list });
+    router.renderDetail(type, id);
+}
+
+function updateSubField(type, id, arrayName, index, key, value) {
+    const item = store.get(type, id);
+    const list = item[arrayName];
+    list[index][key] = value;
+    store.update(type, id, { [arrayName]: list });
+}
+
+function removeSubItem(type, id, arrayName, index) {
+    const item = store.get(type, id);
+    const list = item[arrayName];
+    list.splice(index, 1);
+    store.update(type, id, { [arrayName]: list });
+    router.renderDetail(type, id);
+}
+
+// Modal Helper Globals
+let currentModalKeywords = [];
+
+function addModalKeyword() {
+    const input = document.getElementById('keywordIn');
+    const val = input.value.trim();
+    if(val) {
+        currentModalKeywords.push(val);
+        input.value = '';
+        renderModalKeywords();
+    }
+    input.focus();
+}
+
+function renderModalKeywords() {
+    const container = document.getElementById('keywordListDisplay');
+    container.innerHTML = currentModalKeywords.map((k, idx) => `
+        <span class="chip chip-keyword chip-removable" onclick="currentModalKeywords.splice(${idx}, 1); renderModalKeywords()">${k} ✕</span>
+    `).join('');
+}
+
+const ui = {
+    openCreateModal: (type) => {
+        const modal = document.getElementById('createModal');
+        const inputsDiv = document.getElementById('modalInputs');
+        const title = document.getElementById('modalTitle');
+        const form = document.getElementById('modalForm');
+
+        title.innerText = `New ${type.slice(0, -1)}`;
+        inputsDiv.innerHTML = '';
+        currentModalKeywords = []; // Reset
+
+        if (type === 'programs') {
+            inputsDiv.innerHTML = `
+                <div class="input-group"><label>Short Name</label><input name="shortName" required type="text"></div>
+                <div class="input-group"><label>Long Name</label><input name="longName" required type="text"></div>
+                <div class="input-group"><label>Short Description</label><textarea name="shortDescription"></textarea></div>
+            `;
+        } else if (type === 'tables') {
+            inputsDiv.innerHTML = `
+                <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
+                <div class="input-group"><label>Description</label><textarea name="description"></textarea></div>
+            `;
+        } else if (type === 'queries') {
+            inputsDiv.innerHTML = `
+                <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
+                <div class="input-group"><label>Update Indicator</label>
+                    <select name="updateIndicator">
+                        <option value="R">Read</option><option value="C">Create</option>
+                        <option value="U">Update</option><option value="D">Delete</option>
                     </select>
                 </div>
-            </div>
-            <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px;">
-                <button onclick="closeModal()" style="background: none; border: 1px solid #dadce0; color: #5f6368; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button onclick="saveProject()" style="background: #1a73e8; border: none; color: white; padding: 8px 24px; border-radius: 4px; cursor: pointer;">Create Project</button>
-            </div>
-        </div>
+                <div class="input-group"><label>SQL/Query</label><textarea name="query"></textarea></div>
+            `;
+        } else if (type === 'projects') {
+            inputsDiv.innerHTML = `
+                <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
+                <div class="input-group"><label>Description</label><textarea name="description"></textarea></div>
+                <div class="input-group"><label>Status</label>
+                    <select name="status">
+                        <option value="ANA">Analysis</option><option value="DEV">Development</option>
+                        <option value="APB">Approval</option><option value="DONE">Done</option>
+                    </select>
+                </div>
+            `;
+        } else if (type === 'mailbox') {
+            inputsDiv.innerHTML = `
+                <div class="input-group"><label>Sender E-mail</label><input name="sender" required type="text" placeholder="user@example.com"></div>
+                <div class="input-group"><label>Subject</label><input name="subject" required type="text"></div>
+                <div class="input-group">
+                    <label>Keywords</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="keywordIn" placeholder="Type and press Add (or Enter)..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addModalKeyword();}">
+                        <button type="button" class="btn btn-tonal" onclick="addModalKeyword()">Add</button>
+                    </div>
+                    <div id="keywordListDisplay" style="margin-top:8px; display:flex; gap:4px; flex-wrap:wrap;"></div>
+                </div>
+                <div class="input-group"><label>Status</label>
+                    <div class="status-slider-container">
+                        <div class="status-slider-label"><span>Open</span><span>Solved</span></div>
+                        <input type="range" min="0" max="1" value="0" name="statusRange" class="status-slider">
+                    </div>
+                </div>
+            `;
+        }
 
-        <!-- Program Modal -->
-        <div id="program-modal" style="display:none; background: white; width: 90%; max-width: 600px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow-y: auto; flex-direction: column;">
-            <div style="padding: 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 20px;">New Program</h3>
-                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
-            </div>
-            <div style="padding: 24px;">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">PROGRAM NAME (e.g. Z_MDOCK_SYNC)</label>
-                    <input type="text" id="prog-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">EXTENDED NAME / TITLE</label>
-                    <input type="text" id="prog-ext-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
-                </div>
-            </div>
-            <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px;">
-                <button onclick="closeModal()" style="background: none; border: 1px solid #dadce0; color: #5f6368; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button onclick="saveProgram()" style="background: #1a73e8; border: none; color: white; padding: 8px 24px; border-radius: 4px; cursor: pointer;">Add Program</button>
-            </div>
-        </div>
-
-        <!-- Table Modal -->
-        <div id="table-modal" style="display:none; background: white; width: 90%; max-width: 700px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow-y: auto; flex-direction: column;">
-            <div style="padding: 24px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 20px;">New Data Table</h3>
-                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
-            </div>
-            <div style="padding: 24px;">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">TABLE NAME (e.g. USR_PROFILE)</label>
-                    <input type="text" id="table-name-input" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;">
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; color: #1a73e8; font-weight: 600; margin-bottom: 4px;">DESCRIPTION</label>
-                    <textarea id="table-desc-input" rows="3" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box;"></textarea>
-                </div>
-            </div>
-            <div style="padding: 16px 24px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px;">
-                <button onclick="closeModal()" style="background: none; border: 1px solid #dadce0; color: #5f6368; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button onclick="saveTable()" style="background: #1a73e8; border: none; color: white; padding: 8px 24px; border-radius: 4px; cursor: pointer;">Add Table</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let projects = [];
-        let tables = [];
-        let programs = [];
-        let currentProjectId = null;
-        let currentTableId = null;
-        let currentProgramId = null;
-        
-        const statusColors = {
-            'ANA': { bg: '#e8f0fe', text: '#1967d2' },
-            'DEV': { bg: '#fef7e0', text: '#ea8600' },
-            'APB': { bg: '#fce8e6', text: '#d93025' },
-            'DONE': { bg: '#e6f4ea', text: '#1e8e3e' }
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const obj = Object.fromEntries(formData.entries());
+            if(type === 'programs') { obj.linkedTables = []; obj.linkedPrograms = []; }
+            if(type === 'tables') { obj.fields = []; obj.links = []; } 
+            if(type === 'projects') { obj.todos = []; obj.linkedTables = []; obj.linkedPrograms = []; }
+            if(type === 'mailbox') { 
+                obj.keywords = currentModalKeywords; 
+                obj.status = obj.statusRange == "1" ? "Solved" : "Open";
+                delete obj.statusRange;
+                obj.workLog = [];
+            }
+            const newItem = store.add(type, obj);
+            modal.close();
+            router.navigate(type, newItem.id);
         };
+        modal.showModal();
+    },
 
-        function showTab(tabName) {
-            const tabs = ['projects', 'programs', 'tables', 'project-detail', 'program-detail', 'table-detail'];
-            tabs.forEach(t => {
-                const el = document.getElementById('tab-' + t);
-                if (el) el.style.display = (tabName === t) ? 'block' : 'none';
-            });
+    openLinkModal: (tableId, tableName) => {
+        const modal = document.getElementById('linkModal');
+        const form = document.getElementById('linkForm');
+        document.getElementById('linkFromTableId').value = tableId;
+        document.getElementById('linkFromTableName').value = tableName;
+        
+        // Reset inputs
+        document.getElementById('linkToTableInput').value = '';
+        form.querySelector('textarea').value = '';
+        document.getElementById('linkBidirectional').checked = false;
 
-            // Handle nav highlighting
-            ['nav-projects', 'nav-programs', 'nav-tables'].forEach(n => {
-                const el = document.getElementById(n);
-                if (!el) return;
-                const isActive = (n === 'nav-projects' && tabName.includes('project')) ||
-                                 (n === 'nav-programs' && tabName.includes('program')) ||
-                                 (n === 'nav-tables' && tabName.includes('table'));
-                el.style.backgroundColor = isActive ? '#e8f0fe' : 'transparent';
-                el.style.color = isActive ? '#1a73e8' : '#5f6368';
-            });
+        // Populate Table Suggestions (Excluding self)
+        const dl = document.getElementById('tableSuggestions');
+        dl.innerHTML = store.getAll('tables')
+            .filter(t => t.id !== tableId)
+            .map(t => `<option value="${t.name}">`)
+            .join('');
 
-            if(tabName === 'projects') renderProjects();
-            if(tabName === 'programs') renderPrograms();
-            if(tabName === 'tables') renderTables();
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
-            document.getElementById('project-modal').style.display = 'none';
-            document.getElementById('program-modal').style.display = 'none';
-            document.getElementById('table-modal').style.display = 'none';
-            resetForms();
-        }
-
-        function resetForms() {
-            const ids = ['proj-name-input', 'proj-desc-input', 'proj-status-input', 'prog-name-input', 'prog-ext-name-input', 'table-name-input', 'table-desc-input'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = (id === 'proj-status-input') ? 'ANA' : '';
-            });
-        }
-
-        // --- PROJECTS LOGIC ---
-        function openNewProjectModal() {
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('project-modal').style.display = 'flex';
-        }
-
-        function saveProject() {
-            const name = document.getElementById('proj-name-input').value;
-            if (!name) return;
-            projects.push({
-                id: Date.now(),
-                name,
-                description: document.getElementById('proj-desc-input').value,
-                status: document.getElementById('proj-status-input').value,
-                programs: [], tables: [], logs: [], todos: []
-            });
-            renderProjects();
-            closeModal();
-        }
-
-        function openProjectDetail(id) {
-            currentProjectId = id;
-            const project = projects.find(p => p.id === id);
-            if (!project) return;
-            document.getElementById('detail-name').innerText = project.name;
-            document.getElementById('detail-desc-input').value = project.description || "";
-            document.getElementById('detail-status-select').value = project.status;
-            renderDetailResources();
-            renderDetailLogs();
-            renderDetailTodos();
-            showTab('project-detail');
-        }
-
-        function saveDescriptionDirectly(newDesc) {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (project) project.description = newDesc;
-        }
-
-        function updateProjectStatus(newStatus, id = null) {
-            const pid = id || currentProjectId;
-            const project = projects.find(p => p.id == pid);
-            if (project) {
-                project.status = newStatus;
-                renderProjects();
-                if (currentProjectId == pid) {
-                    const statusSelect = document.getElementById('detail-status-select');
-                    if (statusSelect) statusSelect.value = newStatus;
-                }
-            }
-        }
-
-        function renderDetailResources() {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            document.getElementById('detail-programs-list').innerHTML = project.programs.map(p => `<span style="background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 4px; font-size: 13px;">${p}</span>`).join('');
-            document.getElementById('detail-tables-list').innerHTML = project.tables.map(t => `<span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 4px; font-size: 13px;">${t}</span>`).join('');
-        }
-
-        function addResource(type) {
-            const project = projects.find(p => p.id === currentProjectId);
-            const inputId = type === 'programs' ? 'add-prog-input' : 'add-table-input';
-            const val = document.getElementById(inputId).value.trim();
-            if (val) {
-                project[type].push(val);
-                document.getElementById(inputId).value = '';
-                renderDetailResources();
-            }
-        }
-
-        function renderDetailTodos() {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            document.getElementById('detail-todo-list').innerHTML = project.todos.map((t, idx) => `
-                <div style="display: flex; align-items: center; gap: 10px; background: #fafafa; padding: 8px 12px; border-radius: 4px; border: 1px solid #eee;">
-                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${project.id}, ${idx})">
-                    <div style="flex: 1; display: flex; flex-direction: column;">
-                        <span style="font-size: 14px; ${t.done ? 'text-decoration: line-through; color: #999;' : ''}">${t.text}</span>
-                        <span style="font-size: 10px; color: #9aa0a6;">Created: ${t.timestamp || 'N/A'}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function addTodo() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const text = document.getElementById('add-todo-input').value.trim();
-            if (text) {
-                const now = new Date();
-                const timestamp = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                project.todos.push({ text, done: false, timestamp });
-                document.getElementById('add-todo-input').value = '';
-                renderDetailTodos();
-                renderProjects();
-            }
-        }
-
-        function toggleTodo(projId, todoIdx) {
-            const project = projects.find(p => p.id == projId);
-            if (project) {
-                project.todos[todoIdx].done = !project.todos[todoIdx].done;
-                if (currentProjectId == projId && document.getElementById('tab-project-detail').style.display === 'block') renderDetailTodos();
-                renderProjects();
-            }
-        }
-
-        function renderDetailLogs() {
-            const project = projects.find(p => p.id === currentProjectId);
-            if (!project) return;
-            document.getElementById('detail-log-list').innerHTML = project.logs.slice().reverse().map(l => `
-                <div style="border-left: 3px solid #1a73e8; padding-left: 16px; margin-bottom: 8px;">
-                    <div style="font-size: 11px; color: #9aa0a6; margin-bottom: 4px;">${l.date}</div>
-                    <div style="font-size: 14px; line-height: 1.5; color: #202124;">${l.text}</div>
-                </div>
-            `).join('');
-        }
-
-        function addLog() {
-            const project = projects.find(p => p.id === currentProjectId);
-            const text = document.getElementById('add-log-input').value.trim();
-            if (text) {
-                project.logs.push({ date: new Date().toLocaleString(), text });
-                document.getElementById('add-log-input').value = '';
-                renderDetailLogs();
-            }
-        }
-
-        function renderProjects() {
-            const list = document.getElementById('project-list');
-            const globalTodoContainer = document.getElementById('global-todos-container');
-            const globalTodoList = document.getElementById('global-todo-list');
-            const overviewTimestamp = document.getElementById('overview-timestamp');
-            const emptyState = document.getElementById('empty-state');
-            if (!list) return;
-            if (overviewTimestamp) overviewTimestamp.innerText = "Last update: " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const toTable = formData.get('toTable');
+            const joinStmt = formData.get('joinStatement');
+            const isBi = formData.get('bidirectional') === 'on';
             
-            let allPendingTodos = [];
-            projects.forEach(p => p.todos.forEach((t, idx) => { if (!t.done) allPendingTodos.push({ ...t, projectName: p.name, projId: p.id, todoIdx: idx }); }));
+            const item = store.get('tables', tableId);
+            if (!item.links) item.links = [];
             
-            if (globalTodoContainer) globalTodoContainer.style.display = allPendingTodos.length > 0 ? 'block' : 'none';
-            if (allPendingTodos.length > 0 && globalTodoList) {
-                globalTodoList.innerHTML = allPendingTodos.map(t => `
-                    <div style="background: #fff; border-left: 4px solid #f4b400; padding: 12px 16px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                            <input type="checkbox" onchange="toggleTodo(${t.projId}, ${t.todoIdx})" style="cursor: pointer; width: 16px; height: 16px;">
-                            <div style="display: flex; flex-direction: column;">
-                                <span style="font-size: 14px; font-weight: 500;">${t.text}</span>
-                                <span style="font-size: 10px; color: #9aa0a6;">Added ${t.timestamp || 'recently'}</span>
-                            </div>
-                        </div>
-                        <span style="font-size: 11px; color: #70757a; background: #f1f3f4; padding: 2px 8px; border-radius: 10px; margin-left: 8px;">${t.projectName}</span>
-                    </div>
-                `).join('');
-            }
+            item.links.push({
+                toTable: toTable,
+                join: joinStmt,
+                bidirectional: isBi
+            });
             
-            if (emptyState) emptyState.style.display = projects.length > 0 ? 'none' : 'block';
-            list.innerHTML = '';
-            if (projects.length === 0 && emptyState) {
-                list.appendChild(emptyState);
-            } else {
-                projects.forEach(p => {
-                    const color = statusColors[p.status];
-                    const card = document.createElement('div');
-                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; position: relative;`;
-                    card.onclick = (e) => { if (e.target.tagName !== 'SELECT' && e.target.type !== 'checkbox') openProjectDetail(p.id); };
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0 0 4px 0; font-size: 18px;">${p.name}</h3>
-                                <p style="margin: 0; font-size: 14px; color: #5f6368;">${p.description || 'No description'}</p>
-                            </div>
-                            <select onchange="updateProjectStatus(this.value, ${p.id})" style="background-color: ${color.bg}; color: ${color.text}; padding: 4px 8px; border: none; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer;">
-                                <option value="ANA" ${p.status === 'ANA' ? 'selected' : ''}>ANA</option>
-                                <option value="DEV" ${p.status === 'DEV' ? 'selected' : ''}>DEV</option>
-                                <option value="APB" ${p.status === 'APB' ? 'selected' : ''}>APB</option>
-                                <option value="DONE" ${p.status === 'DONE' ? 'selected' : ''}>DONE</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; gap: 24px; font-size: 12px; color: #70757a; border-top: 1px solid #f1f3f4; padding-top: 12px;">
-                            <span><strong>Programs:</strong> ${p.programs.length}</span>
-                            <span><strong>Tables:</strong> ${p.tables.length}</span>
-                            <span><strong>Pending Tasks:</strong> ${p.todos.filter(t => !t.done).length}</span>
-                        </div>
-                    `;
-                    list.appendChild(card);
-                });
-            }
-        }
+            store.update('tables', tableId, { links: item.links });
+            modal.close();
+            router.renderDetail('tables', tableId);
+        };
+        modal.showModal();
+    }
+};
 
-        // --- PROGRAMS LOGIC ---
-        function openNewProgramModal() {
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('program-modal').style.display = 'flex';
-        }
+const app = {
+    saveToFile: () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store.data));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "dev_manager_backup.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    },
+    loadFromFile: (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => store.importData(e.target.result);
+        reader.readAsText(file);
+    }
+};
 
-        function saveProgram() {
-            const name = document.getElementById('prog-name-input').value.trim();
-            if (!name) return;
-            programs.push({
-                id: Date.now(),
-                name,
-                extName: document.getElementById('prog-ext-name-input').value.trim(),
-                flow: '',
-                reads: [],
-                writes: []
-            });
-            renderPrograms();
-            closeModal();
-        }
+const router = new Router();
+router.navigate('programs');
 
-        function renderPrograms() {
-            const list = document.getElementById('program-list');
-            const empty = document.getElementById('program-empty-state');
-            if (!list) return;
-            if (empty) empty.style.display = programs.length > 0 ? 'none' : 'block';
-            list.innerHTML = '';
-            if (programs.length === 0 && empty) {
-                list.appendChild(empty);
-            } else {
-                programs.forEach(p => {
-                    const card = document.createElement('div');
-                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; cursor: pointer; transition: transform 0.1s; display: flex; flex-direction: column; gap: 8px;`;
-                    card.onclick = () => openProgramDetail(p.id);
-                    card.innerHTML = `
-                        <h3 style="margin: 0; font-size: 18px; color: #1a73e8; font-family: monospace;">${p.name}</h3>
-                        <p style="margin: 0; font-size: 14px; color: #5f6368;">${p.extName || 'No title'}</p>
-                        <div style="margin-top: 12px; font-size: 12px; color: #9aa0a6;">Flow: ${p.flow ? '✅' : '❌'} | Reads: ${p.reads.length} | Writes: ${p.writes.length}</div>
-                    `;
-                    list.appendChild(card);
-                });
-            }
-        }
-
-        function openProgramDetail(id) {
-            currentProgramId = id;
-            const prog = programs.find(p => p.id === id);
-            if (!prog) return;
-            document.getElementById('program-detail-name').innerText = prog.name;
-            document.getElementById('program-detail-ext-input').value = prog.extName || "";
-            document.getElementById('program-flow-input').value = prog.flow || "";
-            renderProgramResources();
-            showTab('program-detail');
-        }
-
-        function saveProgramExtName(val) {
-            const p = programs.find(x => x.id === currentProgramId);
-            if (p) p.extName = val;
-        }
-
-        function saveProgramFlow(val) {
-            const p = programs.find(x => x.id === currentProgramId);
-            if (p) p.flow = val;
-        }
-
-        function renderProgramResources() {
-            const p = programs.find(x => x.id === currentProgramId);
-            if (!p) return;
-            const render = (listId, data) => {
-                const el = document.getElementById(listId);
-                if (!el) return;
-                el.innerHTML = data.map((item, idx) => `
-                    <span style="background: #f1f3f4; color: #5f6368; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-                        ${item}
-                        <button onclick="removeProgramResource('${listId.includes('reads') ? 'reads' : 'writes'}', ${idx})" style="border:none; background:none; color:#ccc; cursor:pointer; font-weight:bold;">&times;</button>
-                    </span>
-                `).join('');
-            };
-            render('program-reads-list', p.reads);
-            render('program-writes-list', p.writes);
-        }
-
-        function addProgramResource(key) {
-            const inputId = key === 'reads' ? 'add-read-table-input' : 'add-write-table-input';
-            const valInput = document.getElementById(inputId);
-            const val = valInput.value.trim();
-            if (val) {
-                const p = programs.find(x => x.id === currentProgramId);
-                if (p) {
-                    p[key].push(val);
-                    valInput.value = '';
-                    renderProgramResources();
-                }
-            }
-        }
-
-        function removeProgramResource(key, idx) {
-            const p = programs.find(x => x.id === currentProgramId);
-            if (p) {
-                p[key].splice(idx, 1);
-                renderProgramResources();
-            }
-        }
-
-        // --- TABLES LOGIC ---
-        function openNewTableModal() {
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.getElementById('table-modal').style.display = 'flex';
-        }
-
-        function saveTable() {
-            const name = document.getElementById('table-name-input').value.trim();
-            if (!name) return;
-            tables.push({ id: Date.now(), name, description: document.getElementById('table-desc-input').value, fields: [] });
-            renderTables();
-            closeModal();
-        }
-
-        function renderTables() {
-            const list = document.getElementById('table-list');
-            const empty = document.getElementById('table-empty-state');
-            if (!list) return;
-            if (empty) empty.style.display = tables.length > 0 ? 'none' : 'block';
-            list.innerHTML = '';
-            if (tables.length === 0 && empty) {
-                list.appendChild(empty);
-            } else {
-                tables.forEach(t => {
-                    const card = document.createElement('div');
-                    card.style.cssText = `background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 12px;`;
-                    card.onclick = () => openTableDetail(t.id);
-                    card.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="background: #f1f3f4; padding: 6px; border-radius: 4px; font-size: 18px;">📄</span>
-                            <h3 style="margin: 0; font-size: 18px; color: #1a73e8;">${t.name}</h3>
-                        </div>
-                        <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.4;">${t.description || 'No description provided.'}</p>
-                        <div style="margin-top: auto; font-size: 12px; color: #9aa0a6;">${t.fields.length} fields documented</div>
-                    `;
-                    list.appendChild(card);
-                });
-            }
-        }
-
-        function openTableDetail(id) {
-            currentTableId = id;
-            const table = tables.find(t => t.id === id);
-            if (!table) return;
-            document.getElementById('table-detail-name').innerText = table.name;
-            document.getElementById('table-detail-desc-input').value = table.description || "";
-            renderFields();
-            showTab('table-detail');
-        }
-
-        function saveTableDescription(val) {
-            const table = tables.find(t => t.id === currentTableId);
-            if (table) table.description = val;
-        }
-
-        function handleFieldAddFromToolbar() {
-            const input = document.getElementById('field-quick-add');
-            const name = input.value.trim();
-            if (!name) return;
-            const table = tables.find(t => t.id === currentTableId);
-            if (table) {
-                table.fields.push({ name, description: '', example: '' });
-                input.value = '';
-                renderFields();
-            }
-        }
-
-        function renderFields() {
-            const table = tables.find(t => t.id === currentTableId);
-            if (!table) return;
-            const tbody = document.getElementById('field-list-body');
-            const emptyMsg = document.getElementById('field-empty-message');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (emptyMsg) emptyMsg.style.display = table.fields.length === 0 ? 'block' : 'none';
-            table.fields.forEach((f, idx) => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #f1f3f4';
-                tr.innerHTML = `
-                    <td style="padding: 4px 24px;"><input value="${f.name}" onchange="updateField(${idx}, 'name', this.value)" style="width: 100%; border: none; font-weight: 600; font-size: 13px; background:transparent;"></td>
-                    <td style="padding: 4px 24px;"><input value="${f.description}" onchange="updateField(${idx}, 'description', this.value)" placeholder="Enter definition..." style="width: 100%; border: none; font-size: 13px; color: #5f6368; background:transparent;"></td>
-                    <td style="padding: 4px 24px;"><input value="${f.example}" onchange="updateField(${idx}, 'example', this.value)" placeholder="e.g. 'Active'" style="width: 100%; border: none; font-size: 13px; font-style: italic; color: #70757a; background:transparent;"></td>
-                    <td style="text-align: center;"><button onclick="removeField(${idx})" style="border: none; background: none; color: #dadce0; cursor: pointer; font-size: 20px;">&times;</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function updateField(idx, key, val) {
-            const table = tables.find(t => t.id === currentTableId);
-            if (table && table.fields[idx]) table.fields[idx][key] = val;
-        }
-
-        function removeField(idx) {
-            const table = tables.find(t => t.id === currentTableId);
-            if (table) { table.fields.splice(idx, 1); renderFields(); }
-        }
-
-        window.onload = () => showTab('projects');
-    </script>
+</script>
 </body>
 </html>
