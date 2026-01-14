@@ -1201,12 +1201,13 @@
     <nav class="sidebar">
         <div class="brand">MDoc</div>
 		<div class="nav-item" onclick="router.navigate('dashboard')">📊 Dashboard</div>
+	    <div class="nav-item" onclick="router.navigate('projects')">🗂️ Projects</div>
         <div class="nav-item" onclick="router.navigate('programs')">📦 Programs</div>
         <div class="nav-item" onclick="router.navigate('tables')">🛢️ Tables</div>
         <div class="nav-item" onclick="router.navigate('queries')">🔍 Queries</div>
-        <div class="nav-item" onclick="router.navigate('projects')">🗂️ Projects</div>
         <div class="nav-item" onclick="router.navigate('mailbox')">📬 Mailbox</div>
 		<div class="nav-item" onclick="router.navigate('orphans')">👻 Orphan Objects</div>
+		<div class="nav-item" onclick="router.navigate('confluence')">📄 Confluence</div>
         <div class="nav-item" onclick="router.navigate('logwork')">⌛ Log Work</div>
 
         <div class="sidebar-footer">
@@ -1577,6 +1578,7 @@ class Router {
         if (type === 'logwork') { renderLogWork(); return; }
         if (type === 'dashboard') { renderDashboard(); return; }
 		if (type === 'orphans') { renderOrphanList(); return; }
+		if (type === 'confluence') { renderConfluencePanel(); return; }
         
         const items = store.getAll(type);
         const titleMap = { programs: 'Programs', tables: 'Tables', queries: 'Queries', projects: 'Projects', mailbox: 'Mailbox' };
@@ -3499,7 +3501,266 @@ function renderModalKeywords() {
         <span class="chip chip-keyword chip-removable" onclick="currentModalKeywords.splice(${idx}, 1); renderModalKeywords()">${k} ✕</span>
     `).join('');
 }
+/**
+ * --- CONFLUENCE GENERATOR ---
+ */
+/**
+ * --- CONFLUENCE GENERATOR (UPDATED) ---
+ */
+function getConfluenceHTML(type, id) {
+    const item = store.get(type, id);
+    if (!item) return '';
 
+    // Helper: Standard List
+    const list = (arr, title) => {
+        if (!arr || arr.length === 0) return '';
+        return `<h3>${title}</h3><ul>${arr.map(x => `<li>${x}</li>`).join('')}</ul>`;
+    };
+
+    // Helper: Linked Objects
+    const links = (arr, title) => {
+        if (!arr || arr.length === 0) return '';
+        const validLinks = arr.filter(x => x && x.trim() !== '');
+        if (validLinks.length === 0) return '';
+        return `<h3>${title}</h3><ul>${validLinks.map(x => `<li>${x}</li>`).join('')}</ul>`;
+    };
+
+    // Helper: Work Logs (New)
+    const renderLogs = (logs) => {
+        if (!logs || logs.length === 0) return '';
+        // Sort Oldest -> Newest for chronological reading
+        const sorted = [...logs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        let html = `<h3>Work Log & History</h3>`;
+        sorted.forEach(log => {
+            const dateStr = new Date(log.timestamp).toLocaleString();
+            const prefix = log.isImportant ? '⭐ ' : '';
+            // We use formatWorkLogContent to keep the formatting, but ensure it displays nicely
+            html += `<hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
+                     <p style="margin-bottom: 5px;"><strong>${prefix}${dateStr}</strong></p>
+                     <div style="margin-left: 15px;">${formatWorkLogContent(log.content)}</div>`;
+        });
+        return html;
+    };
+
+    let body = '';
+
+    // --- 1. PROGRAMS ---
+    if (type === 'programs') {
+        body += `<h1>📦 Program: ${item.longName} (${item.shortName})</h1>`;
+        body += `<p><strong>Description:</strong> ${item.shortDescription || 'N/A'}</p>`;
+        if (item.flow) {
+            body += `<h3>Program Flow</h3>`;
+            body += `<pre style="background:#f4f5f7; border:1px solid #ccc; padding:10px; border-radius:4px;">${item.flow}</pre>`;
+        }
+        body += links(item.linkedTables, "Related Tables");
+        body += links(item.linkedPrograms, "Related Programs");
+    } 
+    
+    // --- 2. TABLES ---
+    else if (type === 'tables') {
+        body += `<h1>🛢️ Table: ${item.name}</h1>`;
+        body += `<p><strong>Description:</strong> ${item.description || 'N/A'}</p>`;
+        if (item.fields && item.fields.length > 0) {
+            body += `<h3>Field Definition</h3>`;
+            body += `<table border="1" style="border-collapse:collapse; width:100%; text-align:left; border-color: #ddd;">
+                <thead style="background-color:#f4f5f7;">
+                    <tr>
+                        <th style="padding:8px;">Name</th>
+                        <th style="padding:8px;">Description</th>
+                        <th style="padding:8px;">Type/Example</th>
+                        <th style="padding:8px;">Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${item.fields.map(f => `
+                        <tr>
+                            <td style="padding:8px;"><strong>${f.name}</strong></td>
+                            <td style="padding:8px;">${f.desc || ''}</td>
+                            <td style="padding:8px;"><code>${f.ex || ''}</code></td>
+                            <td style="padding:8px;">${f.comm || ''}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+        }
+        if(item.links && item.links.length > 0) {
+            body += `<h3>Relationships</h3><ul>`;
+            item.links.forEach(l => {
+                body += `<li><strong>${l.bidirectional ? '↔' : '→'} ${l.toTable}:</strong> <code>${l.join}</code></li>`;
+            });
+            body += `</ul>`;
+        }
+    } 
+    
+    // --- 3. PROJECTS ---
+    else if (type === 'projects') {
+        const statusMap = { 'ANA': 'Analysis', 'DEV': 'Development', 'APB': 'Approval', 'DONE': 'Done' };
+        body += `<h1>🚀 Project: ${item.name}</h1>`;
+        body += `<p><strong>Status:</strong> ${statusMap[item.status] || item.status}</p>`;
+        body += `<p><strong>Description:</strong><br>${item.description || 'N/A'}</p>`;
+
+        if(item.linkDOR || item.linkDOD || item.linkOther) {
+            body += `<h3>Reference Links</h3><ul>`;
+            if(item.linkDOR) body += `<li><a href="${item.linkDOR}">Definition of Ready (DOR)</a></li>`;
+            if(item.linkDOD) body += `<li><a href="${item.linkDOD}">Definition of Done (DOD)</a></li>`;
+            if(item.linkOther) body += `<li><a href="${item.linkOther}">External Resource</a></li>`;
+            body += `</ul>`;
+        }
+
+        if (item.todos && item.todos.length > 0) {
+            body += `<h3>Pending Tasks</h3><ul>`;
+            item.todos.filter(t => !t.done).forEach(t => {
+                body += `<li>[ ] ${t.text}</li>`;
+            });
+            body += `</ul>`;
+        }
+
+        // --- NEW: Work Log Integration ---
+        body += renderLogs(item.workLog);
+
+        body += links(item.linkedTables, "Impacted Tables");
+        body += links(item.linkedPrograms, "Impacted Programs");
+    } 
+    
+    // --- 4. QUERIES ---
+    else if (type === 'queries') {
+        const indMap = { 'R': 'Read', 'C': 'Create', 'U': 'Update', 'D': 'Delete' };
+        body += `<h1>🔍 Query: ${item.name}</h1>`;
+        body += `<p><strong>Type:</strong> ${indMap[item.updateIndicator] || item.updateIndicator}</p>`;
+        body += `<h3>SQL Statement</h3>`;
+        body += `<pre style="background:#f4f5f7; border:1px solid #ccc; padding:10px; border-radius:4px;">${item.query || ''}</pre>`;
+        
+        if (item.paramDescs && Object.keys(item.paramDescs).length > 0) {
+             body += `<h3>Parameters</h3><ul>`;
+             Object.entries(item.paramDescs).forEach(([key, val]) => {
+                 body += `<li><strong>:${key}</strong> - ${val}</li>`;
+             });
+             body += `</ul>`;
+        }
+    }
+
+    // --- 5. MAILBOX ---
+    else if (type === 'mailbox') {
+        body += `<h1>✉️ Mailbox Issue: ${item.subject}</h1>`;
+        body += `<p><strong>Sender:</strong> ${item.sender}</p>`;
+        body += `<p><strong>Status:</strong> ${item.status}</p>`;
+        if(item.keywords && item.keywords.length > 0) {
+            body += `<p><strong>Keywords:</strong> ${item.keywords.join(', ')}</p>`;
+        }
+        body += renderLogs(item.workLog);
+    }
+
+    // Wrap in standard formatting container
+    return `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #172b4d;">${body}</div>`;
+}
+function renderConfluencePanel() {
+    // 1. Initial State
+    if (!window.confState) window.confState = { type: 'projects', id: '' };
+
+    const types = [
+        { val: 'projects', label: 'Projects' },
+        { val: 'tables', label: 'Tables' },
+        { val: 'programs', label: 'Programs' },
+        { val: 'queries', label: 'Queries' },
+        { val: 'mailbox', label: 'Mailbox' }
+    ];
+
+    const items = store.getAll(window.confState.type);
+    
+    // Generate Preview
+    const hasSelection = !!window.confState.id;
+    const previewHTML = hasSelection 
+        ? getConfluenceHTML(window.confState.type, window.confState.id) 
+        : `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; opacity:0.4;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
+                <div style="font-size: 1.2rem;">Select an object to generate preview</div>
+            </div>
+          `;
+
+    const html = `
+        <div class="header-row">
+            <h1 class="page-title">Confluence Export</h1>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; height: calc(100vh - 180px);">
+            
+            <div class="card" style="height: 100%; display: flex; flex-direction: column; border-left: 5px solid var(--md-sys-color-secondary);">
+                <h3 style="margin-top:0; color:var(--md-sys-color-primary); border-bottom:1px solid var(--md-sys-color-outline-variant); padding-bottom:12px;">
+                    Configuration
+                </h3>
+                
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Source Type</label>
+                    <select onchange="window.confState.type = this.value; window.confState.id = ''; router.renderList('confluence')"
+                        style="background: var(--md-sys-color-surface-variant);">
+                        ${types.map(t => `<option value="${t.val}" ${window.confState.type === t.val ? 'selected' : ''}>${t.label}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="input-group" style="flex: 1; display: flex; flex-direction: column;">
+                    <label>Select Object</label>
+                    <select onchange="window.confState.id = this.value; router.renderList('confluence')" 
+                        size="10" 
+                        style="flex: 1; background: var(--md-sys-color-surface-variant); padding: 8px;">
+                        ${items.map(i => `<option value="${i.id}" ${window.confState.id === i.id ? 'selected' : ''} style="padding: 4px;">${i.name || i.shortName || i.subject}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--md-sys-color-outline-variant);">
+                     <button class="btn btn-primary" style="width:100%; height: 50px; font-size: 1.1rem;" 
+                        onclick="copyConfluencePreview()" ${!hasSelection ? 'disabled' : ''}>
+                        ${hasSelection ? '📋 Copy to Clipboard' : 'Select an Item'}
+                    </button>
+                    <div style="text-align:center; font-size:0.8rem; color:var(--md-sys-color-secondary); margin-top:8px;">
+                        Formats as Rich Text (HTML)
+                    </div>
+                </div>
+            </div>
+
+            <div style="position: relative; display: flex; flex-direction: column;">
+                <div style="background: var(--md-sys-color-secondary); color: white; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span>PREVIEW</span>
+                    ${hasSelection ? '<span style="font-size:0.8em; opacity:0.8;">Ready to Copy</span>' : ''}
+                </div>
+                
+                <div id="confluencePreview" 
+                     style="background: white; color: #172b4d; flex: 1; overflow-y: auto; padding: 40px; 
+                            box-shadow: var(--md-sys-elevation-2); border-radius: 0 0 8px 8px; border: 1px solid var(--md-sys-color-outline-variant);">
+                    ${previewHTML}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('mainContent').innerHTML = html;
+}
+
+// Helper to handle the copy action
+function copyConfluencePreview() {
+    const el = document.getElementById('confluencePreview');
+    if (!el) return;
+    
+    // Create a temporary Range to select the HTML content
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    
+    try {
+        document.execCommand('copy');
+        // Show existing Toast
+        const toast = document.getElementById("toast");
+        toast.innerText = "Copied! Paste directly into Confluence.";
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    } catch(err) {
+        alert("Failed to copy");
+    }
+    
+    window.getSelection().removeAllRanges();
+}
 const ui = {
 	// Inside ui = { ... }
 
