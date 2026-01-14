@@ -777,6 +777,71 @@
 
         .card h3 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
         .card p { margin: 0; color: var(--md-sys-color-on-surface-variant); font-size: 0.9rem; }
+		/* --- FAVORITES STYLES --- */
+        .card.is-favorite {
+            border: 2px solid #fbbf24; /* Gold border */
+            background: linear-gradient(135deg, var(--md-sys-color-surface) 0%, #fffbeb 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .card.is-favorite {
+            background: linear-gradient(135deg, var(--md-sys-color-surface) 0%, #451a03 100%);
+        }
+
+        /* Shiny Animation Effect */
+        .card.is-favorite::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shine 6s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            20% { transform: translateX(100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        .favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 5;
+            color: var(--md-sys-color-outline);
+            transition: transform 0.2s, color 0.2s;
+            background: transparent;
+            border: none;
+        }
+        
+        .favorite-btn:hover { transform: scale(1.2); }
+        .favorite-btn.active { color: #fbbf24; text-shadow: 0 0 5px rgba(251, 191, 36, 0.5); }
+        
+        .favorites-header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+            color: #b45309;
+            border-bottom: 2px solid #fbbf24;
+            padding-bottom: 8px;
+            font-weight: bold;
+        }
+        [data-theme="dark"] .favorites-header { color: #fbbf24; }
 
         /* Detail View Styles */
         .detail-container {
@@ -1004,6 +1069,73 @@
             color: #b91c1c;
             border: 1px dashed #b91c1c;
         }
+		/* --- FIXED TICKETS STYLES --- */
+        .fixed-ticket-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--md-sys-color-surface-variant);
+            padding: 1rem;
+            border-radius: 16px;
+        }
+
+        .fixed-ticket-card {
+            background: var(--md-sys-color-surface);
+            border: 1px solid var(--md-sys-color-outline-variant);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100px;
+            position: relative;
+            border-left: 5px solid var(--md-sys-color-secondary);
+        }
+
+        .fixed-ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--md-sys-elevation-2);
+            border-color: var(--md-sys-color-primary);
+        }
+
+        .fixed-ticket-card.active-timer {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-color: var(--md-sys-color-primary);
+        }
+        
+        /* Adjust text colors when active */
+        .fixed-ticket-card.active-timer h3, 
+        .fixed-ticket-card.active-timer p,
+        .fixed-ticket-card.active-timer .btn-icon-only {
+            color: var(--md-sys-color-on-primary) !important;
+        }
+
+        .fixed-ticket-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fixed-ticket-time {
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .fixed-ticket-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0.7;
+        }
+        .fixed-ticket-card:hover .fixed-ticket-actions { opacity: 1; }
         
         #toast {
             visibility: hidden;
@@ -1068,12 +1200,13 @@
     <!-- SIDEBAR -->
     <nav class="sidebar">
         <div class="brand">MDoc</div>
-        <div class="nav-item active" onclick="router.navigate('programs')">📦 Programs</div>
+		<div class="nav-item" onclick="router.navigate('dashboard')">📊 Dashboard</div>
+        <div class="nav-item" onclick="router.navigate('programs')">📦 Programs</div>
         <div class="nav-item" onclick="router.navigate('tables')">🛢️ Tables</div>
         <div class="nav-item" onclick="router.navigate('queries')">🔍 Queries</div>
         <div class="nav-item" onclick="router.navigate('projects')">🗂️ Projects</div>
         <div class="nav-item" onclick="router.navigate('mailbox')">📬 Mailbox</div>
-        <div class="nav-item" onclick="router.navigate('dashboard')">📊 Dashboard</div>
+		<div class="nav-item" onclick="router.navigate('orphans')">👻 Orphan Objects</div>
         <div class="nav-item" onclick="router.navigate('logwork')">⌛ Log Work</div>
 
         <div class="sidebar-footer">
@@ -1230,6 +1363,19 @@
         <button class="btn btn-primary" onclick="ui.dismissCurrentReminder()">Dismiss</button>
     </div>
 </dialog>
+<dialog id="systemLogModal">
+    <h2>⏱️ Work Session Complete</h2>
+    <p>Please describe the work done for <strong id="sysLogTitle"></strong>:</p>
+    
+    <div class="input-group">
+        <label>Description / Activity</label>
+        <textarea id="sysLogInput" placeholder="e.g. Fixed crash in module X..." style="min-height: 100px;"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="ui.confirmSystemStop()">Save & Stop</button>
+    </div>
+</dialog>
 
 <!-- Toast -->
 <div id="toast">JSON copied to clipboard!</div>
@@ -1240,15 +1386,26 @@
  */
 function formatDuration(ms) {
     const totalSeconds = Math.floor((ms || 0) / 1000);
-    const days = Math.floor(totalSeconds / (3600 * 24));
-    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    
+    // Define the custom day length (7h 24m) in seconds
+    const secondsInWorkDay = (7 * 3600) + (24 * 60); // 26640 seconds
+    
+    // Calculate days based on custom length
+    const days = Math.floor(totalSeconds / secondsInWorkDay);
+    
+    // Calculate remaining time within that "day"
+    const remainingSeconds = totalSeconds % secondsInWorkDay;
+    
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
     
     const pad = (num) => num.toString().padStart(2, '0');
     
     if (days > 0) {
-        return `${pad(days)} - ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        // Returns "DD - HH:MM:SS"
+        // Note: HH will never exceed 07 in this logic because of the modulo
+        return `${pad(days)}d - ${pad(hours)}h:${pad(minutes)}m:${pad(seconds)}s`;
     } else {
         return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
@@ -1277,27 +1434,31 @@ class DataStore {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    ensureMailboxFixedCard() {
-        // Ensure the System Mailbox Project exists
+    ensureSystemProjects() {
         if (!this.data.projects) this.data.projects = [];
-        
-        const mailboxId = 'mailbox_fixed';
-        const exists = this.data.projects.find(p => p.id === mailboxId);
-        
-        if (!exists) {
-            this.data.projects.unshift({
-                id: mailboxId,
-                name: 'Mailbox Support',
-                description: 'Support requests and mailbox maintenance.',
-                status: 'ANA', // Keeps it active in Log Work
-                timeSpent: 0,
-                workLog: [],
-                isSystem: true
-            });
-            this.save();
-        }
-    }
 
+        const systemTickets = [
+            { id: 'mailbox_fixed', name: 'Mailbox Support', desc: 'Support requests and mailbox maintenance.' },
+            { id: 'incident_fixed', name: 'Incident Management', desc: 'Urgent fixes and production incidents.' },
+            { id: 'overhead_fixed', name: 'Overhead', desc: 'Meetings, admin, and general overhead.' }
+        ];
+
+        systemTickets.forEach(ticket => {
+            const exists = this.data.projects.find(p => p.id === ticket.id);
+            if (!exists) {
+                this.data.projects.unshift({
+                    id: ticket.id,
+                    name: ticket.name,
+                    description: ticket.desc,
+                    status: 'ANA', // Keeps it active
+                    timeSpent: 0,
+                    workLog: [],
+                    isSystem: true
+                });
+            }
+        });
+        this.save();
+    }
     // CRUD
     add(type, item) {
         item.id = this.generateId();
@@ -1318,7 +1479,7 @@ class DataStore {
 
     delete(type, id) {
         // Prevent deleting system objects
-        if (id === 'mailbox_fixed') {
+        if (id === 'mailbox_fixed' || id === 'incident_fixed' || id === 'overhead_fixed') {
             alert("Cannot delete the system Mailbox card.");
             return;
         }
@@ -1361,7 +1522,7 @@ class DataStore {
         if(!this.data.quickLinks) this.data.quickLinks = [];
         if(!this.data.globalTodos) this.data.globalTodos = [];
         if(!this.data.reminders) this.data.reminders = []; // Ensure reminders array
-        this.ensureMailboxFixedCard();
+        this.ensureSystemProjects();
     }
 
     importData(jsonString) {
@@ -1372,7 +1533,7 @@ class DataStore {
             if(!this.data.quickLinks) this.data.quickLinks = [];
             if(!this.data.globalTodos) this.data.globalTodos = [];
             if(!this.data.reminders) this.data.reminders = [];
-            this.ensureMailboxFixedCard();
+            this.ensureSystemProjects();
             this.save();
             alert('Data loaded successfully!');
             location.reload();
@@ -1413,28 +1574,32 @@ class Router {
     }
 
     renderList(type) {
-        if (type === 'logwork') {
-            renderLogWork();
-            return;
-        }
-
-        if (type === 'dashboard') {
-            renderDashboard();
-            return;
-        }
-
+        if (type === 'logwork') { renderLogWork(); return; }
+        if (type === 'dashboard') { renderDashboard(); return; }
+		if (type === 'orphans') { renderOrphanList(); return; }
+        
         const items = store.getAll(type);
         const titleMap = { programs: 'Programs', tables: 'Tables', queries: 'Queries', projects: 'Projects', mailbox: 'Mailbox' };
         
-        // --- SEARCH FEATURE ---
+        // --- SEARCH ---
         const currentSearch = this.searchState[type] || '';
         const filteredItems = items.filter(item => {
-            // Hide System Items from normal lists
-            if (type === 'projects' && item.id === 'mailbox_fixed') return false;
-
+            if (type === 'projects' && (item.id === 'mailbox_fixed' || item.id === 'incident_fixed' || item.id === 'overhead_fixed')) return false;
             const raw = JSON.stringify(item).toLowerCase();
             return raw.includes(currentSearch.toLowerCase());
         });
+
+        // --- SPLIT FAVORITES ---
+        // Only applicable for standard list views (programs, tables, queries, projects)
+        const supportsFavorites = ['programs', 'tables', 'queries', 'projects'].includes(type);
+        
+        let favorites = [];
+        let others = filteredItems;
+
+        if (supportsFavorites) {
+            favorites = filteredItems.filter(i => i.favorite);
+            others = filteredItems.filter(i => !i.favorite);
+        }
 
         let html = `
             <div class="header-row">
@@ -1444,7 +1609,6 @@ class Router {
                 </button>
             </div>
             
-            <!-- Global Search Bar for this Page -->
             <div class="filter-bar" style="margin-bottom: 1.5rem;">
                 <span style="font-size: 1.2rem;">🔎</span>
                 <input type="text" class="search-input" placeholder="Search ${titleMap[type]}..." 
@@ -1455,14 +1619,13 @@ class Router {
         `;
 
         if (type === 'mailbox') {
-            // Special Layout for Mailbox
+            // ... (Keep existing Mailbox Logic unchanged) ...
+            // Copy your existing Mailbox logic here from previous version
             const openItems = filteredItems.filter(i => i.status !== 'Solved');
             const solvedItems = filteredItems.filter(i => i.status === 'Solved');
 
             html += `<h3 style="color:var(--md-sys-color-primary)">Open Issues</h3><div class="card-grid">`;
-            
             if(openItems.length === 0) html += `<p style="grid-column: 1/-1; opacity:0.6">No open mail items.</p>`;
-
             openItems.forEach(item => {
                 const keywordsHtml = (item.keywords || []).map(k => `<span class="chip chip-keyword">${k}</span>`).join('');
                 html += `
@@ -1473,9 +1636,7 @@ class Router {
                     </div>
                 `;
             });
-
             html += `</div>`;
-
             // Solved Table
             if(solvedItems.length > 0) {
                 html += `
@@ -1499,68 +1660,84 @@ class Router {
             }
 
         } else if (type === 'projects') {
-             // Standard Project Grid
+             // Standard Project Grid WITH FAVORITES
              html += '<div class="card-grid">';
-            // Defined order
+             
+             // 1. Render Favorites
+             if (favorites.length > 0) {
+                 html += `<div class="favorites-header"><span>⭐</span> Favorites</div>`;
+                 favorites.forEach(item => html += this.buildCardHtml(type, item, item.status || 'ANA'));
+             }
+
+            // 2. Render Status Groups (for non-favorites)
             const statusOrder = ['ANA', 'DEV', 'APB', 'DONE'];
-            
-            // Render groups
             statusOrder.forEach(status => {
-                const groupItems = filteredItems.filter(i => (i.status || 'ANA') === status);
+                const groupItems = others.filter(i => (i.status || 'ANA') === status);
                 if (groupItems.length > 0) {
                     html += `<div class="status-separator">
                                 <span class="chip status-${status}" style="margin-right: 10px;">${status}</span>
                                 <span>Projects</span>
                              </div>`;
-                    
-                    groupItems.forEach(item => {
-                        html += this.buildCardHtml(type, item, status);
-                    });
+                    groupItems.forEach(item => html += this.buildCardHtml(type, item, status));
                 }
             });
 
-            // Catch any weird status
-            const others = filteredItems.filter(i => !statusOrder.includes(i.status || 'ANA'));
-            if (others.length > 0) {
+            // Catch others
+            const rest = others.filter(i => !statusOrder.includes(i.status || 'ANA'));
+            if (rest.length > 0) {
                 html += `<div class="status-separator">Uncategorized</div>`;
-                others.forEach(item => html += this.buildCardHtml(type, item, 'default'));
+                rest.forEach(item => html += this.buildCardHtml(type, item, 'default'));
             }
             html += '</div>';
 
         } else {
-            // Standard Grid for other types
+            // Standard Grid for others (programs, tables, etc)
             html += '<div class="card-grid">';
-            if (filteredItems.length === 0) {
+            
+            // 1. Favorites
+            if (favorites.length > 0) {
+                 html += `<div class="favorites-header"><span>⭐</span> Favorites</div>`;
+                 favorites.forEach(item => html += this.buildCardHtml(type, item));
+                 html += `<div class="status-separator" style="margin-top:1rem; border-color: transparent; opacity:0.5; font-size:0.8rem;">All Items</div>`;
+            }
+
+            if (others.length === 0 && favorites.length === 0) {
                 html += `<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No items found.</p>`;
             }
-            filteredItems.forEach(item => {
+            others.forEach(item => {
                 html += this.buildCardHtml(type, item);
             });
             html += '</div>';
         }
 
         this.mainEl.innerHTML = html;
-        
-        // Keep focus on search input if typing
         const input = document.querySelector('.search-input');
-        if (input && currentSearch) {
-            const len = currentSearch.length;
-            input.setSelectionRange(len, len);
-            input.focus();
-        }
+        if (input && currentSearch) { input.setSelectionRange(currentSearch.length, currentSearch.length); input.focus(); }
     }
 
     buildCardHtml(type, item, status = null) {
         let extra = '';
         let cardClasses = 'card';
         
+        // Favorite Logic
+        const isFav = item.favorite === true;
+        if (isFav) cardClasses += ' is-favorite';
+
+        // Star Button HTML
+        const starBtn = `
+            <button class="favorite-btn ${isFav ? 'active' : ''}" 
+                onclick="event.stopPropagation(); toggleFavorite('${type}', '${item.id}')">
+                ${isFav ? '★' : '☆'}
+            </button>
+        `;
+
         // Status border logic for projects
         if (type === 'projects') {
             cardClasses += ' project-card';
             cardClasses += ` status-border-${status || item.status || 'default'}`;
         }
         
-        // Query Special Styling
+        // Query styling
         if (type === 'queries') {
             if (item.updateIndicator === 'U') cardClasses += ' query-update';
             if (item.updateIndicator === 'D') cardClasses += ' query-delete';
@@ -1579,7 +1756,8 @@ class Router {
         }
         return `
             <div class="${cardClasses}" onclick="router.navigate('${type}', '${item.id}')">
-                <h3 style="margin:0">${item.name || item.shortName}</h3>
+                ${starBtn}
+                <h3 style="margin:0; padding-right: 20px;">${item.name || item.shortName}</h3>
                 <p style="margin-top:4px">${item.description || item.shortDescription || 'No description'}</p>
                 ${extra}
             </div>
@@ -1795,30 +1973,134 @@ function toggleGlobalTodoItem(type, parentId, idOrIdx) {
     setTimeout(() => router.renderList('dashboard'), 200);
 }
 
+// --- 1. State Management (Place this outside the render function) ---
+let currentWeekOffset = 0;
+let logWorkViewMode = 'all'; // 'all' or 'week'
+
+window.changeWeek = function(direction) {
+    if (direction == 0) {
+		currentWeekOffset = 0;
+	}
+	else {
+		currentWeekOffset += direction;
+		// Fix: Re-render the dashboard view using the router to update the chart correctly
+	}
+	router.renderList('dashboard')
+};
+
+// --- 2. The Fancy Render Function ---
 function renderWeeklyChart() {
-    // 1. Determine Week Range (Mon-Fri)
+    // --- CSS Styles (Scoped to this component for portability) ---
+    // Find this inside function renderWeeklyChart()
+// Inside function renderWeeklyChart()...
+
+const styles = `
+    <style>
+        .fancy-wrapper { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--md-sys-color-on-surface); }
+        .fancy-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        /* Chart Area */
+        .chart-container { position: relative; height: 250px; display: flex; align-items: flex-end; padding-left: 50px; margin-bottom: 30px; overflow: visible; }
+        .chart-grid { position: absolute; inset: 0 0 0 50px; display: flex; flex-direction: column-reverse; justify-content: space-between; pointer-events: none; z-index: 0; }
+        .grid-line { width: 100%; border-top: 1px dashed var(--md-sys-color-outline-variant); height: 0; opacity: 0.5; }
+        .y-axis { position: absolute; left: 0; top: 0; bottom: 0; width: 40px; display: flex; flex-direction: column-reverse; justify-content: space-between; font-size: 0.75rem; color: var(--md-sys-color-secondary); text-align: right; padding-right: 10px; }
+        
+        .bars-area { display: flex; width: 100%; height: 100%; z-index: 1; justify-content: space-around; align-items: flex-end; }
+        .day-col { display: flex; flex-direction: column; align-items: center; width: 14%; height: 100%; justify-content: flex-end; position: relative; }
+        .bar-stack { width: 60%; display: flex; flex-direction: column-reverse; border-radius: 4px; overflow: visible; transition: height 0.3s ease; position: relative; }
+        .day-label { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--md-sys-color-secondary); }
+        .date-sublabel { font-size: 0.7rem; color: var(--md-sys-color-secondary); margin-top: 2px; opacity: 0.8; }
+
+        /* Tooltip Fixes */
+        .bar-segment { width: 100%; position: relative; transition: opacity 0.2s; cursor: pointer; }
+        .bar-segment:first-child { border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+        .bar-segment:last-child { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+        
+        .bar-segment::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 5px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            display: none;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .bar-segment:hover::after { display: block; }
+        
+        .project-breakdown { margin-top: 20px; border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 20px; }
+        
+        /* --- ALIGNMENT FIXES HERE --- */
+        .pb-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 0.9rem; color: var(--md-sys-color-on-surface); }
+        
+        .pb-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0; /* Prevents dot from squishing */
+        }
+
+        .pb-name {
+            width: 160px; /* FIXED WIDTH: Ensures all bars start at same point */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Adds ... if name is too long */
+            margin-right: 15px;
+        }
+
+        .pb-track { 
+            flex-grow: 1; /* Takes up remaining space */
+            height: 8px; 
+            background: var(--md-sys-color-surface-variant); 
+            border-radius: 4px; 
+            overflow: hidden; 
+            margin-right: 15px; 
+        }
+        
+        .pb-fill { height: 100%; width: var(--target-width); border-radius: 4px; transition: width 1s ease-out; }
+        
+        .pb-time { width: 60px; text-align: right; font-variant-numeric: tabular-nums; color: var(--md-sys-color-secondary); font-size: 0.85rem; flex-shrink: 0; }
+    </style>
+`;
+
+    // --- 3. Logic & Calculation ---
+
+    // A. Date Math with Offset
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 Sun, 1 Mon...
+    today.setDate(today.getDate() + (currentWeekOffset * 7)); // Apply global offset
+    
+    const dayOfWeek = today.getDay(); 
     const diffToMon = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
     
     const monday = new Date(today);
     monday.setDate(today.getDate() + diffToMon);
     monday.setHours(0,0,0,0);
 
-    const weekData = {
-        'Mon': { date: new Date(monday), total: 0, projects: {} },
-        'Tue': { date: new Date(monday.getTime() + 86400000 * 1), total: 0, projects: {} },
-        'Wed': { date: new Date(monday.getTime() + 86400000 * 2), total: 0, projects: {} },
-        'Thu': { date: new Date(monday.getTime() + 86400000 * 3), total: 0, projects: {} },
-        'Fri': { date: new Date(monday.getTime() + 86400000 * 4), total: 0, projects: {} }
-    };
+    const weekData = {};
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    
+    // Initialize Week & tracking for Project Summary
+    const projectSummary = {}; 
+    let grandTotal = 0;
 
-    // 2. Aggregate Data from workSessions
+    days.forEach((d, index) => {
+        const date = new Date(monday.getTime() + 86400000 * index);
+        weekData[d] = { date: date, total: 0, projects: {} };
+    });
+
+    // B. Aggregate Data
     const sessions = store.data.workSessions || [];
     
     sessions.forEach(s => {
         const sDate = new Date(s.start);
-        // Basic match YYYY-MM-DD
         const dayKey = Object.keys(weekData).find(key => {
             const wDate = weekData[key].date;
             return wDate.getDate() === sDate.getDate() && 
@@ -1827,48 +2109,85 @@ function renderWeeklyChart() {
         });
 
         if (dayKey) {
+            // Daily aggregation
             weekData[dayKey].total += s.duration;
             if (!weekData[dayKey].projects[s.projectId]) {
                 weekData[dayKey].projects[s.projectId] = 0;
             }
             weekData[dayKey].projects[s.projectId] += s.duration;
+
+            // Global (Weekly) aggregation
+            grandTotal += s.duration;
+            if (!projectSummary[s.projectId]) projectSummary[s.projectId] = 0;
+            projectSummary[s.projectId] += s.duration;
         }
     });
 
-    // 3. Render Chart
-    // Find Max Daily Duration for scaling (default to at least 1 hour to avoid div/0)
+    // C. Scaling Logic
     let maxDuration = Math.max(1000 * 60 * 60, ...Object.values(weekData).map(d => d.total));
-    // Add 10% headroom
-    maxDuration = maxDuration * 1.1;
+    maxDuration = maxDuration * 1.1; // 10% headroom
 
-    // Y Axis Labels (Time)
     const yLabels = [];
-    const step = maxDuration / 5;
-    for(let i=0; i<=5; i++) {
-        yLabels.push(formatDurationShort(step * i));
-    }
+    for(let i=0; i<=5; i++) yLabels.push(formatDurationShort((maxDuration / 5) * i));
+
+    // D. Build Project Breakdown List (Sorted by duration)
+    const sortedProjectIds = Object.keys(projectSummary).sort((a,b) => projectSummary[b] - projectSummary[a]);
+    
+    const projectListHtml = sortedProjectIds.map(pid => {
+        const duration = projectSummary[pid];
+        const percent = grandTotal > 0 ? (duration / grandTotal) * 100 : 0;
+        const project = store.get('projects', pid) || { name: 'Unknown Project' };
+        const color = stringToColor(pid);
+
+        return `
+            <div class="pb-row" onclick="router.navigate('projects', '${pid}')" style="cursor: pointer;">
+                <div class="pb-color" style="background-color: ${color}"></div>
+                <div class="pb-name" title="${project.name}">${project.name}</div>
+                <div class="pb-track">
+                    <div class="pb-fill" style="background-color: ${color}; --target-width: ${percent}%;"></div>
+                </div>
+                <div class="pb-time">${formatDurationShort(duration)}</div>
+            </div>
+        `;
+    }).join('');
+
+    // --- 4. Render HTML ---
+    
+    // Formatting the date range for the header
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    const dateRangeStr = `${monday.toLocaleDateString(undefined, {month:'short', day:'numeric'})} - ${friday.toLocaleDateString(undefined, {month:'short', day:'numeric'})}`;
 
     return `
-        <div class="chart-wrapper">
-            <h3>Workweek Overview</h3>
-            <p style="opacity: 0.6; margin-top: -8px; font-size: 0.9rem;">Total time logged per day (Mon - Fri)</p>
+        ${styles}
+        <div class="fancy-wrapper">
+            
+            <div class="fancy-header">
+                <div>
+                    <h3 style="margin:0;">Weekly Activity</h3>
+                    <div style="font-size: 0.9rem; color: #888; margin-top: 4px;">${dateRangeStr}</div>
+                </div>
+                <div style="display:flex; gap: 8px;">
+					<button class="btn btn-outlined btn-small" onclick="window.changeWeek(-1)">← Prev</button>
+					<button class="btn btn-tonal btn-small" onclick="window.changeWeek(0)">Today</button>
+					<button class="btn btn-outlined btn-small" onclick="window.changeWeek(1)">Next →</button>
+				</div>
+            </div>
             
             <div class="chart-container">
-                <!-- Grid Lines -->
-                <div style="position:absolute; inset: 0 0 0 40px; display:flex; flex-direction:column-reverse; justify-content:space-between; pointer-events:none;">
-                    ${[0,1,2,3,4,5].map(() => '<div class="chart-grid-line" style="position:relative; width:100%;"></div>').join('')}
+                <div class="grid-lines chart-grid">
+                    ${[0,1,2,3,4,5].map(() => '<div class="grid-line"></div>').join('')}
                 </div>
-
-                <div class="chart-y-axis">
+                <div class="y-axis">
                     ${yLabels.map(l => `<span>${l}</span>`).join('')}
                 </div>
                 
-                <div class="chart-area">
+                <div class="bars-area">
                     ${Object.keys(weekData).map(day => {
                         const dayObj = weekData[day];
                         const totalHeight = (dayObj.total / maxDuration) * 100;
                         
-                        // Build Stack
+                        // Stack Segments
                         const stackHtml = Object.keys(dayObj.projects).map(pid => {
                             const pDuration = dayObj.projects[pid];
                             const pHeight = (pDuration / dayObj.total) * 100;
@@ -1877,25 +2196,32 @@ function renderWeeklyChart() {
                             
                             return `
                                 <div class="bar-segment" 
-                                    style="height: ${pHeight}%; background-color: ${color};"
-                                    data-tooltip="${project.name}: ${formatDurationShort(pDuration)}"
-                                    onclick="router.navigate('projects', '${pid}')">
+                                     style="height: ${pHeight}%; background-color: ${color};"
+                                     data-tooltip="${project.name}: ${formatDurationShort(pDuration)}"
+                                     onclick="event.stopPropagation(); router.navigate('projects', '${pid}')">
                                 </div>
                             `;
                         }).join('');
 
                         return `
-                            <div class="day-column">
+                            <div class="day-col">
                                 <div class="bar-stack" style="height: ${totalHeight}%;">
                                     ${stackHtml}
                                 </div>
                                 <div class="day-label">${day}</div>
+                                <div class="date-sublabel">${dayObj.date.getDate()}</div>
                             </div>
                         `;
                     }).join('')}
                 </div>
             </div>
-            ${Object.values(weekData).every(d => d.total === 0) ? '<p style="text-align:center; opacity:0.5; margin-top:1rem;">No activity recorded for this week yet.</p>' : ''}
+
+            <div class="project-breakdown">
+                <h4 style="margin: 0 0 15px 0; font-size: 0.9rem; text-transform: uppercase; color: #888; letter-spacing: 0.5px;">
+                    Project Breakdown (Total: ${formatDurationShort(grandTotal)})
+                </h4>
+                ${projectListHtml || '<div style="color:#999; text-align:center; padding: 20px;">No logs this week</div>'}
+            </div>
         </div>
     `;
 }
@@ -2004,7 +2330,122 @@ function stringToColor(str) {
 /**
  * --- RENDERERS ---
  */
+/**
+ * --- ORPHAN LOGIC & RENDERER ---
+ */
 
+function scanTextForRefs(text, callback) {
+    if(!text) return;
+    // Regex matches /table{Name} and /program{Name}
+    const tableRegex = /\/table\{([^}]+)\}/g;
+    const progRegex = /\/program\{([^}]+)\}/g;
+    
+    let match;
+    while ((match = tableRegex.exec(text)) !== null) callback('tables', match[1]);
+    while ((match = progRegex.exec(text)) !== null) callback('programs', match[1]);
+}
+
+function getOrphanData() {
+    const missing = { programs: new Set(), tables: new Set() };
+    
+    // Helper: checks if exists, if not adds to missing set
+    const checkAndAdd = (type, name) => {
+        if(!name) return;
+        const exists = store.findByName(type, name);
+        if(!exists) missing[type].add(name);
+    };
+
+    // 1. Scan Projects (Links + Logs + Description)
+    store.getAll('projects').forEach(p => {
+        (p.linkedTables || []).forEach(t => checkAndAdd('tables', t));
+        (p.linkedPrograms || []).forEach(prog => checkAndAdd('programs', prog));
+        scanTextForRefs(p.description, checkAndAdd);
+        scanTextForRefs(p.notes, checkAndAdd);
+        (p.workLog || []).forEach(log => scanTextForRefs(log.content, checkAndAdd));
+        (p.todos || []).forEach(todo => scanTextForRefs(todo.text, checkAndAdd));
+    });
+    
+    // 2. Scan Programs (Links + Flow)
+    store.getAll('programs').forEach(p => {
+        (p.linkedTables || []).forEach(t => checkAndAdd('tables', t));
+        (p.linkedPrograms || []).forEach(prog => checkAndAdd('programs', prog));
+        scanTextForRefs(p.flow, checkAndAdd);
+        scanTextForRefs(p.shortDescription, checkAndAdd);
+    });
+
+    // 3. Scan Tables (Relationships)
+    store.getAll('tables').forEach(t => {
+        (t.links || []).forEach(l => checkAndAdd('tables', l.toTable));
+    });
+
+    // 4. Scan Mailbox (Logs)
+    store.getAll('mailbox').forEach(m => {
+        (m.workLog || []).forEach(log => scanTextForRefs(log.content, checkAndAdd));
+    });
+
+    return {
+        programs: Array.from(missing.programs).sort(),
+        tables: Array.from(missing.tables).sort()
+    };
+}
+
+function renderOrphanList() {
+    const data = getOrphanData();
+    const hasOrphans = data.programs.length > 0 || data.tables.length > 0;
+
+    let html = `
+        <div class="header-row">
+            <h1 class="page-title">Orphan Objects</h1>
+            <button class="btn btn-outlined" onclick="router.renderList('orphans')">↻ Refresh Scan</button>
+        </div>
+        <p style="margin-bottom: 2rem; color: var(--md-sys-color-secondary);">
+            The following objects are referenced in your documentation (via links, relationships, or text tags like <code>/table{Name}</code>), 
+            but do not exist in the database. Click a card to create it.
+        </p>
+    `;
+
+    if (!hasOrphans) {
+        html += `
+            <div style="text-align:center; padding: 4rem; opacity: 0.6;">
+                <div style="font-size: 3rem;">✨</div>
+                <h3>Clean System!</h3>
+                <p>No orphan references found.</p>
+            </div>
+        `;
+    } else {
+        // Render Missing Tables
+        if (data.tables.length > 0) {
+            html += `<h3 style="color:var(--md-sys-color-primary); border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 8px;">Missing Tables (${data.tables.length})</h3>`;
+            html += `<div class="card-grid" style="margin-bottom: 2rem;">`;
+            html += data.tables.map(name => `
+                <div class="card" style="border-left: 5px solid #eab308; cursor: pointer;" 
+                     onclick="ui.openCreateModal('tables', '${name}')" title="Click to Create Table">
+                    <h3 style="margin:0">🛢️ ${name}</h3>
+                    <p style="margin-top:4px; font-size:0.85rem;">Referenced as Table</p>
+                    <div style="margin-top:10px; font-size:0.8rem; color:var(--md-sys-color-primary); font-weight:bold;">+ Create Now</div>
+                </div>
+            `).join('');
+            html += `</div>`;
+        }
+
+        // Render Missing Programs
+        if (data.programs.length > 0) {
+            html += `<h3 style="color:var(--md-sys-color-primary); border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 8px;">Missing Programs (${data.programs.length})</h3>`;
+            html += `<div class="card-grid">`;
+            html += data.programs.map(name => `
+                <div class="card" style="border-left: 5px solid #3b82f6; cursor: pointer;" 
+                     onclick="ui.openCreateModal('programs', '${name}')" title="Click to Create Program">
+                    <h3 style="margin:0">📦 ${name}</h3>
+                    <p style="margin-top:4px; font-size:0.85rem;">Referenced as Program</p>
+                    <div style="margin-top:10px; font-size:0.8rem; color:var(--md-sys-color-primary); font-weight:bold;">+ Create Now</div>
+                </div>
+            `).join('');
+            html += `</div>`;
+        }
+    }
+
+    document.getElementById('mainContent').innerHTML = html;
+}
 // 1. PROGRAMS
 function renderProgramDetail(item) {
     return `
@@ -2270,15 +2711,28 @@ function renderQueryDetail(item) {
     `;
 }
 
-// 4. PROJECTS
 function renderProjectDetail(item) {
     const formattedTime = formatDuration(item.timeSpent);
+    
+    // --- 1. PREPARE LOGS (FILTER & SORT) ---
     let logs = item.workLog || [];
+    
+    // Add legacy note if exists
     if (logs.length === 0 && item.notes) {
         logs.push({ id: 'legacy', timestamp: item.createdAt || new Date().toISOString(), content: item.notes, isLegacy: true });
     }
-    // Newest first
-    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Filter: Important Only
+    if (projectLogFilter.importantOnly) {
+        logs = logs.filter(l => l.isImportant);
+    }
+
+    // Sort: Date
+    logs.sort((a, b) => {
+        const dateA = new Date(a.timestamp);
+        const dateB = new Date(b.timestamp);
+        return projectLogFilter.sortAscending ? dateA - dateB : dateB - dateA;
+    });
 
     return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-right: 80px;">
@@ -2294,14 +2748,37 @@ function renderProjectDetail(item) {
             </div>
         </div>
         
+        <div class="input-group" style="margin-top: 1rem;">
+            <label>Description</label>
+            <textarea placeholder="Project description..." style="min-height: 60px;" 
+                onchange="updateField('projects', '${item.id}', 'description', this.value)">${item.description || ''}</textarea>
+        </div>
+
         <div class="input-group">
-            <label>Status (Click & Drag to Change)</label>
+            <label>Status</label>
             ${renderStatusSlider(item.id, item.status, false)}
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+            ${renderLinkInput(item.id, 'DOR Link', 'linkDOR', item.linkDOR)}
+            ${renderLinkInput(item.id, 'DOD Link', 'linkDOD', item.linkDOD)}
+            ${renderLinkInput(item.id, 'Other Link', 'linkOther', item.linkOther)}
+        </div>
+
         <div class="section-header">
-            Work Logs
-            <span style="font-size: 0.7rem; font-weight: normal; color: #666;">Use /table{Name} or /program{Name} to reference</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                Work Logs
+                <span style="font-size: 0.7rem; font-weight: normal; color: #666;">(${logs.length} visible)</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-small ${projectLogFilter.importantOnly ? 'btn-primary' : 'btn-outlined'}" 
+                    onclick="toggleProjectLogFilter('${item.id}', 'important')">
+                    ${projectLogFilter.importantOnly ? '★ Important Only' : '☆ All Logs'}
+                </button>
+                <button class="btn btn-small btn-tonal" onclick="toggleProjectLogFilter('${item.id}', 'sort')">
+                    ${projectLogFilter.sortAscending ? '⬆️ Oldest First' : '⬇️ Newest First'}
+                </button>
+            </div>
         </div>
         
         <div style="background: var(--md-sys-color-surface-variant); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
@@ -2312,19 +2789,25 @@ function renderProjectDetail(item) {
         </div>
 
         <div id="project-work-logs">
-            ${logs.map((log, index) => `
-                <div class="work-log-entry ${log.isImportant ? 'important' : ''}" id="log-entry-${index}">
+            ${logs.length === 0 ? '<p style="text-align:center; opacity:0.5; font-style:italic;">No logs match your filter.</p>' : ''}
+            ${logs.map((log) => {
+                // Find original index in the main array to ensure edits save to correct slot
+                // We use referential equality since objects are passed by reference
+                const originalIndex = (item.workLog || []).indexOf(log);
+                
+                return `
+                <div class="work-log-entry ${log.isImportant ? 'important' : ''}" id="log-entry-${originalIndex}">
                     <div class="work-log-meta">
                         <span>${new Date(log.timestamp).toLocaleString()} ${log.isLegacy ? '(Legacy Note)' : ''}</span>
                         <div>
-                             <button class="log-action-btn ${log.isImportant ? 'active-star' : ''}" onclick="toggleImportant('${item.id}', ${index})" title="Mark as Important">★</button>
-                             <button class="log-action-btn" onclick="enableEditLog('${item.id}', ${index})" title="Edit Note">✎</button>
+                             <button class="log-action-btn ${log.isImportant ? 'active-star' : ''}" onclick="toggleImportant('${item.id}', ${originalIndex})" title="Mark as Important">★</button>
+                             <button class="log-action-btn" onclick="enableEditLog('${item.id}', ${originalIndex})" title="Edit Note">✎</button>
                         </div>
                     </div>
-                    <div class="work-log-content" id="log-content-${index}">${formatWorkLogContent(log.content)}</div>
-                    <textarea id="log-edit-${index}" style="display:none; width:100%; border:1px solid #ccc; padding:8px;" onblur="saveLogEdit('${item.id}', ${index}, this.value)">${log.content}</textarea>
+                    <div class="work-log-content" id="log-content-${originalIndex}">${formatWorkLogContent(log.content)}</div>
+                    <textarea id="log-edit-${originalIndex}" style="display:none; width:100%; border:1px solid #ccc; padding:8px;" onblur="saveLogEdit('${item.id}', ${originalIndex}, this.value)">${log.content}</textarea>
                 </div>
-            `).join('')}
+            `}).join('')}
         </div>
 
         <div class="section-header">To-Do's</div>
@@ -2350,6 +2833,20 @@ function renderProjectDetail(item) {
              ${(item.linkedPrograms || []).map((p, idx) => renderReferenceCard('projects', item.id, 'linkedPrograms', idx, p, 'programs')).join('')}
         </div>
         <button class="btn btn-tonal btn-small" style="margin-top:12px" onclick="addListItem('projects', '${item.id}', 'linkedPrograms')">+ Link Program</button>
+    `;
+}
+
+// Helper to render the Link inputs
+function renderLinkInput(id, label, field, value) {
+    return `
+        <div class="input-group">
+            <label>${label}</label>
+            <div style="display:flex; gap:4px;">
+                <input type="text" value="${value || ''}" placeholder="https://..." 
+                    onchange="updateField('projects', '${id}', '${field}', this.value)">
+                ${value ? `<button class="btn btn-icon-only btn-tonal" onclick="window.open('${value}', '_blank')" title="Open Link">↗</button>` : ''}
+            </div>
+        </div>
     `;
 }
 
@@ -2615,62 +3112,97 @@ setInterval(updateStatusBar, 1000);
 updateStatusBar(); // Init
 
 function renderLogWork() {
-    const projects = store.getAll('projects').filter(p => p.status !== 'DONE' || p.isSystem);
+    // 1. Separate System vs Regular Projects
+    const allProjects = store.getAll('projects').filter(p => p.status !== 'DONE' || p.isSystem);
     
-    // Sort so mailbox_fixed is always first
-    projects.sort((a, b) => {
-        if (a.id === 'mailbox_fixed') return -1;
-        if (b.id === 'mailbox_fixed') return 1;
-        return 0;
-    });
+    const systemIds = ['mailbox_fixed', 'incident_fixed', 'overhead_fixed'];
+    const systemProjects = allProjects.filter(p => systemIds.includes(p.id));
+    
+    // Sort system projects
+    systemProjects.sort((a, b) => systemIds.indexOf(a.id) - systemIds.indexOf(b.id));
+
+    const userProjects = allProjects.filter(p => !systemIds.includes(p.id));
 
     const mainEl = document.getElementById('mainContent');
     const activeProject = currentProjectId ? store.get('projects', currentProjectId) : null;
     
+    const sysIcons = { 'mailbox_fixed': '📬', 'incident_fixed': '🔥', 'overhead_fixed': '☕' };
+
+    // HTML Construction
     let html = `
         <div class="header-row">
             <h1 class="page-title">Log Work</h1>
-            ${currentProjectId ? `<button class="btn btn-danger" onclick="stopTimer()">Stop Timer</button>` : ''}
+            <div style="display:flex; gap: 10px; align-items:center;">
+                <div style="display:flex; background:var(--md-sys-color-surface-variant); padding:4px; border-radius:20px;">
+                    <button class="btn btn-small ${logWorkViewMode === 'week' ? 'btn-primary' : 'btn-ghost'}" 
+                        style="border-radius:16px;" 
+                        onclick="logWorkViewMode='week'; renderLogWork()">This Week</button>
+                    <button class="btn btn-small ${logWorkViewMode === 'all' ? 'btn-primary' : 'btn-ghost'}" 
+                        style="border-radius:16px;" 
+                        onclick="logWorkViewMode='all'; renderLogWork()">All Time</button>
+                </div>
+                ${currentProjectId ? `<button class="btn btn-danger" onclick="stopTimer()">Stop Timer</button>` : ''}
+            </div>
         </div>
 
-        <div class="detail-container" style="text-align:center; margin-bottom: 2rem;">
-            <p style="margin:0; opacity: 0.7; font-weight: 500;">
-                ${currentProjectId ? `Currently working on: <strong>${activeProject.name}</strong>` : 'Select a project to start logging time'}
-            </p>
-            <div id="timerDisplay" class="timer-display">00:00:00</div>
+        <div class="detail-container" style="text-align:center; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 3rem;">
+            <div style="text-align: left;">
+                 <p style="margin:0; opacity: 0.7; font-weight: 500; font-size: 0.9rem; text-transform: uppercase;">Current Session</p>
+                 <div style="font-size: 1.2rem; font-weight: bold; margin-top: 5px;">
+                    ${currentProjectId ? activeProject.name : 'No Active Timer'}
+                 </div>
+            </div>
+            <div id="timerDisplay" class="timer-display" style="margin: 0;">00:00:00</div>
         </div>
 
-        <h3 style="margin-bottom: 1rem; color: var(--md-sys-color-on-surface-variant)">Active Projects</h3>
-        <div class="card-grid">
-            ${projects.map(p => {
+        <h3 style="margin-bottom: 1rem; color: var(--md-sys-color-primary)">Quick Actions</h3>
+        <div class="fixed-ticket-container">
+            ${systemProjects.map(p => {
                 const isActive = currentProjectId === p.id;
-                const isFixed = p.id === 'mailbox_fixed';
-                const cardStyle = isFixed ? 'border-top: 4px solid var(--md-sys-color-secondary);' : '';
-                const formattedTime = formatDuration(p.timeSpent);
+                // LOGIC SWITCH: Check mode
+                const timeValue = logWorkViewMode === 'week' ? getProjectTimeForCurrentWeek(p.id) : p.timeSpent;
+                const formattedTime = formatDuration(timeValue);
+                
+                return `
+                    <div class="fixed-ticket-card ${isActive ? 'active-timer' : ''}" onclick="handleProjectCardClick('${p.id}')">
+                        <div class="fixed-ticket-actions">
+                            <button class="btn btn-icon-only btn-tonal" onclick="event.stopPropagation(); router.navigate('projects', '${p.id}')">➚</button>
+                        </div>
+                        <div class="fixed-ticket-title">
+                            <span style="font-size: 1.5rem;">${sysIcons[p.id] || '📋'}</span>
+                            <span>${p.name}</span>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <div style="font-size: 0.75rem; opacity: 0.8; text-transform: uppercase;">${logWorkViewMode === 'week' ? 'This Week' : 'Total Time'}</div>
+                            <div class="fixed-ticket-time">${formattedTime}</div>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                             ${isActive ? '<span class="rec-dot active" style="background: white;"></span> Recording...' : '▶ Click to Start'}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+
+        <h3 style="margin-bottom: 1rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2rem;">Project Tickets</h3>
+        <div class="card-grid">
+            ${userProjects.map(p => {
+                const isActive = currentProjectId === p.id;
+                // LOGIC SWITCH: Check mode
+                const timeValue = logWorkViewMode === 'week' ? getProjectTimeForCurrentWeek(p.id) : p.timeSpent;
+                const formattedTime = formatDuration(timeValue);
 
                 return `
-                    <div class="card ${isActive ? 'active-timer' : ''} project-card status-border-${p.status}" style="${cardStyle}" onclick="handleProjectCardClick('${p.id}')">
+                    <div class="card ${isActive ? 'active-timer' : ''} project-card status-border-${p.status}" onclick="handleProjectCardClick('${p.id}')">
 						<div style="display:flex; justify-content: space-between; align-items: flex-start;">
-							<h3 style="margin:0; display: flex; align-items: center; gap: 6px; color: var(--md-sys-color-on-surface, #1d1b20);">
-								<span style="
-									background-color: var(--md-sys-color-on-surface, #1d1b20); 
-									color: #ffffff; 
-									width: 28px; 
-									height: 28px; 
-									display: flex; 
-									align-items: center; 
-									justify-content: center; 
-									border-radius: 6px; 
-									font-size: 0.9em;
-									flex-shrink: 0;
-								">
-									${isFixed ? '📬' : p.name.charAt(0).toUpperCase()}
+							<h3 style="margin:0; display: flex; align-items: center; gap: 6px; color: var(--md-sys-color-on-surface);">
+								<span style="background-color: var(--md-sys-color-on-surface); color: #ffffff; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 0.9em; flex-shrink: 0;">
+									${p.name.charAt(0).toUpperCase()}
 								</span>
-								
 								<span>${p.name}</span>
 							</h3>
                             <div style="display:flex; gap: 4px; align-items: center;">
-                                <button class="btn btn-tonal btn-icon-only" title="Adjust Time" onclick="adjustTime('${p.id}', event)" style="width:24px; height:24px; font-size:1.1rem; line-height:0;">±</button>
+                                <button class="btn btn-tonal btn-icon-only" title="Adjust Time" onclick="adjustTime('${p.id}', event)" style="width:24px; height:24px;">±</button>
 							    <span class="chip status-${p.status}">${p.status}</span>
                             </div>
 						</div>
@@ -2678,7 +3210,7 @@ function renderLogWork() {
 						<p style="margin-top: 10px;">${p.description || 'No description'}</p>
                         
                         <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--md-sys-color-outline-variant); font-size: 0.85rem; color: var(--md-sys-color-primary);">
-                             <strong>Total Logged:</strong> ${formattedTime}
+                             <strong>${logWorkViewMode === 'week' ? 'Week' : 'Total'}:</strong> ${formattedTime}
                         </div>
 						
 						<div style="margin-top: 8px; font-weight: bold; color: var(--md-sys-color-primary)">
@@ -2687,7 +3219,7 @@ function renderLogWork() {
 					</div>
                 `;
             }).join('')}
-            ${projects.length === 0 ? '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No active projects. Go to Projects to create one!</p>' : ''}
+             ${userProjects.length === 0 ? '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No active projects.</p>' : ''}
         </div>
     `;
     mainEl.innerHTML = html;
@@ -2729,6 +3261,14 @@ function updateTimerDisplay() {
 
 function stopTimer(shouldRefresh = true) {
     if (!currentProjectId) return;
+
+    // --- CHECK FOR SYSTEM ID ---
+    const systemIds = ['mailbox_fixed', 'incident_fixed', 'overhead_fixed'];
+    if (systemIds.includes(currentProjectId)) {
+        // Open Modal instead of stopping immediately
+        ui.openSystemStopModal(currentProjectId);
+        return;
+    }
     const endTime = Date.now();
     const sessionDuration = endTime - startTime;
     
@@ -2761,8 +3301,57 @@ function stopTimer(shouldRefresh = true) {
             renderLogWork();
         }
     }
+	finalizeStopTimer(shouldRefresh);
 }
+function finalizeStopTimer(shouldRefresh = true, customDesc = null) {
+    const endTime = Date.now();
+    const sessionDuration = endTime - startTime;
+    
+    // 1. Update Aggregate Time
+    const project = store.get('projects', currentProjectId);
+    const newTotal = (project.timeSpent || 0) + sessionDuration;
+    
+    // 2. Add Log Entry if customDesc is provided (System Tickets)
+    let logs = project.workLog || [];
+    if (customDesc) {
+        logs.push({
+            id: Date.now().toString(),
+            timestamp: new Date().toISOString(),
+            content: customDesc,
+            isImportant: false
+        });
+    }
 
+    store.update('projects', currentProjectId, { 
+        timeSpent: newTotal,
+        workLog: logs
+    });
+    
+    // 3. Record Session for Dashboard
+    if (!store.data.workSessions) store.data.workSessions = [];
+    store.data.workSessions.push({
+        id: Date.now().toString(),
+        projectId: currentProjectId,
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+        duration: sessionDuration
+    });
+    store.save();
+
+    // Reset Globals
+    clearInterval(timerInterval);
+    timerInterval = null;
+    currentProjectId = null;
+    startTime = null;
+    
+    updateStatusBar();
+
+    if (shouldRefresh) {
+        if (router.currentView === 'logwork') {
+            renderLogWork();
+        }
+    }
+}
 function adjustTime(projectId, event) {
     if (event) event.stopPropagation();
     ui.openAdjustModal(projectId);
@@ -2771,7 +3360,37 @@ function adjustTime(projectId, event) {
 /**
  * --- HELPER FUNCTIONS ---
  */
-
+ function toggleFavorite(type, id) {
+    const item = store.get(type, id);
+    if (item) {
+        // Toggle boolean
+        const newVal = !item.favorite;
+        store.update(type, id, { favorite: newVal });
+        // Refresh List
+        router.renderList(type);
+    }
+}
+// Replace the existing getProjectTimeForCurrentWeek function
+function getProjectTimeForCurrentWeek(projectId) {
+    const now = new Date();
+    const day = now.getDay(); 
+    // Calculate Monday of the current week
+    const diff = now.getDate() - day + (day == 0 ? -6 : 1); 
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0,0,0,0);
+    
+    const sessions = store.data.workSessions || [];
+    
+    return sessions.reduce((total, sess) => {
+        const sessDate = new Date(sess.start);
+        // Ensure we strictly check Project ID and Date range
+        if (sess.projectId === projectId && sessDate >= monday) {
+            // FIX: Wrap in Number() to prevent string concatenation (e.g. "100" + "100" = "100100")
+            return total + Number(sess.duration || 0);
+        }
+        return total;
+    }, 0);
+}
 function updateField(type, id, field, value) {
     store.update(type, id, { [field]: value });
     if(field === 'linkedTables' || field === 'linkedPrograms' || field === 'todos' || field === 'keywords') {
@@ -2822,23 +3441,41 @@ function formatWorkLogContent(text) {
     if(!text) return '';
     let safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     safeText = safeText.replace(/\n/g, "<br>");
+    
+    // Updated: Added onclick event to the 'missing' span
     safeText = safeText.replace(/\/table\{([^}]+)\}/g, (match, name) => {
         const found = store.findByName('tables', name);
         if (found) {
             return `<span class="smart-ref found" onclick="router.navigate('tables', '${found.id}')">🛢️ ${name}</span>`;
         } else {
-            return `<span class="smart-ref missing" title="Table '${name}' not found. Create it to link.">⚠️ ${name}</span>`;
+            // Click to create logic added here
+            return `<span class="smart-ref missing" style="cursor:pointer;" title="Table '${name}' not found. Click to create." onclick="ui.openCreateModal('tables', '${name}')">⚠️ ${name}</span>`;
         }
     });
+    
+    // Updated: Added onclick event to the 'missing' span
     safeText = safeText.replace(/\/program\{([^}]+)\}/g, (match, name) => {
         const found = store.findByName('programs', name);
         if (found) {
             return `<span class="smart-ref found" onclick="router.navigate('programs', '${found.id}')">📦 ${name}</span>`;
         } else {
-            return `<span class="smart-ref missing" title="Program '${name}' not found. Create it to link.">⚠️ ${name}</span>`;
+            // Click to create logic added here
+            return `<span class="smart-ref missing" style="cursor:pointer;" title="Program '${name}' not found. Click to create." onclick="ui.openCreateModal('programs', '${name}')">⚠️ ${name}</span>`;
         }
     });
     return safeText;
+}
+// --- PROJECT LOG FILTER STATE ---
+let projectLogFilter = {
+    importantOnly: false,
+    sortAscending: false // Default: Newest first
+};
+
+function toggleProjectLogFilter(projectId, type) {
+    if (type === 'important') projectLogFilter.importantOnly = !projectLogFilter.importantOnly;
+    if (type === 'sort') projectLogFilter.sortAscending = !projectLogFilter.sortAscending;
+    // Re-render the view to apply changes
+    router.renderDetail('projects', projectId);
 }
 
 // Modal Helper Globals
@@ -2864,17 +3501,39 @@ function renderModalKeywords() {
 }
 
 const ui = {
-    openCreateModal: (type) => {
+	// Inside ui = { ... }
+
+    openSystemStopModal: (projectId) => {
+        const project = store.get('projects', projectId);
+        document.getElementById('sysLogTitle').innerText = project.name;
+        document.getElementById('sysLogInput').value = ''; // Clear previous
+        document.getElementById('systemLogModal').showModal();
+        
+        // Focus the textarea
+        setTimeout(() => document.getElementById('sysLogInput').focus(), 100);
+    },
+
+    confirmSystemStop: () => {
+        const desc = document.getElementById('sysLogInput').value.trim();
+        const finalDesc = desc || "Logged work (No description provided)";
+        
+        document.getElementById('systemLogModal').close();
+        
+        // Call the finalizer with the description
+        finalizeStopTimer(true, finalDesc);
+    },
+	
+	openCreateModal: (type, prefillName = null) => {
         const modal = document.getElementById('createModal');
         const inputsDiv = document.getElementById('modalInputs');
         const title = document.getElementById('modalTitle');
         const form = document.getElementById('modalForm');
 
-        title.innerText = `New ${type.replace(/s$/, '').replace(/Link/, 'Link')}`; // naive fix for quickLinks
+        title.innerText = `New ${type.replace(/s$/, '').replace(/Link/, 'Link')}`; 
         if(type === 'quickLinks') title.innerText = 'New Quick Link';
         
         inputsDiv.innerHTML = '';
-        currentModalKeywords = []; // Reset
+        currentModalKeywords = [];
 
         if (type === 'programs') {
             inputsDiv.innerHTML = `
@@ -2935,6 +3594,13 @@ const ui = {
                 <div class="input-group"><label>Icon (Emoji)</label><input name="icon" type="text" placeholder="e.g. 🚀" maxlength="2"></div>
                 <div class="input-group"><label>Description</label><input name="description" type="text" placeholder="Short description"></div>
             `;
+        }
+		if (prefillName) {
+            // Try to find standard name input or shortName input (for programs)
+            const nameInput = inputsDiv.querySelector('input[name="name"]') || inputsDiv.querySelector('input[name="shortName"]');
+            if (nameInput) {
+                nameInput.value = prefillName;
+            }
         }
 
         form.onsubmit = (e) => {
@@ -3019,7 +3685,7 @@ const ui = {
             .filter(t => t.id !== tableId)
             .map(t => `<option value="${t.name}">`)
             .join('');
-
+		
         form.onsubmit = (e) => {
             e.preventDefault();
             const formData = new FormData(form);
@@ -3208,7 +3874,7 @@ const app = {
 // Initialize
 app.initTheme();
 const router = new Router();
-router.navigate('programs');
+router.navigate('dashboard');
 
 </script>
 </body>
