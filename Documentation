@@ -3617,12 +3617,12 @@ function getConfluenceHTML(type, id) {
     const formatDate = (iso) => new Date(iso).toLocaleDateString() + ' ' + new Date(iso).toLocaleTimeString();
     
     // Macro Helper: Status Lozenge
-    const renderStatus = (status) => {
+    const renderStatus = (status, colorOverride = null) => {
         const map = { 
             'ANA': 'Blue', 'DEV': 'Yellow', 'APB': 'Orange', 'DONE': 'Green',
             'Open': 'Red', 'Solved': 'Green' 
         };
-        const color = map[status] || 'Grey';
+        const color = colorOverride || map[status] || 'Grey';
         return `{status:colour=${color}|title=${status}}`;
     };
 
@@ -3631,27 +3631,23 @@ function getConfluenceHTML(type, id) {
     // --- 1. PROGRAMS ---
     if (type === 'programs') {
         m += `h1. 📦 ${item.longName} (${item.shortName})\n\n`;
-        
         m += `{info:title=Summary}\n${safeWiki(item.shortDescription) || 'No description provided.'}\n{info}\n\n`;
 
         if (item.flow) {
             m += `{panel:title=Program Flow|borderStyle=solid|borderColor=#ccc|bgColor=#f9f9f9}\n`;
-            m += `{noformat}\n${item.flow}\n{noformat}\n`; // preserves spacing
+            m += `{noformat}\n${item.flow}\n{noformat}\n`; 
             m += `{panel}\n\n`;
         }
 
-        // Two-column layout for relationships
         m += `{section}\n{column:width=50%}\n`;
         m += `h3. Related Tables\n`;
-        if (item.linkedTables?.length) {
-            item.linkedTables.forEach(t => m += `* 🛢️ ${t}\n`);
-        } else { m += `_None_\n`; }
+        if (item.linkedTables?.length) item.linkedTables.forEach(t => m += `* 🛢️ ${t}\n`);
+        else m += `_None_\n`;
         
         m += `{column}\n{column:width=50%}\n`;
         m += `h3. Related Programs\n`;
-        if (item.linkedPrograms?.length) {
-            item.linkedPrograms.forEach(p => m += `* 📦 ${p}\n`);
-        } else { m += `_None_\n`; }
+        if (item.linkedPrograms?.length) item.linkedPrograms.forEach(p => m += `* 📦 ${p}\n`);
+        else m += `_None_\n`;
         m += `{column}\n{section}\n`;
     } 
     
@@ -3679,11 +3675,9 @@ function getConfluenceHTML(type, id) {
         }
     } 
     
-    // --- 3. PROJECTS ---
+    // --- 3. PROJECTS (UPDATED FOR LISTS) ---
     else if (type === 'projects') {
         m += `h1. 🚀 Project: ${item.name}\n\n`;
-
-        // Metadata Table
         m += `|| Status || Time Logged || Created ||\n`;
         m += `| ${renderStatus(item.status)} | *${formatDuration(item.timeSpent)}* | ${formatDate(item.createdAt)} |\n\n`;
 
@@ -3691,7 +3685,6 @@ function getConfluenceHTML(type, id) {
         m += `${formatMarkupContent(item.description) || '_No description._'}\n`;
         m += `{panel}\n\n`;
 
-        // Links Section
         if(item.linkDOR || item.linkDOD || item.linkOther) {
             m += `h3. 🔗 References\n`;
             if(item.linkDOR) m += `* [Definition of Ready|${item.linkDOR}]\n`;
@@ -3702,13 +3695,10 @@ function getConfluenceHTML(type, id) {
 
         if (item.todos?.length) {
             m += `h3. ✅ Pending Tasks\n`;
-            item.todos.filter(t => !t.done).forEach(t => {
-                m += `* ${formatMarkupContent(t.text)}\n`;
-            });
+            item.todos.filter(t => !t.done).forEach(t => m += `* ${formatMarkupContent(t.text)}\n`);
             m += `\n`;
         }
 
-        // Work Logs (Collapsible)
         if (item.workLog?.length) {
             m += `{expand:title=View Work Log History (${item.workLog.length} entries)}\n`;
             const sorted = [...item.workLog].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -3716,19 +3706,26 @@ function getConfluenceHTML(type, id) {
                 const date = formatDate(log.timestamp);
                 const icon = log.isImportant ? '⭐ ' : '';
                 m += `* *${date}* ${icon}\n`;
-                // Indent content
-                m += `> ${formatMarkupContent(log.content)}\n`;
+                // CHANGED: Use {quote} block to ensure multi-line lists inside notes render correctly
+                m += `{quote}\n${formatMarkupContent(log.content)}\n{quote}\n`;
                 m += `----\n`;
             });
             m += `{expand}\n\n`;
         }
     } 
     
-    // --- 4. QUERIES ---
+    // --- 4. QUERIES (UPDATED FOR COLORS) ---
     else if (type === 'queries') {
         const indMap = { 'R': 'Read', 'C': 'Create', 'U': 'Update', 'D': 'Delete' };
+        // Define colors: Green for Read, Yellow for Create, Red for Update/Delete
+        const colorMap = { 'R': 'Green', 'C': 'Yellow', 'U': 'Red', 'D': 'Red' };
+        
+        const label = indMap[item.updateIndicator] || item.updateIndicator;
+        const color = colorMap[item.updateIndicator] || 'Grey';
+
         m += `h1. 🔍 Query: ${item.name}\n\n`;
-        m += `*Type:* ${indMap[item.updateIndicator] || item.updateIndicator}\n\n`;
+        // CHANGED: Use renderStatus with explicit color override
+        m += `*Type:* ${renderStatus(label, color)}\n\n`;
         
         m += `{code:language=sql|title=SQL Query|theme=Midnight}\n`;
         m += `${item.query || ''}\n`;
@@ -3873,10 +3870,15 @@ function safeWiki(str) {
 
 function formatMarkupContent(text) {
     if(!text) return '';
+    
+    // 1. Escape special Wiki characters first (this turns '{' into '\{')
     let res = safeWiki(text);
-    // Convert smart tags /table{Name} to bold text *Name*
-    res = res.replace(/\/table\{([^}]+)\}/g, ' *🛢️ $1* ');
-    res = res.replace(/\/program\{([^}]+)\}/g, ' *📦 $1* ');
+    
+    // 2. Convert smart tags to Bold Confluence Text
+    // Note: We now match the escaped versions: \\\{ and \\\}
+    res = res.replace(/\/table\\\{([^}]+)\\\}/g, ' *🛢️ $1* ');
+    res = res.replace(/\/program\\\{([^}]+)\\\}/g, ' *📦 $1* ');
+    
     return res;
 }
 const ui = {
