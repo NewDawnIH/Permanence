@@ -183,7 +183,19 @@
             z-index: 900; 
             height: 100%;
             transition: background-color 0.3s;
+			overflow-y: auto;       /* Enables vertical scrolling */
+			max-height: 100vh;      /* Ensures it doesn't grow beyond screen */
         }
+		.sidebar::-webkit-scrollbar {
+			width: 6px;
+		}
+		.sidebar::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		.sidebar::-webkit-scrollbar-thumb {
+			background: var(--md-sys-color-outline);
+			border-radius: 4px;
+		}
 
         .brand {
             font-size: 1.5rem;
@@ -203,6 +215,7 @@
             font-weight: 500;
             color: var(--md-sys-color-on-surface-variant);
             transition: background 0.2s;
+			flex-shrink: 0;
         }
 
         .nav-item:hover {
@@ -947,6 +960,77 @@
             padding: 0;
             border: none;
         }
+		/* --- MERGE PANEL STYLES --- */
+		.merge-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 1rem;
+			margin-bottom: 2rem;
+		}
+
+		.merge-config-card {
+			background: var(--md-sys-color-surface);
+			border: 1px solid var(--md-sys-color-outline-variant);
+			padding: 1rem;
+			border-radius: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.merge-checkbox-wrapper {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			cursor: pointer;
+		}
+
+		.merge-checkbox-wrapper input[type="checkbox"] {
+			width: 18px; 
+			height: 18px; 
+			accent-color: var(--md-sys-color-primary);
+			cursor: pointer;
+		}
+
+		/* Success Animation Overlay */
+		#successOverlay {
+			position: fixed;
+			top: 0; left: 0; width: 100%; height: 100%;
+			background: rgba(0,0,0,0.7);
+			z-index: 2000;
+			display: none;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			color: white;
+			backdrop-filter: blur(5px);
+		}
+
+		.checkmark-circle {
+			width: 100px; height: 100px;
+			border-radius: 50%;
+			background: var(--status-done);
+			display: flex; justify-content: center; align-items: center;
+			box-shadow: 0 0 20px var(--status-done);
+			animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+		}
+
+		.checkmark {
+			font-size: 60px; font-weight: bold; color: white;
+		}
+
+		.success-text {
+			margin-top: 20px; font-size: 1.5rem; font-weight: bold;
+			opacity: 0;
+			animation: fadeIn 0.5s ease 0.3s forwards;
+		}
+
+		@keyframes popIn {
+			0% { transform: scale(0); }
+			80% { transform: scale(1.2); }
+			100% { transform: scale(1); }
+		}
+		@keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
 
         /* Thumb */
         input[type=range].status-slider::-webkit-slider-thumb {
@@ -1184,6 +1268,7 @@
             from {bottom: 30px; opacity: 1;}
             to {bottom: 0; opacity: 0;}
         }
+		
     </style>
 </head>
 <body>
@@ -1224,6 +1309,7 @@
         <div class="nav-item" onclick="router.navigate('mailbox')">📬 Mailbox</div>
 		<div class="nav-item" onclick="router.navigate('orphans')">👻 Orphan Objects</div>
 		<div class="nav-item" onclick="router.navigate('confluence')">📄 Confluence</div>
+		<div class="nav-item" onclick="router.navigate('merge')">🔄 Merge Data</div>
         <div class="nav-item" onclick="router.navigate('logwork')">⌛ Log Work</div>
 
         <div class="sidebar-footer">
@@ -1393,11 +1479,89 @@
         <button class="btn btn-primary" onclick="ui.confirmSystemStop()">Save & Stop</button>
     </div>
 </dialog>
+<dialog id="mergeConfirmModal">
+    <h2>Confirm Merge</h2>
+    <p>You are about to merge external data into your system.</p>
+    <ul id="mergeSummary" style="background: var(--md-sys-color-surface-variant); padding: 10px 20px; border-radius: 8px; margin: 10px 0;"></ul>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-outlined" onclick="document.getElementById('mergeConfirmModal').close()">Cancel</button>
+        <button class="btn btn-primary" onclick="ui.executeMerge()">Confirm & Merge</button>
+    </div>
+</dialog>
+
+<div id="successOverlay">
+    <div class="checkmark-circle">
+        <div class="checkmark">✓</div>
+    </div>
+    <div class="success-text">Merge Successful!</div>
+</div>
 
 <!-- Toast -->
 <div id="toast">JSON copied to clipboard!</div>
 
 <script>
+/**
+ * --- MERGE PANEL RENDERER ---
+ */
+function renderMergePanel() {
+    const mainEl = document.getElementById('mainContent');
+    const types = [
+        { id: 'programs', label: 'Programs' },
+        { id: 'tables', label: 'Tables' },
+        { id: 'queries', label: 'Queries' },
+        { id: 'projects', label: 'Projects' },
+        { id: 'mailbox', label: 'Mailbox' }
+    ];
+
+    let html = `
+        <div class="header-row">
+            <h1 class="page-title">Merge Data</h1>
+        </div>
+        
+        <div style="display: flex; gap: 2rem; height: calc(100vh - 160px);">
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <h3 style="color: var(--md-sys-color-primary);">1. Paste Foreign JSON</h3>
+                <textarea id="mergeInput" placeholder="Paste the full JSON content here..." 
+                    style="flex: 1; width: 100%; border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.9rem; resize: none;"></textarea>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <h3 style="color: var(--md-sys-color-primary);">2. Configuration</h3>
+                
+                <div class="merge-grid">
+                    ${types.map(t => `
+                        <div class="merge-config-card">
+                            <span style="font-weight: bold;">${t.label}</span>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <label class="merge-checkbox-wrapper">
+                                    <input type="checkbox" id="load_${t.id}" checked> Load
+                                </label>
+                                <label class="merge-checkbox-wrapper">
+                                    <input type="checkbox" id="over_${t.id}"> Overwrite Own
+                                </label>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div style="margin-top: auto; background: var(--md-sys-color-surface-variant); padding: 1.5rem; border-radius: 8px;">
+                    <label class="merge-checkbox-wrapper" style="margin-bottom: 1rem; font-weight: bold; font-size: 1.1rem;">
+                        <input type="checkbox" id="backupFirst" checked> 
+                        💾 Save backup of own JSON first
+                    </label>
+                    
+                    <button class="btn btn-primary" style="width: 100%; height: 50px; font-size: 1.1rem;" onclick="ui.initMerge()">
+                        Start Merge Process
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    mainEl.innerHTML = html;
+}
+
+
 /**
  * --- UTILS ---
  */
@@ -1531,13 +1695,15 @@ class DataStore {
         return this.data[type] || [];
     }
 
-    findByName(type, name) {
-        if (!name) return null;
-        return this.data[type].find(x => {
-            const itemName = x.name || x.shortName || '';
-            return itemName.toLowerCase() === name.toLowerCase();
-        });
-    }
+    // Inside class DataStore
+	findByName(type, name) {
+		if (!name) return null;
+		return this.data[type].find(x => {
+			// Updated to include 'subject' for Mailbox
+			const itemName = x.name || x.shortName || x.subject || '';
+			return itemName.toLowerCase() === name.toLowerCase();
+		});
+	}
 
     // Persistence
     save() {
@@ -1610,6 +1776,7 @@ class Router {
         if (type === 'dashboard') { renderDashboard(); return; }
         if (type === 'orphans') { renderOrphanList(); return; }
         if (type === 'confluence') { renderConfluencePanel(); return; }
+		if (type === 'merge') { renderMergePanel(); return; }
         
         const items = store.getAll(type);
         const titleMap = { programs: 'Programs', tables: 'Tables', queries: 'Queries', projects: 'Projects', mailbox: 'Mailbox' };
@@ -4205,7 +4372,113 @@ const ui = {
         document.getElementById('reminderAlertModal').close();
     }
 };
+/**
+ * --- MERGE LOGIC HANDLERS (Add to UI object or global) ---
+ */
+ui.initMerge = function() {
+    const inputStr = document.getElementById('mergeInput').value.trim();
+    if (!inputStr) { alert("Please paste valid JSON data."); return; }
 
+    let inputData;
+    try {
+        inputData = JSON.parse(inputStr);
+    } catch (e) {
+        alert("Invalid JSON format.");
+        return;
+    }
+
+    // Prepare Summary
+    const summaryList = document.getElementById('mergeSummary');
+    summaryList.innerHTML = '';
+    
+    // Store data temporarily for the execution phase
+    window.mergePayload = { data: inputData, config: {} };
+    let hasSelection = false;
+
+    ['programs', 'tables', 'queries', 'projects', 'mailbox'].forEach(type => {
+        const doLoad = document.getElementById(`load_${type}`).checked;
+        const doOver = document.getElementById(`over_${type}`).checked;
+        
+        window.mergePayload.config[type] = { load: doLoad, overwrite: doOver };
+
+        if (doLoad && inputData[type] && inputData[type].length > 0) {
+            hasSelection = true;
+            const count = inputData[type].length;
+            summaryList.innerHTML += `<li><strong>${type.toUpperCase()}</strong>: Found ${count} items. ${doOver ? '(Overwrite ON)' : '(Overwrite OFF)'}</li>`;
+        }
+    });
+
+    if (!hasSelection) {
+        alert("No data found for the selected types.");
+        return;
+    }
+
+    // Check Backup
+    window.mergePayload.backup = document.getElementById('backupFirst').checked;
+
+    document.getElementById('mergeConfirmModal').showModal();
+};
+
+ui.executeMerge = function() {
+    const payload = window.mergePayload;
+    const backup = payload.backup;
+
+    document.getElementById('mergeConfirmModal').close();
+
+    // 1. Perform Backup if requested
+    if (backup) {
+        app.saveToFile(); // Triggers download
+    }
+
+    // 2. Process Merge
+    const types = ['programs', 'tables', 'queries', 'projects', 'mailbox'];
+    
+    types.forEach(type => {
+        const conf = payload.config[type];
+        const incomingList = payload.data[type] || [];
+
+        if (conf.load && incomingList.length > 0) {
+            incomingList.forEach(item => {
+                // Determine Name for matching
+                const name = item.name || item.shortName || item.subject;
+                if (!name) return; // Skip invalid items
+
+                const existing = store.findByName(type, name);
+
+                if (existing) {
+                    if (conf.overwrite) {
+                        // OVERWRITE STRATEGY: Update properties, preserve ID (to keep links safe)
+                        const originalId = existing.id;
+                        // Determine created date: keep original or use new? Usually keep original if overwrite.
+                        const originalCreated = existing.createdAt; 
+                        
+                        // Merge object
+                        const merged = { ...item, id: originalId, createdAt: originalCreated };
+                        store.update(type, originalId, merged);
+                    }
+                    // If overwrite is FALSE, we do nothing (Skip)
+                } else {
+                    // NEW ITEM
+                    // Ensure ID doesn't clash (rare but possible with raw JSON paste)
+                    if (store.get(type, item.id)) {
+                        item.id = store.generateId();
+                    }
+                    store.add(type, item);
+                }
+            });
+        }
+    });
+
+    // 3. Play Animation
+    const overlay = document.getElementById('successOverlay');
+    overlay.style.display = 'flex';
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        // Refresh view
+        router.navigate('dashboard');
+    }, 2500);
+};
 const app = {
     saveToFile: () => {
         lastSaveTime = Date.now();
