@@ -720,6 +720,22 @@
             display: flex;
             align-items: center;
         }
+		/* --- PROGRAM TYPES --- */
+        .prog-type-BATCH { border-left: 5px solid #673ab7 !important; } /* Purple */
+        .prog-type-INTERACTIVE { border-left: 5px solid #06b6d4 !important; } /* Cyan */
+        .prog-type-SERVICE { border-left: 5px solid #f97316 !important; } /* Orange */
+        .prog-type-OTHER { border-left: 5px solid #94a3b8 !important; } /* Slate */
+
+        .prog-type-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-top: 8px;
+            color: white;
+        }
         
         /* Reference Cards */
         .ref-card {
@@ -1385,6 +1401,21 @@
 /**
  * --- UTILS ---
  */
+ /**
+ * --- PROGRAM UTILS ---
+ */
+// Global state for program filter
+let currentProgramFilter = 'ALL'; 
+
+function getProgramType(name) {
+    if (!name) return 'OTHER';
+    const n = name.toUpperCase().trim();
+    
+    if (n.startsWith('SRV')) return 'SERVICE';
+    if (n.endsWith('B')) return 'BATCH';
+    if (n.endsWith('I')) return 'INTERACTIVE';
+    return 'OTHER';
+}
 function formatDuration(ms) {
     const totalSeconds = Math.floor((ms || 0) / 1000);
     
@@ -1577,22 +1608,34 @@ class Router {
     renderList(type) {
         if (type === 'logwork') { renderLogWork(); return; }
         if (type === 'dashboard') { renderDashboard(); return; }
-		if (type === 'orphans') { renderOrphanList(); return; }
-		if (type === 'confluence') { renderConfluencePanel(); return; }
+        if (type === 'orphans') { renderOrphanList(); return; }
+        if (type === 'confluence') { renderConfluencePanel(); return; }
         
         const items = store.getAll(type);
         const titleMap = { programs: 'Programs', tables: 'Tables', queries: 'Queries', projects: 'Projects', mailbox: 'Mailbox' };
         
         // --- SEARCH ---
         const currentSearch = this.searchState[type] || '';
-        const filteredItems = items.filter(item => {
+        let filteredItems = items.filter(item => {
             if (type === 'projects' && (item.id === 'mailbox_fixed' || item.id === 'incident_fixed' || item.id === 'overhead_fixed')) return false;
             const raw = JSON.stringify(item).toLowerCase();
             return raw.includes(currentSearch.toLowerCase());
         });
 
+        // --- NEW: PROGRAM TYPE FILTER ---
+        if (type === 'programs') {
+            if (typeof currentProgramFilter === 'undefined') currentProgramFilter = 'ALL';
+            
+            if (currentProgramFilter !== 'ALL') {
+                filteredItems = filteredItems.filter(item => {
+                    // Check Short Name (usually the technical name) or Name
+                    const nameToCheck = item.shortName || item.name || '';
+                    return getProgramType(nameToCheck) === currentProgramFilter;
+                });
+            }
+        }
+
         // --- SPLIT FAVORITES ---
-        // Only applicable for standard list views (programs, tables, queries, projects)
         const supportsFavorites = ['programs', 'tables', 'queries', 'projects'].includes(type);
         
         let favorites = [];
@@ -1619,6 +1662,18 @@ class Router {
                     autofocus>
             </div>
         `;
+
+        // --- NEW: INSERT FILTER BUTTONS FOR PROGRAMS ---
+        if (type === 'programs') {
+            const types = ['ALL', 'BATCH', 'INTERACTIVE', 'SERVICE', 'OTHER'];
+            html += `<div style="display:flex; gap:8px; margin-bottom: 1.5rem; flex-wrap: wrap;">`;
+            types.forEach(t => {
+                const isActive = currentProgramFilter === t;
+                const btnClass = isActive ? 'btn-primary' : 'btn-outlined';
+                html += `<button class="btn ${btnClass} btn-small" onclick="currentProgramFilter='${t}'; router.renderList('programs')">${t}</button>`;
+            });
+            html += `</div>`;
+        }
 
         if (type === 'mailbox') {
             // ... (Keep existing Mailbox Logic unchanged) ...
@@ -1733,19 +1788,11 @@ class Router {
             </button>
         `;
 
-        // Status border logic for projects
+        // 1. PROJECT STYLES
         if (type === 'projects') {
             cardClasses += ' project-card';
             cardClasses += ` status-border-${status || item.status || 'default'}`;
-        }
-        
-        // Query styling
-        if (type === 'queries') {
-            if (item.updateIndicator === 'U') cardClasses += ' query-update';
-            if (item.updateIndicator === 'D') cardClasses += ' query-delete';
-        }
-
-        if (type === 'projects') {
+            
             const formattedTime = formatDuration(item.timeSpent);
             extra = `
                 <div style="margin-top: 15px;">
@@ -1756,6 +1803,37 @@ class Router {
                 </div>
             `;
         }
+
+        // 2. NEW: PROGRAM STYLES
+        if (type === 'programs') {
+            const pType = getProgramType(item.shortName || item.name);
+            
+            // Apply border class ONLY if not a favorite (Favorite gold border takes priority)
+            if (!isFav) {
+                cardClasses += ` prog-type-${pType}`;
+            }
+
+            // Define colors for the internal badge
+            const colorMap = {
+                'BATCH': '#673ab7',
+                'INTERACTIVE': '#06b6d4',
+                'SERVICE': '#f97316',
+                'OTHER': '#94a3b8'
+            };
+
+            extra += `
+                <div style="margin-top: 10px;">
+                    <span class="prog-type-tag" style="background-color: ${colorMap[pType]}">${pType}</span>
+                </div>
+            `;
+        }
+        
+        // Query styling
+        if (type === 'queries') {
+            if (item.updateIndicator === 'U') cardClasses += ' query-update';
+            if (item.updateIndicator === 'D') cardClasses += ' query-delete';
+        }
+
         return `
             <div class="${cardClasses}" onclick="router.navigate('${type}', '${item.id}')">
                 ${starBtn}
@@ -2800,12 +2878,13 @@ function renderProjectDetail(item) {
                 return `
                 <div class="work-log-entry ${log.isImportant ? 'important' : ''}" id="log-entry-${originalIndex}">
                     <div class="work-log-meta">
-                        <span>${new Date(log.timestamp).toLocaleString()} ${log.isLegacy ? '(Legacy Note)' : ''}</span>
-                        <div>
-                             <button class="log-action-btn ${log.isImportant ? 'active-star' : ''}" onclick="toggleImportant('${item.id}', ${originalIndex})" title="Mark as Important">★</button>
-                             <button class="log-action-btn" onclick="enableEditLog('${item.id}', ${originalIndex})" title="Edit Note">✎</button>
-                        </div>
-                    </div>
+						<span>${new Date(log.timestamp).toLocaleString()} ${log.isLegacy ? '(Legacy Note)' : ''}</span>
+						<div>
+							 <button class="log-action-btn ${log.isImportant ? 'active-star' : ''}" onclick="toggleImportant('${item.id}', ${originalIndex})" title="Mark as Important">★</button>
+							 <button class="log-action-btn" onclick="enableEditLog('${item.id}', ${originalIndex})" title="Edit Note">✎</button>
+							 <button class="log-action-btn" onclick="deleteWorkLog('${item.id}', ${originalIndex})" title="Delete Entry" style="color: var(--md-sys-color-error); margin-left: 8px;">✕</button>
+						</div>
+					</div>
                     <div class="work-log-content" id="log-content-${originalIndex}">${formatWorkLogContent(log.content)}</div>
                     <textarea id="log-edit-${originalIndex}" style="display:none; width:100%; border:1px solid #ccc; padding:8px;" onblur="saveLogEdit('${item.id}', ${originalIndex}, this.value)">${log.content}</textarea>
                 </div>
@@ -2840,16 +2919,29 @@ function renderProjectDetail(item) {
 
 // Helper to render the Link inputs
 function renderLinkInput(id, label, field, value) {
-    return `
-        <div class="input-group">
-            <label>${label}</label>
-            <div style="display:flex; gap:4px;">
-                <input type="text" value="${value || ''}" placeholder="https://..." 
-                    onchange="updateField('projects', '${id}', '${field}', this.value)">
-                ${value ? `<button class="btn btn-icon-only btn-tonal" onclick="window.open('${value}', '_blank')" title="Open Link">↗</button>` : ''}
+    if (value) {
+        // READ MODE: Display clickable link + Pencil Button
+        return `
+            <div class="input-group">
+                <label>${label}</label>
+                <div style="display:flex; gap:8px; align-items: center; background: var(--md-sys-color-surface-variant); padding: 8px; border-radius: 4px; border-bottom: 1px solid var(--md-sys-color-outline);">
+                    <a href="${value}" target="_blank" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--md-sys-color-primary); font-weight:bold; text-decoration: underline;">${value}</a>
+                    <button class="btn btn-icon-only btn-tonal" onclick="ui.editProjectLink('${id}', '${field}')" title="Edit Link">✎</button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        // EDIT MODE (Empty): Display Input field
+        return `
+            <div class="input-group">
+                <label>${label}</label>
+                <div style="display:flex; gap:4px;">
+                    <input type="text" placeholder="https://..." 
+                        onchange="updateField('projects', '${id}', '${field}', this.value)">
+                </div>
+            </div>
+        `;
+    }
 }
 
 // 5. MAILBOX
@@ -2999,7 +3091,21 @@ function addWorkLog(projectId) {
 
     router.renderDetail('projects', projectId);
 }
-
+function deleteWorkLog(projectId, index) {
+    if(!confirm('Are you sure you want to permanently delete this work log entry?')) return;
+    
+    const item = store.get('projects', projectId);
+    // Copy the array to avoid direct mutation issues
+    const logs = [...(item.workLog || [])];
+    
+    // Remove the item at the specific index
+    logs.splice(index, 1);
+    
+    store.update('projects', projectId, { workLog: logs });
+    
+    // Re-render to show changes
+    router.renderDetail('projects', projectId);
+}
 function toggleImportant(projectId, index) {
     const item = store.get('projects', projectId);
     let logs = [...item.workLog];
@@ -3508,148 +3614,155 @@ function getConfluenceHTML(type, id) {
     const item = store.get(type, id);
     if (!item) return '';
 
-    // Helper: Standard List
-    const list = (arr, title) => {
-        if (!arr || arr.length === 0) return '';
-        return `<h3>${title}</h3><ul>${arr.map(x => `<li>${x}</li>`).join('')}</ul>`;
+    const formatDate = (iso) => new Date(iso).toLocaleDateString() + ' ' + new Date(iso).toLocaleTimeString();
+    
+    // Macro Helper: Status Lozenge
+    const renderStatus = (status) => {
+        const map = { 
+            'ANA': 'Blue', 'DEV': 'Yellow', 'APB': 'Orange', 'DONE': 'Green',
+            'Open': 'Red', 'Solved': 'Green' 
+        };
+        const color = map[status] || 'Grey';
+        return `{status:colour=${color}|title=${status}}`;
     };
 
-    // Helper: Linked Objects
-    const links = (arr, title) => {
-        if (!arr || arr.length === 0) return '';
-        const validLinks = arr.filter(x => x && x.trim() !== '');
-        if (validLinks.length === 0) return '';
-        return `<h3>${title}</h3><ul>${validLinks.map(x => `<li>${x}</li>`).join('')}</ul>`;
-    };
-
-    // Helper: Work Logs (New)
-    const renderLogs = (logs) => {
-        if (!logs || logs.length === 0) return '';
-        // Sort Oldest -> Newest for chronological reading
-        const sorted = [...logs].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-        
-        let html = `<h3>Work Log & History</h3>`;
-        sorted.forEach(log => {
-            const dateStr = new Date(log.timestamp).toLocaleString();
-            const prefix = log.isImportant ? '⭐ ' : '';
-            // We use formatWorkLogContent to keep the formatting, but ensure it displays nicely
-            html += `<hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
-                     <p style="margin-bottom: 5px;"><strong>${prefix}${dateStr}</strong></p>
-                     <div style="margin-left: 15px;">${formatWorkLogContent(log.content)}</div>`;
-        });
-        return html;
-    };
-
-    let body = '';
+    let m = ''; // The markup string
 
     // --- 1. PROGRAMS ---
     if (type === 'programs') {
-        body += `<h1>📦 Program: ${item.longName} (${item.shortName})</h1>`;
-        body += `<p><strong>Description:</strong> ${item.shortDescription || 'N/A'}</p>`;
+        m += `h1. 📦 ${item.longName} (${item.shortName})\n\n`;
+        
+        m += `{info:title=Summary}\n${safeWiki(item.shortDescription) || 'No description provided.'}\n{info}\n\n`;
+
         if (item.flow) {
-            body += `<h3>Program Flow</h3>`;
-            body += `<pre style="background:#f4f5f7; border:1px solid #ccc; padding:10px; border-radius:4px;">${item.flow}</pre>`;
+            m += `{panel:title=Program Flow|borderStyle=solid|borderColor=#ccc|bgColor=#f9f9f9}\n`;
+            m += `{noformat}\n${item.flow}\n{noformat}\n`; // preserves spacing
+            m += `{panel}\n\n`;
         }
-        body += links(item.linkedTables, "Related Tables");
-        body += links(item.linkedPrograms, "Related Programs");
+
+        // Two-column layout for relationships
+        m += `{section}\n{column:width=50%}\n`;
+        m += `h3. Related Tables\n`;
+        if (item.linkedTables?.length) {
+            item.linkedTables.forEach(t => m += `* 🛢️ ${t}\n`);
+        } else { m += `_None_\n`; }
+        
+        m += `{column}\n{column:width=50%}\n`;
+        m += `h3. Related Programs\n`;
+        if (item.linkedPrograms?.length) {
+            item.linkedPrograms.forEach(p => m += `* 📦 ${p}\n`);
+        } else { m += `_None_\n`; }
+        m += `{column}\n{section}\n`;
     } 
     
     // --- 2. TABLES ---
     else if (type === 'tables') {
-        body += `<h1>🛢️ Table: ${item.name}</h1>`;
-        body += `<p><strong>Description:</strong> ${item.description || 'N/A'}</p>`;
-        if (item.fields && item.fields.length > 0) {
-            body += `<h3>Field Definition</h3>`;
-            body += `<table border="1" style="border-collapse:collapse; width:100%; text-align:left; border-color: #ddd;">
-                <thead style="background-color:#f4f5f7;">
-                    <tr>
-                        <th style="padding:8px;">Name</th>
-                        <th style="padding:8px;">Description</th>
-                        <th style="padding:8px;">Type/Example</th>
-                        <th style="padding:8px;">Comments</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${item.fields.map(f => `
-                        <tr>
-                            <td style="padding:8px;"><strong>${f.name}</strong></td>
-                            <td style="padding:8px;">${f.desc || ''}</td>
-                            <td style="padding:8px;"><code>${f.ex || ''}</code></td>
-                            <td style="padding:8px;">${f.comm || ''}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>`;
-        }
-        if(item.links && item.links.length > 0) {
-            body += `<h3>Relationships</h3><ul>`;
-            item.links.forEach(l => {
-                body += `<li><strong>${l.bidirectional ? '↔' : '→'} ${l.toTable}:</strong> <code>${l.join}</code></li>`;
+        m += `h1. 🛢️ Table: ${item.name}\n\n`;
+        m += `{quote}${safeWiki(item.description) || 'No description.'}{quote}\n\n`;
+
+        if (item.fields?.length) {
+            m += `h3. Field Definitions\n`;
+            m += `|| Name || Description || Example || Comments ||\n`;
+            item.fields.forEach(f => {
+                m += `| *${safeWiki(f.name)}* | ${safeWiki(f.desc)} | {{${safeWiki(f.ex)}}} | ${safeWiki(f.comm)} |\n`;
             });
-            body += `</ul>`;
+            m += `\n`;
+        }
+
+        if (item.links?.length) {
+            m += `{panel:title=Relationships|titleBGColor=#eae6ff|borderColor=#6750a4}\n`;
+            item.links.forEach(l => {
+                const arrow = l.bidirectional ? '↔' : '→';
+                m += `* ${arrow} *${l.toTable}*: {{${l.join}}}\n`;
+            });
+            m += `{panel}\n`;
         }
     } 
     
     // --- 3. PROJECTS ---
     else if (type === 'projects') {
-        const statusMap = { 'ANA': 'Analysis', 'DEV': 'Development', 'APB': 'Approval', 'DONE': 'Done' };
-        body += `<h1>🚀 Project: ${item.name}</h1>`;
-        body += `<p><strong>Status:</strong> ${statusMap[item.status] || item.status}</p>`;
-        body += `<p><strong>Description:</strong><br>${item.description || 'N/A'}</p>`;
+        m += `h1. 🚀 Project: ${item.name}\n\n`;
 
+        // Metadata Table
+        m += `|| Status || Time Logged || Created ||\n`;
+        m += `| ${renderStatus(item.status)} | *${formatDuration(item.timeSpent)}* | ${formatDate(item.createdAt)} |\n\n`;
+
+        m += `{panel:title=Description|titleBGColor=#f4f5f7|borderColor=#ccc}\n`;
+        m += `${formatMarkupContent(item.description) || '_No description._'}\n`;
+        m += `{panel}\n\n`;
+
+        // Links Section
         if(item.linkDOR || item.linkDOD || item.linkOther) {
-            body += `<h3>Reference Links</h3><ul>`;
-            if(item.linkDOR) body += `<li><a href="${item.linkDOR}">Definition of Ready (DOR)</a></li>`;
-            if(item.linkDOD) body += `<li><a href="${item.linkDOD}">Definition of Done (DOD)</a></li>`;
-            if(item.linkOther) body += `<li><a href="${item.linkOther}">External Resource</a></li>`;
-            body += `</ul>`;
+            m += `h3. 🔗 References\n`;
+            if(item.linkDOR) m += `* [Definition of Ready|${item.linkDOR}]\n`;
+            if(item.linkDOD) m += `* [Definition of Done|${item.linkDOD}]\n`;
+            if(item.linkOther) m += `* [External Resource|${item.linkOther}]\n`;
+            m += `\n`;
         }
 
-        if (item.todos && item.todos.length > 0) {
-            body += `<h3>Pending Tasks</h3><ul>`;
+        if (item.todos?.length) {
+            m += `h3. ✅ Pending Tasks\n`;
             item.todos.filter(t => !t.done).forEach(t => {
-                body += `<li>[ ] ${t.text}</li>`;
+                m += `* ${formatMarkupContent(t.text)}\n`;
             });
-            body += `</ul>`;
+            m += `\n`;
         }
 
-        // --- NEW: Work Log Integration ---
-        body += renderLogs(item.workLog);
-
-        body += links(item.linkedTables, "Impacted Tables");
-        body += links(item.linkedPrograms, "Impacted Programs");
+        // Work Logs (Collapsible)
+        if (item.workLog?.length) {
+            m += `{expand:title=View Work Log History (${item.workLog.length} entries)}\n`;
+            const sorted = [...item.workLog].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            sorted.forEach(log => {
+                const date = formatDate(log.timestamp);
+                const icon = log.isImportant ? '⭐ ' : '';
+                m += `* *${date}* ${icon}\n`;
+                // Indent content
+                m += `> ${formatMarkupContent(log.content)}\n`;
+                m += `----\n`;
+            });
+            m += `{expand}\n\n`;
+        }
     } 
     
     // --- 4. QUERIES ---
     else if (type === 'queries') {
         const indMap = { 'R': 'Read', 'C': 'Create', 'U': 'Update', 'D': 'Delete' };
-        body += `<h1>🔍 Query: ${item.name}</h1>`;
-        body += `<p><strong>Type:</strong> ${indMap[item.updateIndicator] || item.updateIndicator}</p>`;
-        body += `<h3>SQL Statement</h3>`;
-        body += `<pre style="background:#f4f5f7; border:1px solid #ccc; padding:10px; border-radius:4px;">${item.query || ''}</pre>`;
+        m += `h1. 🔍 Query: ${item.name}\n\n`;
+        m += `*Type:* ${indMap[item.updateIndicator] || item.updateIndicator}\n\n`;
+        
+        m += `{code:language=sql|title=SQL Query|theme=Midnight}\n`;
+        m += `${item.query || ''}\n`;
+        m += `{code}\n\n`;
         
         if (item.paramDescs && Object.keys(item.paramDescs).length > 0) {
-             body += `<h3>Parameters</h3><ul>`;
+             m += `h3. Parameters\n`;
+             m += `|| Parameter || Description ||\n`;
              Object.entries(item.paramDescs).forEach(([key, val]) => {
-                 body += `<li><strong>:${key}</strong> - ${val}</li>`;
+                 m += `| :${key} | ${val} |\n`;
              });
-             body += `</ul>`;
         }
     }
 
     // --- 5. MAILBOX ---
     else if (type === 'mailbox') {
-        body += `<h1>✉️ Mailbox Issue: ${item.subject}</h1>`;
-        body += `<p><strong>Sender:</strong> ${item.sender}</p>`;
-        body += `<p><strong>Status:</strong> ${item.status}</p>`;
-        if(item.keywords && item.keywords.length > 0) {
-            body += `<p><strong>Keywords:</strong> ${item.keywords.join(', ')}</p>`;
-        }
-        body += renderLogs(item.workLog);
+        const isSolved = item.status === 'Solved';
+        const containerMacro = isSolved ? 'info' : 'note';
+        
+        m += `h1. ✉️ ${item.subject}\n\n`;
+        m += `{${containerMacro}:title=Status: ${item.status}}\n`;
+        m += `*Sender:* ${item.sender}\n`;
+        if(item.keywords?.length) m += `*Keywords:* ${item.keywords.join(', ')}\n`;
+        m += `{${containerMacro}}\n\n`;
+
+        m += `{panel:title=Discussion & Notes}\n`;
+        const sorted = [...(item.workLog||[])].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        sorted.forEach(log => {
+            m += `* *${formatDate(log.timestamp)}*: ${formatMarkupContent(log.content)}\n`;
+        });
+        m += `{panel}`;
     }
 
-    // Wrap in standard formatting container
-    return `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #172b4d;">${body}</div>`;
+    return m;
 }
 function renderConfluencePanel() {
     // 1. Initial State
@@ -3664,17 +3777,12 @@ function renderConfluencePanel() {
     ];
 
     const items = store.getAll(window.confState.type);
-    
-    // Generate Preview
     const hasSelection = !!window.confState.id;
-    const previewHTML = hasSelection 
+    
+    // Generate Markup
+    const markupContent = hasSelection 
         ? getConfluenceHTML(window.confState.type, window.confState.id) 
-        : `
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; opacity:0.4;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
-                <div style="font-size: 1.2rem;">Select an object to generate preview</div>
-            </div>
-          `;
+        : 'Select an object to generate Wiki Markup.';
 
     const html = `
         <div class="header-row">
@@ -3683,7 +3791,7 @@ function renderConfluencePanel() {
 
         <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; height: calc(100vh - 180px);">
             
-            <div class="card" style="height: 100%; display: flex; flex-direction: column; border-left: 5px solid var(--md-sys-color-secondary);">
+            <div class="card" style="height: 100%; display: flex; flex-direction: column; border-left: 5px solid #205081;">
                 <h3 style="margin-top:0; color:var(--md-sys-color-primary); border-bottom:1px solid var(--md-sys-color-outline-variant); padding-bottom:12px;">
                     Configuration
                 </h3>
@@ -3708,25 +3816,23 @@ function renderConfluencePanel() {
                 <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--md-sys-color-outline-variant);">
                      <button class="btn btn-primary" style="width:100%; height: 50px; font-size: 1.1rem;" 
                         onclick="copyConfluencePreview()" ${!hasSelection ? 'disabled' : ''}>
-                        ${hasSelection ? '📋 Copy to Clipboard' : 'Select an Item'}
+                        ${hasSelection ? '📋 Copy Wiki Markup' : 'Select an Item'}
                     </button>
-                    <div style="text-align:center; font-size:0.8rem; color:var(--md-sys-color-secondary); margin-top:8px;">
-                        Formats as Rich Text (HTML)
+                    <div style="text-align:center; font-size:0.75rem; color:var(--md-sys-color-secondary); margin-top:8px; line-height: 1.4;">
+                        Use <strong>Ctrl + Shift + D</strong> in Confluence<br>to paste this Markup.
                     </div>
                 </div>
             </div>
 
             <div style="position: relative; display: flex; flex-direction: column;">
-                <div style="background: var(--md-sys-color-secondary); color: white; padding: 8px 16px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
-                    <span>PREVIEW</span>
-                    ${hasSelection ? '<span style="font-size:0.8em; opacity:0.8;">Ready to Copy</span>' : ''}
+                <div style="background: #205081; color: white; padding: 10px 16px; border-radius: 8px 8px 0 0; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span>WIKI MARKUP PREVIEW</span>
+                    ${hasSelection ? '<span style="font-size:0.8em; opacity:0.8; font-family:monospace;">Ready to Copy</span>' : ''}
                 </div>
                 
-                <div id="confluencePreview" 
-                     style="background: white; color: #172b4d; flex: 1; overflow-y: auto; padding: 40px; 
-                            box-shadow: var(--md-sys-elevation-2); border-radius: 0 0 8px 8px; border: 1px solid var(--md-sys-color-outline-variant);">
-                    ${previewHTML}
-                </div>
+                <textarea id="confluencePreview" readonly
+                     style="background: #f4f5f7; color: #172b4d; flex: 1; resize: none; padding: 20px; font-family: monospace; font-size: 0.9rem;
+                            border: 1px solid var(--md-sys-color-outline-variant); border-top: none; border-radius: 0 0 8px 8px; outline: none;">${markupContent}</textarea>
             </div>
         </div>
     `;
@@ -3739,28 +3845,56 @@ function copyConfluencePreview() {
     const el = document.getElementById('confluencePreview');
     if (!el) return;
     
-    // Create a temporary Range to select the HTML content
-    const range = document.createRange();
-    range.selectNode(el);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    
+    el.select();
+    el.setSelectionRange(0, 99999); // For mobile devices
+
     try {
-        document.execCommand('copy');
-        // Show existing Toast
-        const toast = document.getElementById("toast");
-        toast.innerText = "Copied! Paste directly into Confluence.";
-        toast.className = "show";
-        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        navigator.clipboard.writeText(el.value).then(() => {
+            const toast = document.getElementById("toast");
+            toast.innerText = "Markup copied! Use Ctrl+Shift+D in Confluence.";
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        });
     } catch(err) {
-        alert("Failed to copy");
+        // Fallback
+        document.execCommand('copy');
+        alert("Copied!");
     }
-    
-    window.getSelection().removeAllRanges();
+}
+/**
+ * --- CONFLUENCE MARKUP UTILS ---
+ */
+ 
+function safeWiki(str) {
+    if (!str) return '';
+    // Escape pipes and curly braces which are control characters in Wiki Markup
+    return str.replace(/\|/g, '\\|').replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+}
+
+function formatMarkupContent(text) {
+    if(!text) return '';
+    let res = safeWiki(text);
+    // Convert smart tags /table{Name} to bold text *Name*
+    res = res.replace(/\/table\{([^}]+)\}/g, ' *🛢️ $1* ');
+    res = res.replace(/\/program\{([^}]+)\}/g, ' *📦 $1* ');
+    return res;
 }
 const ui = {
-	// Inside ui = { ... }
+    
+    editProjectLink: (id, field) => {
+        const item = store.get('projects', id);
+        const currentVal = item[field] || '';
+        
+        // Use a prompt to allow editing the existing string
+        const newVal = prompt(`Edit ${field} URL (clear to remove):`, currentVal);
+        
+        // If user didn't press Cancel (null)
+        if (newVal !== null) {
+            updateField('projects', id, field, newVal.trim());
+        }
+    },
 
+    // ... existing functions
     openSystemStopModal: (projectId) => {
         const project = store.get('projects', projectId);
         document.getElementById('sysLogTitle').innerText = project.name;
