@@ -1363,6 +1363,69 @@
             from {bottom: 30px; opacity: 1;}
             to {bottom: 0; opacity: 0;}
         }
+		/* --- NEW FEATURE: OMNI SEARCH (COMMAND PALETTE) --- */
+		.omni-backdrop {
+			position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+			background: rgba(0,0,0,0.6); z-index: 5000;
+			display: none; align-items: flex-start; justify-content: center;
+			padding-top: 80px; backdrop-filter: blur(3px);
+		}
+		.omni-box {
+			width: 600px; max-width: 90%;
+			background: var(--md-sys-color-surface);
+			border-radius: 12px;
+			border: 1px solid var(--md-sys-color-outline-variant);
+			box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+			display: flex; flex-direction: column; overflow: hidden;
+			animation: slideDown 0.15s ease-out;
+		}
+		@keyframes slideDown { from {transform: translateY(-20px); opacity:0;} to {transform: translateY(0); opacity:1;} }
+
+		.omni-input {
+			width: 100%; padding: 16px 20px; font-size: 1.2rem; border: none;
+			border-bottom: 1px solid var(--md-sys-color-outline-variant);
+			background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
+			outline: none; font-family: var(--font-family);
+		}
+		.omni-results {
+			max-height: 400px; overflow-y: auto;
+		}
+		.omni-item {
+			padding: 12px 20px; border-bottom: 1px solid var(--md-sys-color-outline-variant);
+			cursor: pointer; display: flex; align-items: center; gap: 12px;
+			transition: background 0.1s;
+		}
+		.omni-item:hover, .omni-item.selected { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+		.omni-type {
+			font-size: 0.7rem; text-transform: uppercase; font-weight: bold;
+			padding: 4px 8px; border-radius: 4px; color: white; min-width: 70px; text-align: center;
+		}
+		/* Omni-Type Colors */
+		.omni-type.PROG { background: #673ab7; }
+		.omni-type.TAB { background: #06b6d4; }
+		.omni-type.QRY { background: #f97316; }
+		.omni-type.PROJ { background: #22c55e; }
+		.omni-type.MAIL { background: #e11d48; }
+
+		.omni-footer {
+			padding: 8px 16px; font-size: 0.75rem; 
+			color: var(--md-sys-color-secondary); 
+			background: var(--md-sys-color-surface-variant); 
+			border-top: 1px solid var(--md-sys-color-outline-variant);
+			display: flex; justify-content: space-between;
+		}
+
+		/* --- NEW FEATURE: ERD VISUALIZER --- */
+		.erd-container {
+			background: var(--md-sys-color-surface-variant);
+			border: 1px solid var(--md-sys-color-outline-variant);
+			border-radius: 8px; overflow: hidden;
+			position: relative; height: calc(100vh - 200px); width: 100%;
+			cursor: grab;
+			background-image: radial-gradient(var(--md-sys-color-outline-variant) 1px, transparent 1px);
+			background-size: 20px 20px; /* Dot grid effect */
+		}
+		.erd-container:active { cursor: grabbing; }
 		
     </style>
 </head>
@@ -1400,6 +1463,7 @@
 	    <div class="nav-item" onclick="router.navigate('projects')">🗂️ Projects</div>
         <div class="nav-item" onclick="router.navigate('programs')">📦 Programs</div>
         <div class="nav-item" onclick="router.navigate('tables')">🛢️ Tables</div>
+		<div class="nav-item" onclick="router.navigate('erd')" style="padding-left: 40px; font-size: 0.9em; height: 40px; opacity: 0.8;">↳ 🕸️ Visualizer</div>
         <div class="nav-item" onclick="router.navigate('queries')">🔍 Queries</div>
         <div class="nav-item" onclick="router.navigate('mailbox')">📬 Mailbox</div>
 		<div class="nav-item" onclick="router.navigate('orphans')">👻 Orphan Objects</div>
@@ -1421,7 +1485,17 @@
         <!-- Dynamic Content Injected Here -->
     </main>
 </div>
-
+<div id="omniSearchModal" class="omni-backdrop" onclick="if(event.target===this) ui.closeOmniSearch()">
+    <div class="omni-box">
+        <input type="text" id="omniInput" class="omni-input" placeholder="Search projects, tables, logic..." autocomplete="off">
+        <div id="omniResults" class="omni-results"></div>
+        <div class="omni-footer">
+            <span><strong>↑↓</strong> to navigate</span> 
+            <span><strong>Enter</strong> to select</span> 
+            <span><strong>Esc</strong> to close</span>
+        </div>
+    </div>
+</div>
 <!-- CREATE MODAL TEMPLATE -->
 <dialog id="createModal">
     <h2 id="modalTitle">Create New</h2>
@@ -1851,20 +1925,24 @@ class Router {
     }
 
     navigate(view, id = null) {
-        this.currentView = view;
-        
-        // Update Sidebar UI
-        this.navItems.forEach(el => el.classList.remove('active'));
-        const activeNav = Array.from(this.navItems).find(el => el.innerText.toLowerCase().replace(' ', '').includes(view));
-        if(activeNav) activeNav.classList.add('active');
+		this.currentView = view;
 
-        // Render
-        if (id) {
-            this.renderDetail(view, id);
-        } else {
-            this.renderList(view);
-        }
-    }
+		this.navItems.forEach(el => el.classList.remove('active'));
+		// Logic to highlight 'Tables' parent if ERD is selected
+		const searchView = view === 'erd' ? 'tables' : view;
+		const activeNav = Array.from(this.navItems).find(el => el.innerText.toLowerCase().replace(' ', '').includes(searchView));
+		if(activeNav) activeNav.classList.add('active');
+
+		// --- NEW ROUTE ---
+		if (view === 'erd') { renderERDView(); return; }
+		// -----------------
+
+		if (id) {
+			this.renderDetail(view, id);
+		} else {
+			this.renderList(view);
+		}
+	}
 
     renderList(type) {
         if (type === 'logwork') { renderLogWork(); return; }
@@ -4864,7 +4942,333 @@ const app = {
         }
     }
 };
+/* =========================================
+   FEATURE: OMNI SEARCH (COMMAND PALETTE)
+   ========================================= */
+document.addEventListener('keydown', (e) => {
+    // Shortcut: Ctrl+K or Cmd+K
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        ui.openOmniSearch();
+    }
+    // Shortcut: Esc to close
+    if (e.key === 'Escape') {
+        ui.closeOmniSearch();
+    }
+});
 
+ui.openOmniSearch = function() {
+    const modal = document.getElementById('omniSearchModal');
+    modal.style.display = 'flex';
+    const input = document.getElementById('omniInput');
+    input.value = '';
+    input.focus();
+    ui.runOmniSearch(''); // Show recent or empty state
+    
+    // Bind Input Logic
+    input.oninput = (e) => ui.runOmniSearch(e.target.value);
+    
+    // Bind Keyboard Navigation
+    input.onkeydown = (e) => {
+        const list = document.getElementById('omniResults');
+        const items = list.querySelectorAll('.omni-item');
+        let activeIdx = Array.from(items).findIndex(el => el.classList.contains('selected'));
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (activeIdx < items.length - 1) {
+                if(activeIdx > -1) items[activeIdx].classList.remove('selected');
+                items[activeIdx + 1].classList.add('selected');
+                items[activeIdx + 1].scrollIntoView({block: 'nearest'});
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (activeIdx > 0) {
+                items[activeIdx].classList.remove('selected');
+                items[activeIdx - 1].classList.add('selected');
+                items[activeIdx - 1].scrollIntoView({block: 'nearest'});
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIdx > -1) items[activeIdx].click();
+            else if (items.length > 0) items[0].click(); // Select first if none selected
+        }
+    };
+};
+
+ui.closeOmniSearch = function() {
+    document.getElementById('omniSearchModal').style.display = 'none';
+};
+
+ui.runOmniSearch = function(query) {
+    const q = query.toLowerCase();
+    const results = document.getElementById('omniResults');
+    results.innerHTML = '';
+    
+    const map = { 
+        'programs': { lbl: 'PROG', w: 10 }, 
+        'tables': { lbl: 'TAB', w: 8 }, 
+        'queries': { lbl: 'QRY', w: 5 }, 
+        'projects': { lbl: 'PROJ', w: 8 },
+        'mailbox': { lbl: 'MAIL', w: 5 }
+    };
+
+    let allItems = [];
+
+    // Aggregate all searchable items
+    Object.keys(map).forEach(type => {
+        store.getAll(type).forEach(item => {
+            const name = item.name || item.shortName || item.subject || '';
+            const desc = item.description || item.shortDescription || '';
+            
+            // Simple scoring algorithm
+            let score = 0;
+            if (q === '') score = 1; // Show all if empty (could limit to recent)
+            else {
+                if (name.toLowerCase() === q) score += 20; // Exact match
+                else if (name.toLowerCase().startsWith(q)) score += 10;
+                else if (name.toLowerCase().includes(q)) score += 5;
+                
+                if (desc.toLowerCase().includes(q)) score += 1;
+            }
+            
+            // Apply weight based on type
+            score += map[type].w;
+
+            if (score > 0) {
+                allItems.push({ 
+                    ...item, 
+                    type, 
+                    typeLabel: map[type].lbl, 
+                    score,
+                    // Store display name for rendering
+                    displayName: name,
+                    displayDesc: desc
+                });
+            }
+        });
+    });
+
+    // Sort by Score DESC
+    allItems.sort((a,b) => b.score - a.score);
+
+    if (allItems.length === 0) {
+        results.innerHTML = '<div style="padding:20px; text-align:center; opacity:0.5">No matching results found.</div>';
+        return;
+    }
+
+    // Render Limit 15
+    allItems.slice(0, 15).forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = `omni-item ${idx === 0 ? 'selected' : ''}`; // Auto-select first
+        div.innerHTML = `
+            <span class="omni-type ${item.typeLabel}">${item.typeLabel}</span>
+            <div style="overflow:hidden;">
+                <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.displayName}</div>
+                <div style="font-size:0.8rem; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.displayDesc}</div>
+            </div>
+        `;
+        div.onclick = () => {
+            ui.closeOmniSearch();
+            router.navigate(item.type, item.id);
+        };
+        results.appendChild(div);
+    });
+};
+
+/* =========================================
+   FEATURE: CANVAS ERD VISUALIZER
+   ========================================= */
+function renderERDView() {
+    const mainEl = document.getElementById('mainContent');
+    mainEl.innerHTML = `
+        <div class="header-row">
+            <h1 class="page-title">Schema Visualizer</h1>
+            <div>
+                <button class="btn btn-outlined" onclick="initERD()">↻ Reset View</button>
+            </div>
+        </div>
+        <p style="margin-bottom:1rem; opacity:0.7;">Visual representation of Tables and their bidirectional links.</p>
+        
+        <div class="erd-container">
+            <canvas id="erdCanvas"></canvas>
+            <div style="position:absolute; bottom:15px; right:15px; background:var(--md-sys-color-surface); 
+                        padding:6px 12px; border-radius:6px; font-size:0.8rem; box-shadow:var(--md-sys-elevation-1); border:1px solid var(--md-sys-color-outline-variant);">
+                🖱️ Drag to Pan • 📜 Scroll to Zoom
+            </div>
+        </div>
+    `;
+    // Delay init to allow DOM painting
+    setTimeout(initERD, 50);
+}
+
+function initERD() {
+    const canvas = document.getElementById('erdCanvas');
+    if(!canvas) return;
+    const container = canvas.parentElement;
+    const ctx = canvas.getContext('2d');
+    
+    // Set resolution
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    // State
+    const tables = store.getAll('tables');
+    let offsetX = canvas.width / 2 - 100; // Center ish
+    let offsetY = 50;
+    let scale = 1;
+    let isDragging = false, lastX, lastY;
+
+    // Node Calculation
+    const cardW = 200;
+    const headerH = 35;
+    const rowH = 20;
+    const nodes = [];
+
+    // Simple Grid Auto-Layout
+    const cols = Math.ceil(Math.sqrt(tables.length + 1)); 
+    tables.forEach((t, i) => {
+        const c = i % cols;
+        const r = Math.floor(i / cols);
+        const contentH = (t.fields || []).length * rowH;
+        
+        nodes.push({
+            id: t.id,
+            name: t.name,
+            x: c * (cardW + 100),
+            y: r * 300,
+            w: cardW,
+            h: headerH + contentH + 10,
+            fields: t.fields || [],
+            links: t.links || []
+        });
+    });
+
+    function draw() {
+        // Clear
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Transform
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+
+        // 1. Draw Links (Bezier Curves)
+        ctx.lineWidth = 2;
+        nodes.forEach(node => {
+            if(!node.links) return;
+            node.links.forEach(link => {
+                const target = nodes.find(n => n.name === link.toTable);
+                if(target) {
+                    const sx = node.x + node.w; 
+                    const sy = node.y + headerH / 2;
+                    const ex = target.x;
+                    const ey = target.y + headerH / 2;
+
+                    // Gradient Stroke
+                    const grad = ctx.createLinearGradient(sx, sy, ex, ey);
+                    grad.addColorStop(0, '#94a3b8');
+                    grad.addColorStop(1, '#64748b');
+                    ctx.strokeStyle = grad;
+
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.bezierCurveTo(sx + 80, sy, ex - 80, ey, ex, ey);
+                    ctx.stroke();
+                    
+                    // Arrowhead
+                    ctx.fillStyle = '#64748b';
+                    ctx.beginPath();
+                    ctx.arc(ex, ey, 4, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            });
+        });
+
+        // 2. Draw Nodes
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        
+        nodes.forEach(node => {
+            // Shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetY = 5;
+
+            // Card Bg
+            ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
+            ctx.fillRect(node.x, node.y, node.w, node.h);
+            ctx.shadowBlur = 0; // reset
+
+            // Border
+            ctx.strokeStyle = isDark ? '#334155' : '#cbd5e1';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(node.x, node.y, node.w, node.h);
+
+            // Header
+            ctx.fillStyle = isDark ? '#334155' : '#f1f5f9';
+            ctx.fillRect(node.x, node.y, node.w, headerH);
+            
+            // Header Text
+            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(node.name, node.x + 10, node.y + 22);
+            
+            // Fields
+            ctx.font = '11px monospace';
+            ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
+            node.fields.forEach((f, idx) => {
+                const fy = node.y + headerH + 16 + (idx * rowH);
+                ctx.fillText(f.name, node.x + 10, fy);
+                // Type hint (fake)
+                ctx.fillStyle = isDark ? '#475569' : '#cbd5e1';
+                ctx.fillText('VARCHAR', node.x + node.w - 55, fy);
+                ctx.fillStyle = isDark ? '#94a3b8' : '#475569'; // restore
+            });
+        });
+
+        ctx.restore();
+    }
+
+    // Input Handlers
+    canvas.onmousedown = (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; };
+    window.onmouseup = () => { isDragging = false; };
+    canvas.onmousemove = (e) => {
+        if(isDragging) {
+            offsetX += e.clientX - lastX;
+            offsetY += e.clientY - lastY;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            requestAnimationFrame(draw);
+        }
+    };
+    canvas.onwheel = (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        scale = Math.min(Math.max(0.2, scale * delta), 3);
+        requestAnimationFrame(draw);
+    };
+
+    draw();
+}
+
+/* =========================================
+   FEATURE: TAB SUPPORT FOR TEXTAREAS
+   ========================================= */
+// Automatically apply to all textareas on focus
+document.addEventListener('focusin', function(e) {
+    if(e.target.tagName === 'TEXTAREA') {
+        e.target.onkeydown = function(ev) {
+            if(ev.key === 'Tab') {
+                ev.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                // Insert 2 spaces
+                this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+            }
+        };
+    }
+});
 // Initialize
 app.initTheme();
 const router = new Router();
