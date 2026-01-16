@@ -90,6 +90,20 @@
             overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
+		/* --- Add this to your CSS --- */
+		.query-box {
+			background-color: #1e293b; /* Dark slate */
+			color: #a5b4fc; /* Light indigo/blue text */
+			font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+			font-size: 0.9rem;
+			padding: 12px;
+			border-radius: 6px;
+			border: 1px solid #334155;
+			margin: 8px 0;
+			white-space: pre-wrap; /* Preserves newlines/spaces */
+			overflow-x: auto;
+			box-shadow: inset 0 1px 4px rgba(0,0,0,0.2);
+		}
 
         /* --- STATUS BAR --- */
         .status-bar {
@@ -1236,7 +1250,88 @@
             opacity: 0.7;
         }
         .fixed-ticket-card:hover .fixed-ticket-actions { opacity: 1; }
-        
+        /* --- SMART LINK WIDGET STYLES --- */
+		.link-widget-wrapper {
+			position: relative;
+			height: 100%; /* Ensure consistent height in grid */
+		}
+
+		/* The Card Look */
+		.link-card-display {
+			background: var(--md-sys-color-surface);
+			border: 1px solid var(--md-sys-color-outline-variant);
+			border-left: 4px solid var(--md-sys-color-secondary); /* Default Accent */
+			border-radius: 8px;
+			padding: 12px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			height: 60px; /* Fixed height for neatness */
+			max-width: 100%;
+		}
+
+		.link-card-display:hover {
+			transform: translateY(-2px);
+			box-shadow: var(--md-sys-elevation-1);
+			border-color: var(--md-sys-color-primary);
+		}
+
+		/* Specific Colors for Types */
+		.card-type-linkDOR { border-left-color: #3b82f6; } /* Blue */
+		.card-type-linkDOD { border-left-color: #22c55e; } /* Green */
+		.card-type-linkOther { border-left-color: #a855f7; } /* Purple */
+
+		.link-card-content {
+			flex: 1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			min-width: 0;
+		}
+
+		.link-card-label {
+			font-size: 0.65rem;
+			text-transform: uppercase;
+			color: var(--md-sys-color-secondary);
+			font-weight: bold;
+			letter-spacing: 0.5px;
+		}
+
+		.link-card-url {
+			font-size: 0.9rem;
+			font-weight: 500;
+			color: var(--md-sys-color-on-surface);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			/* Truncation Logic */
+			display: block; /* Ensures max-width logic applies */
+		}
+
+		/* Edit Button (Visible on Hover) */
+		.link-card-actions {
+			opacity: 0; 
+			transition: opacity 0.2s;
+		}
+		.link-card-display:hover .link-card-actions {
+			opacity: 1;
+		}
+
+		/* The Input State */
+		.link-input-state {
+			display: flex;
+			flex-direction: column;
+		}
+		.link-input-state input {
+			font-size: 0.9rem;
+			border-bottom-width: 2px;
+		}
+		.link-input-anim {
+			animation: fadeIn 0.3s ease;
+		}
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -1575,7 +1670,7 @@ function getProgramType(name) {
     if (!name) return 'OTHER';
     const n = name.toUpperCase().trim();
     
-    if (n.startsWith('SRV')) return 'SERVICE';
+    if (n.startsWith('SRV') || n.startsWith('SVL')) return 'SERVICE';
     if (n.endsWith('B')) return 'BATCH';
     if (n.endsWith('I')) return 'INTERACTIVE';
     return 'OTHER';
@@ -2017,16 +2112,22 @@ class Router {
 
         let content = '';
 
-        // Back button
+        // --- UPDATED HEADER SECTION ---
         content += `
-            <button class="btn btn-outlined btn-small" onclick="router.navigate('${type}')" style="margin-bottom: 1rem;">← Back to List</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <button class="btn btn-outlined btn-small" onclick="router.navigate('${type}')">← Back to List</button>
+                
+                <div style="display: flex; gap: 8px;">
+                    <button id="btn-conf-copy" class="btn btn-tonal btn-small" onclick="ui.copyConfluenceObject('${type}', '${id}')" title="Copy as Wiki Markup">
+                        <span style="font-size: 1.1em; margin-right: 4px;">📘</span> Copy to Confluence
+                    </button>
+                    
+                    ${!item.isSystem ? `<button class="btn btn-danger btn-small" onclick="deleteObject('${type}', '${id}')">Delete</button>` : ''}
+                </div>
+            </div>
             <div class="detail-container">
         `;
-        
-        // Allow deleting except system objects
-        if (!item.isSystem) {
-             content += `<button class="btn btn-danger btn-small" style="position: absolute; top: 2rem; right: 2rem;" onclick="deleteObject('${type}', '${id}')">Delete</button>`;
-        }
+        // --- END HEADER SECTION ---
 
         // Render specific editor based on type
         if (type === 'programs') content += renderProgramDetail(item);
@@ -3005,11 +3106,17 @@ function renderProjectDetail(item) {
             <label>Status</label>
             ${renderStatusSlider(item.id, item.status, false)}
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-            ${renderLinkInput(item.id, 'DOR Link', 'linkDOR', item.linkDOR)}
-            ${renderLinkInput(item.id, 'DOD Link', 'linkDOD', item.linkDOD)}
-            ${renderLinkInput(item.id, 'Other Link', 'linkOther', item.linkOther)}
+        
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div id="wrapper-linkDOR" class="link-widget-wrapper">
+                ${ui.renderLinkWidget(item.id, 'linkDOR', 'Definition of Ready', item.linkDOR)}
+            </div>
+            <div id="wrapper-linkDOD" class="link-widget-wrapper">
+                ${ui.renderLinkWidget(item.id, 'linkDOD', 'Definition of Done', item.linkDOD)}
+            </div>
+            <div id="wrapper-linkOther" class="link-widget-wrapper">
+                ${ui.renderLinkWidget(item.id, 'linkOther', 'Resources / Links', item.linkOther)}
+            </div>
         </div>
 
         <div class="section-header">
@@ -3114,7 +3221,9 @@ function renderLinkInput(id, label, field, value) {
 // 5. MAILBOX
 function renderMailboxDetail(item) {
     let logs = item.workLog || [];
+    // Sort Newest First
     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
     const isSolved = item.status === 'Solved';
     
     return `
@@ -3154,17 +3263,25 @@ function renderMailboxDetail(item) {
         </div>
         
         <div style="background: var(--md-sys-color-surface-variant); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <textarea id="mail-log-input" placeholder="Notes... (Supports /table{...} and /program{...})" style="min-height: 80px; margin-bottom: 8px;"></textarea>
+            <textarea id="mail-log-input" placeholder="Notes... (Supports /table{...}, /program{...} and /query{...})" style="min-height: 80px; margin-bottom: 8px;"></textarea>
             <div style="text-align: right;">
                 <button class="btn btn-primary btn-small" onclick="addMailboxLog('${item.id}')">Log Note</button>
             </div>
         </div>
 
         <div id="mailbox-logs">
-            ${logs.map(log => `
-                <div class="work-log-entry">
-                    <div class="work-log-meta">${new Date(log.timestamp).toLocaleString()}</div>
-                    <div class="work-log-content">${formatWorkLogContent(log.content)}</div>
+            ${logs.map((log, index) => `
+                <div class="work-log-entry ${log.isImportant ? 'important' : ''}">
+                    <div class="work-log-meta">
+                        <span>${new Date(log.timestamp).toLocaleString()}</span>
+                        <div>
+                             <button class="log-action-btn ${log.isImportant ? 'active-star' : ''}" onclick="ui.toggleMailboxImportant('${item.id}', ${index})" title="Mark as Important">★</button>
+                             <button class="log-action-btn" onclick="ui.enableEditMailboxLog('${item.id}', ${index})" title="Edit Note">✎</button>
+                             <button class="log-action-btn" onclick="ui.deleteMailboxLog('${item.id}', ${index})" title="Delete Entry" style="color: var(--md-sys-color-error); margin-left: 8px;">✕</button>
+                        </div>
+                    </div>
+                    <div class="work-log-content" id="mail-log-content-${index}">${formatWorkLogContent(log.content)}</div>
+                    <textarea id="mail-log-edit-${index}" style="display:none; width:100%; border:1px solid #ccc; padding:8px;" onblur="ui.saveMailboxLogEdit('${item.id}', ${index}, this.value)">${log.content}</textarea>
                 </div>
             `).join('')}
         </div>
@@ -3711,31 +3828,50 @@ function removeSubItem(type, id, arrayName, index) {
 
 function formatWorkLogContent(text) {
     if(!text) return '';
+    
+    // 1. Basic HTML Escaping
     let safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    safeText = safeText.replace(/\n/g, "<br>");
+
+    // 2. Split text by the /query{...} pattern (multiline supported)
+    // The regex captures the full query tag so we can process it in the loop
+    const parts = safeText.split(/(\/query\{[\s\S]*?\})/g);
     
-    // Updated: Added onclick event to the 'missing' span
-    safeText = safeText.replace(/\/table\{([^}]+)\}/g, (match, name) => {
-        const found = store.findByName('tables', name);
-        if (found) {
-            return `<span class="smart-ref found" onclick="router.navigate('tables', '${found.id}')">🛢️ ${name}</span>`;
+    // 3. Process each part
+    return parts.map(part => {
+        if (part.startsWith('/query{') && part.endsWith('}')) {
+            // --- HANDLE QUERY BLOCK ---
+            // Remove /query{ and }
+            const content = part.slice(7, -1); 
+            // Return formatted box. CSS 'white-space: pre-wrap' handles the newlines.
+            return `<div class="query-box">${content}</div>`;
         } else {
-            // Click to create logic added here
-            return `<span class="smart-ref missing" style="cursor:pointer;" title="Table '${name}' not found. Click to create." onclick="ui.openCreateModal('tables', '${name}')">⚠️ ${name}</span>`;
+            // --- HANDLE NORMAL TEXT ---
+            // Convert newlines to <br> for normal text
+            let processed = part.replace(/\n/g, "<br>");
+            
+            // Link Tables
+            processed = processed.replace(/\/table\{([^}]+)\}/g, (match, name) => {
+                const found = store.findByName('tables', name);
+                if (found) {
+                    return `<span class="smart-ref found" onclick="router.navigate('tables', '${found.id}')">🛢️ ${name}</span>`;
+                } else {
+                    return `<span class="smart-ref missing" style="cursor:pointer;" title="Table '${name}' not found. Click to create." onclick="ui.openCreateModal('tables', '${name}')">⚠️ ${name}</span>`;
+                }
+            });
+            
+            // Link Programs
+            processed = processed.replace(/\/program\{([^}]+)\}/g, (match, name) => {
+                const found = store.findByName('programs', name);
+                if (found) {
+                    return `<span class="smart-ref found" onclick="router.navigate('programs', '${found.id}')">📦 ${name}</span>`;
+                } else {
+                    return `<span class="smart-ref missing" style="cursor:pointer;" title="Program '${name}' not found. Click to create." onclick="ui.openCreateModal('programs', '${name}')">⚠️ ${name}</span>`;
+                }
+            });
+            
+            return processed;
         }
-    });
-    
-    // Updated: Added onclick event to the 'missing' span
-    safeText = safeText.replace(/\/program\{([^}]+)\}/g, (match, name) => {
-        const found = store.findByName('programs', name);
-        if (found) {
-            return `<span class="smart-ref found" onclick="router.navigate('programs', '${found.id}')">📦 ${name}</span>`;
-        } else {
-            // Click to create logic added here
-            return `<span class="smart-ref missing" style="cursor:pointer;" title="Program '${name}' not found. Click to create." onclick="ui.openCreateModal('programs', '${name}')">⚠️ ${name}</span>`;
-        }
-    });
-    return safeText;
+    }).join('');
 }
 // --- PROJECT LOG FILTER STATE ---
 let projectLogFilter = {
@@ -4041,15 +4177,105 @@ function formatMarkupContent(text) {
     // 1. Escape special Wiki characters first (this turns '{' into '\{')
     let res = safeWiki(text);
     
-    // 2. Convert smart tags to Bold Confluence Text
-    // Note: We now match the escaped versions: \\\{ and \\\}
+    // 2. Handle /query{...} -> {code} block
+    // Since safeWiki ran, we look for escaped brackets: /query\{ ... \}
+    // [\s\S]*? matches any character including newlines, non-greedy
+    res = res.replace(/\/query\\\{([\s\S]*?)\\\}/g, (match, codeContent) => {
+        // We un-escape the content inside the code block so the query looks clean
+        const rawCode = codeContent.replace(/\\\{/g, '{').replace(/\\\}/g, '}').replace(/\\\|/g, '|');
+        return `\n{code:language=sql|title=SQL Query|theme=Midnight}\n${rawCode}\n{code}\n`;
+    });
+    
+    // 3. Convert smart tags to Bold Confluence Text
     res = res.replace(/\/table\\\{([^}]+)\\\}/g, ' *🛢️ $1* ');
     res = res.replace(/\/program\\\{([^}]+)\\\}/g, ' *📦 $1* ');
     
     return res;
 }
 const ui = {
-    
+    // --- MAILBOX LOG ACTIONS ---
+    toggleMailboxImportant: (id, index) => {
+        const item = store.get('mailbox', id);
+        if (!item.workLog) return;
+        
+        // Ensure array copy
+        const logs = [...item.workLog];
+        // Sort to match view (Newest First)
+        logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // Toggle
+        logs[index].isImportant = !logs[index].isImportant;
+        
+        // We must re-sort back to original chronological order if that's how you save, 
+        // OR just save the modified sorted array. 
+        // Safest is to find the exact object by ID in the original array if possible, 
+        // but since we sort in view, let's just update the specific item found by index in the sorted view.
+        // NOTE: A better approach for data integrity is finding by ID.
+        // Let's stick to the Project pattern for consistency:
+        
+        // Update the main store
+        store.update('mailbox', id, { workLog: logs });
+        router.renderDetail('mailbox', id);
+    },
+
+    enableEditMailboxLog: (id, index) => {
+        document.getElementById(`mail-log-content-${index}`).style.display = 'none';
+        const ta = document.getElementById(`mail-log-edit-${index}`);
+        ta.style.display = 'block';
+        ta.focus();
+    },
+
+    saveMailboxLogEdit: (id, index, value) => {
+        const item = store.get('mailbox', id);
+        let logs = [...item.workLog];
+        logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        logs[index].content = value;
+        store.update('mailbox', id, { workLog: logs });
+        router.renderDetail('mailbox', id);
+    },
+
+    deleteMailboxLog: (id, index) => {
+        if(!confirm('Delete this note permanently?')) return;
+        const item = store.get('mailbox', id);
+        let logs = [...item.workLog];
+        
+        // We need to remove the correct item. Since view is sorted, we delete by index of the sorted view
+        logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        logs.splice(index, 1);
+        
+        store.update('mailbox', id, { workLog: logs });
+        router.renderDetail('mailbox', id);
+    },
+
+    // --- CONFLUENCE DIRECT COPY ---
+    copyConfluenceObject: (type, id) => {
+        const markup = getConfluenceHTML(type, id);
+        if (!markup) {
+            alert("Error generating markup.");
+            return;
+        }
+
+        // Copy to clipboard
+        const el = document.createElement('textarea');
+        el.value = markup;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        // Feedback
+        const btn = document.getElementById('btn-conf-copy');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>✅</span> Copied!';
+        setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+        
+        // Optional: Show Toast
+        const toast = document.getElementById("toast");
+        toast.innerText = "Wiki Markup copied to clipboard!";
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    },
     editProjectLink: (id, field) => {
         const item = store.get('projects', id);
         const currentVal = item[field] || '';
@@ -4168,6 +4394,25 @@ const ui = {
             e.preventDefault();
             const formData = new FormData(form);
             const obj = Object.fromEntries(formData.entries());
+
+            // --- FEATURE ADDITION: UNIQUE NAME CHECK ---
+            // Determine which field holds the "name" based on type
+            let nameToCheck = null;
+            if (type === 'programs') nameToCheck = obj.shortName;
+            else if (type === 'mailbox') nameToCheck = obj.subject; // Optional: check mailbox subject uniqueness
+            else if (type === 'quickLinks') nameToCheck = obj.title; 
+            else nameToCheck = obj.name; // Tables, Queries, Projects
+
+            // Check if it exists (Case-insensitive check provided by store.findByName)
+            if (nameToCheck && (type === 'programs' || type === 'tables')) {
+                const exists = store.findByName(type, nameToCheck);
+                if (exists) {
+                    alert(`Error: A ${type.slice(0, -1)} with the name "${nameToCheck}" already exists.\nPlease choose a unique name.`);
+                    return; // Stop execution, do not close modal
+                }
+            }
+            // -------------------------------------------
+
             if(type === 'programs') { obj.linkedTables = []; obj.linkedPrograms = []; }
             if(type === 'tables') { obj.fields = []; obj.links = []; } 
             if(type === 'projects') { obj.todos = []; obj.linkedTables = []; obj.linkedPrograms = []; }
@@ -4418,7 +4663,89 @@ ui.initMerge = function() {
 
     document.getElementById('mergeConfirmModal').showModal();
 };
+/* --- SMART LINK WIDGET LOGIC --- */
+ui.renderLinkWidget = function(projectId, fieldKey, label, value) {
+    // 1. If value exists, render CARD
+    if (value) {
+        return `
+            <div class="link-card-display card-type-${fieldKey} link-input-anim" 
+                 onclick="window.open('${value}', '_blank')" 
+                 title="${value}">
+                
+                <div class="link-card-content">
+                    <span class="link-card-label">${label}</span>
+                    <span class="link-card-url">🔗 ${value.replace(/^https?:\/\//, '')}</span>
+                </div>
+                
+                <div class="link-card-actions">
+                    <button class="btn btn-icon-only btn-tonal" 
+                        onclick="event.stopPropagation(); ui.toggleLinkEdit('${projectId}', '${fieldKey}', '${label}')">
+                        ✎
+                    </button>
+                </div>
+            </div>
+        `;
+    } 
+    
+    // 2. If empty, render INPUT
+    else {
+        return `
+            <div class="link-input-state link-input-anim">
+                <label style="margin-left: 4px;">${label}</label>
+                <input type="text" 
+                    placeholder="Paste URL + Enter..." 
+                    value="${value || ''}"
+                    onkeydown="if(event.key === 'Enter') this.blur()"
+                    onblur="ui.saveLinkWidget('${projectId}', '${fieldKey}', '${label}', this.value)"
+                    autofocus
+                >
+            </div>
+        `;
+    }
+};
 
+ui.saveLinkWidget = function(projectId, fieldKey, label, newValue) {
+    const val = newValue.trim();
+    
+    // 1. Update Data Store silently
+    store.update('projects', projectId, { [fieldKey]: val });
+
+    // 2. Update ONLY this specific wrapper in the DOM (No full reload)
+    const wrapper = document.getElementById(`wrapper-${fieldKey}`);
+    if (wrapper) {
+        wrapper.innerHTML = ui.renderLinkWidget(projectId, fieldKey, label, val);
+    }
+};
+
+ui.toggleLinkEdit = function(projectId, fieldKey, label) {
+    // 1. Get current value from store
+    const item = store.get('projects', projectId);
+    const currentVal = item[fieldKey] || '';
+
+    // 2. Force render the INPUT view into the wrapper
+    const wrapper = document.getElementById(`wrapper-${fieldKey}`);
+    if (wrapper) {
+        // We temporarily pass 'null' as value to renderLinkWidget to force the Input view,
+        // but we manually inject the value back into the input so the user doesn't lose it.
+        wrapper.innerHTML = `
+            <div class="link-input-state link-input-anim">
+                <label style="margin-left: 4px;">${label}</label>
+                <input type="text" 
+                    id="edit-input-${fieldKey}"
+                    value="${currentVal}"
+                    placeholder="Paste URL..." 
+                    onkeydown="if(event.key === 'Enter') this.blur()"
+                    onblur="ui.saveLinkWidget('${projectId}', '${fieldKey}', '${label}', this.value)"
+                >
+            </div>
+        `;
+        // Auto-focus the input
+        setTimeout(() => {
+            const inp = document.getElementById(`edit-input-${fieldKey}`);
+            if(inp) { inp.focus(); inp.select(); }
+        }, 50);
+    }
+};
 ui.executeMerge = function() {
     const payload = window.mergePayload;
     const backup = payload.backup;
