@@ -2770,7 +2770,100 @@ function scanTextForRefs(text, callback) {
     while ((match = tableRegex.exec(text)) !== null) callback('tables', match[1]);
     while ((match = progRegex.exec(text)) !== null) callback('programs', match[1]);
 }
+/* --- REFERENCE SCANNER LOGIC --- */
+function findReferences(targetType, targetName) {
+    if (!targetName) return [];
+    const refs = [];
+    const pushRef = (type, item, reason) => {
+        // Prevent self-reference
+        if (type === targetType && (item.name === targetName || item.shortName === targetName)) return;
+        
+        refs.push({ 
+            type, 
+            id: item.id, 
+            name: item.name || item.shortName || item.subject, 
+            reason 
+        });
+    };
 
+    const tag = targetType === 'tables' ? `/table{${targetName}}` : `/program{${targetName}}`;
+
+    // 1. Scan Projects (Structured + Text)
+    store.getAll('projects').forEach(p => {
+        if (targetType === 'tables' && p.linkedTables?.includes(targetName)) pushRef('projects', p, 'Linked Table');
+        if (targetType === 'programs' && p.linkedPrograms?.includes(targetName)) pushRef('projects', p, 'Linked Program');
+        
+        if (p.description?.includes(tag)) pushRef('projects', p, 'Description Tag');
+        p.workLog?.forEach(l => { if(l.content?.includes(tag)) pushRef('projects', p, 'Work Log'); });
+        p.todos?.forEach(t => { if(t.text?.includes(tag)) pushRef('projects', p, 'Todo Item'); });
+    });
+
+    // 2. Scan Programs (Structured + Text)
+    store.getAll('programs').forEach(p => {
+        if (targetType === 'tables' && p.linkedTables?.includes(targetName)) pushRef('programs', p, 'Linked Table');
+        if (targetType === 'programs' && p.linkedPrograms?.includes(targetName)) pushRef('programs', p, 'Linked Program');
+        
+        if (p.flow?.includes(tag)) pushRef('programs', p, 'Flow Tag');
+    });
+
+    // 3. Scan Tables (Links)
+    if (targetType === 'tables') {
+        store.getAll('tables').forEach(t => {
+            t.links?.forEach(l => {
+                if(l.toTable === targetName) pushRef('tables', t, 'Table Link');
+            });
+        });
+    }
+
+    // 4. Scan Mailbox (Logs)
+    store.getAll('mailbox').forEach(m => {
+        m.workLog?.forEach(l => { if(l.content?.includes(tag)) pushRef('mailbox', m, 'Mailbox Log'); });
+    });
+    
+    // 5. Deduplicate (e.g. same project referenced twice via link and text)
+    const unique = [];
+    const seen = new Set();
+    refs.forEach(r => {
+        const key = r.type + r.id;
+        if(!seen.has(key)) {
+            seen.add(key);
+            unique.push(r);
+        }
+    });
+
+    return unique;
+}
+
+function renderReferencedBySection(targetType, targetName) {
+    const refs = findReferences(targetType, targetName);
+    
+    if (refs.length === 0) return '';
+
+    const iconMap = { projects: '🗂️', programs: '📦', tables: '🛢️', mailbox: '📬', queries: '🔍' };
+
+    return `
+        <div class="section-header" style="margin-top: 3rem; border-color: var(--md-sys-color-primary);">
+            <span>References / Usage</span>
+            <span class="chip" style="background: var(--md-sys-color-secondary);">${refs.length} References</span>
+        </div>
+        <p style="opacity: 0.7; margin-bottom: 1rem; font-size: 0.9rem;">
+            This ${targetType.slice(0,-1)} is referenced by the following items:
+        </p>
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+            ${refs.map(r => `
+                <div class="ref-card" style="cursor:pointer; border-left: 3px solid var(--md-sys-color-secondary);" 
+                     onclick="router.navigate('${r.type}', '${r.id}')">
+                    <div class="ref-header">
+                        <span class="ref-title" style="font-size: 0.95rem;">${iconMap[r.type] || '📄'} ${r.name}</span>
+                    </div>
+                    <div class="ref-desc" style="margin-top: 4px; color: var(--md-sys-color-primary); font-size: 0.75rem; font-weight: bold;">
+                        ${r.reason}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
 function getOrphanData() {
     const missing = { programs: new Set(), tables: new Set() };
     
@@ -2872,8 +2965,10 @@ function renderOrphanList() {
 
     document.getElementById('mainContent').innerHTML = html;
 }
-// 1. PROGRAMS
 function renderProgramDetail(item) {
+    // NEW: Generate References HTML
+    const refHtml = renderReferencedBySection('programs', item.shortName); // Using shortName as the key
+
     return `
         <h1 style="margin-right: 80px;">${item.longName} (${item.shortName})</h1>
         <p>${item.shortDescription}</p>
@@ -2897,6 +2992,8 @@ function renderProgramDetail(item) {
         <div class="card-grid" id="prog-progs-list" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
              ${(item.linkedPrograms || []).map((p, idx) => renderReferenceCard('programs', item.id, 'linkedPrograms', idx, p, 'programs')).join('')}
         </div>
+        
+        ${refHtml}
     `;
 }
 
@@ -2951,19 +3048,18 @@ function renderTableDetail(item) {
             join: item.linkDesc || '',
             bidirectional: false
         });
-        item.linkedTable = null; // Clear old
+        item.linkedTable = null; 
         item.linkDesc = null;
-        store.save(); // Persist migration
+        store.save(); 
     }
 
     const outgoingLinks = item.links || [];
 
-    // --- DYNAMIC SEARCH: Incoming Bi-Directional Links ---
-    // Now including index to allow removal
+    // Incoming Bi-Directional Links
     const incomingLinks = store.getAll('tables').flatMap(t => {
         if (!t.links) return [];
         return t.links
-            .map((link, idx) => ({ ...link, originalIdx: idx, originalId: t.id, fromTable: t.name })) // Map first to keep index
+            .map((link, idx) => ({ ...link, originalIdx: idx, originalId: t.id, fromTable: t.name })) 
             .filter(l => l.toTable.toLowerCase() === item.name.toLowerCase() && l.bidirectional)
             .map(l => ({
                 fromTable: l.fromTable,
@@ -2974,6 +3070,9 @@ function renderTableDetail(item) {
                 bidirectional: true
             }));
     });
+
+    // NEW: Generate References HTML
+    const refHtml = renderReferencedBySection('tables', item.name);
 
     return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-right: 80px;">
@@ -3049,6 +3148,8 @@ function renderTableDetail(item) {
             
             ${outgoingLinks.length === 0 && incomingLinks.length === 0 ? '<p style="opacity:0.6; font-style:italic;">No links defined.</p>' : ''}
         </div>
+        
+        ${refHtml}
     `;
 }
 
@@ -3112,6 +3213,12 @@ function renderQueryDetail(item) {
 
     return `
         <h1 style="margin-right: 80px;">Query: ${item.name}</h1>
+        
+        <div class="input-group">
+            <label>Description</label>
+            <textarea placeholder="Query description..." style="min-height: 60px;" 
+                onchange="updateField('queries', '${item.id}', 'description', this.value)">${item.description || ''}</textarea>
+        </div>
         <div class="input-group">
             <label>Update Indicator</label>
             <select onchange="updateField('queries', '${item.id}', 'updateIndicator', this.value)">
@@ -3136,7 +3243,6 @@ function renderQueryDetail(item) {
         `).join('') : '<p>No parameters (use :paramName) detected.</p>'}
     `;
 }
-
 function renderProjectDetail(item) {
     const formattedTime = formatDuration(item.timeSpent);
     
@@ -4411,18 +4517,35 @@ const ui = {
                 <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
                 <div class="input-group"><label>Description</label><textarea name="description"></textarea></div>
             `;
-        } else if (type === 'queries') {
-            inputsDiv.innerHTML = `
-                <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
-                <div class="input-group"><label>Update Indicator</label>
-                    <select name="updateIndicator">
-                        <option value="R">Read</option><option value="C">Create</option>
-                        <option value="U">Update</option><option value="D">Delete</option>
-                    </select>
-                </div>
-                <div class="input-group"><label>SQL/Query</label><textarea name="query"></textarea></div>
-            `;
-        } else if (type === 'projects') {
+      /* ... inside ui.openCreateModal ... */
+
+		} else if (type === 'queries') {
+			inputsDiv.innerHTML = `
+				<div class="input-group">
+					<label>Name</label>
+					<input name="name" required type="text">
+				</div>
+				<div class="input-group">
+					<label>Description</label>
+					<textarea name="description" placeholder="Explain the purpose of this query..."></textarea>
+				</div>
+				<div class="input-group">
+					<label>Update Indicator</label>
+					<select name="updateIndicator">
+						<option value="R">Read</option>
+						<option value="C">Create</option>
+						<option value="U">Update</option>
+						<option value="D">Delete</option>
+					</select>
+				</div>
+				<div class="input-group">
+					<label>SQL/Query</label>
+					<textarea name="query"></textarea>
+				</div>
+			`;
+		} 
+
+		else if (type === 'projects') {
             inputsDiv.innerHTML = `
                 <div class="input-group"><label>Name</label><input name="name" required type="text"></div>
                 <div class="input-group"><label>Description</label><textarea name="description"></textarea></div>
@@ -5019,29 +5142,50 @@ ui.runOmniSearch = function(query) {
     Object.keys(map).forEach(type => {
         store.getAll(type).forEach(item => {
             const name = item.name || item.shortName || item.subject || '';
-            const desc = item.description || item.shortDescription || '';
+            let desc = item.description || item.shortDescription || '';
             
-            // Simple scoring algorithm
             let score = 0;
-            if (q === '') score = 1; // Show all if empty (could limit to recent)
-            else {
-                if (name.toLowerCase() === q) score += 20; // Exact match
-                else if (name.toLowerCase().startsWith(q)) score += 10;
-                else if (name.toLowerCase().includes(q)) score += 5;
+            let matched = false;
+
+            if (q === '') {
+                score = 1;
+                matched = true;
+            } else {
+                // 1. Check Name
+                if (name.toLowerCase() === q) { score += 20; matched = true; }
+                else if (name.toLowerCase().startsWith(q)) { score += 10; matched = true; }
+                else if (name.toLowerCase().includes(q)) { score += 5; matched = true; }
                 
-                if (desc.toLowerCase().includes(q)) score += 1;
+                // 2. Check Description
+                if (desc.toLowerCase().includes(q)) { score += 1; matched = true; }
+
+                // 3. NEW: Check Work Logs (Projects & Mailbox)
+                if (item.workLog && Array.isArray(item.workLog)) {
+                    const hasLogMatch = item.workLog.some(log => 
+                        (log.content || '').toLowerCase().includes(q)
+                    );
+                    
+                    if (hasLogMatch) {
+                        score += 5; // Give logs a decent weight
+                        matched = true;
+                        // Optional: Append hint to description for context
+                        if (!desc.toLowerCase().includes(q) && !name.toLowerCase().includes(q)) {
+                            desc += " (found in logs)";
+                        }
+                    }
+                }
             }
             
-            // Apply weight based on type
-            score += map[type].w;
+            // Only add to results if it matched something (or query is empty)
+            if (matched) {
+                // Apply type weight
+                score += map[type].w;
 
-            if (score > 0) {
                 allItems.push({ 
                     ...item, 
                     type, 
                     typeLabel: map[type].lbl, 
                     score,
-                    // Store display name for rendering
                     displayName: name,
                     displayDesc: desc
                 });
@@ -5114,7 +5258,7 @@ function initERD() {
 
     // State
     const tables = store.getAll('tables');
-    let offsetX = canvas.width / 2 - 100; // Center ish
+    let offsetX = canvas.width / 2 - 100; 
     let offsetY = 50;
     let scale = 1;
     let isDragging = false, lastX, lastY;
@@ -5125,7 +5269,6 @@ function initERD() {
     const rowH = 20;
     const nodes = [];
 
-    // Simple Grid Auto-Layout
     const cols = Math.ceil(Math.sqrt(tables.length + 1)); 
     tables.forEach((t, i) => {
         const c = i % cols;
@@ -5144,17 +5287,28 @@ function initERD() {
         });
     });
 
+    // Helper: Draw Arrowhead
+    function drawArrow(ctx, x, y, angle, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-10, -5);
+        ctx.lineTo(-10, 5);
+        ctx.fill();
+        ctx.restore();
+    }
+
     function draw() {
-        // Clear
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Transform
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
 
-        // 1. Draw Links (Bezier Curves)
-        ctx.lineWidth = 2;
+        // 1. Draw Links
         nodes.forEach(node => {
             if(!node.links) return;
             node.links.forEach(link => {
@@ -5164,23 +5318,30 @@ function initERD() {
                     const sy = node.y + headerH / 2;
                     const ex = target.x;
                     const ey = target.y + headerH / 2;
+                    
+                    const isBi = link.bidirectional;
 
-                    // Gradient Stroke
-                    const grad = ctx.createLinearGradient(sx, sy, ex, ey);
-                    grad.addColorStop(0, '#94a3b8');
-                    grad.addColorStop(1, '#64748b');
-                    ctx.strokeStyle = grad;
+                    // Style Distinction
+                    const linkColor = isBi ? '#8b5cf6' : '#64748b'; // Purple if Bi, Slate if Single
+                    ctx.strokeStyle = linkColor;
+                    ctx.lineWidth = isBi ? 3 : 1.5; // Thicker if Bi
+                    if (isBi) ctx.setLineDash([]); // Solid
+                    else ctx.setLineDash([5, 3]);  // Dashed for single
 
+                    // Curve
                     ctx.beginPath();
                     ctx.moveTo(sx, sy);
                     ctx.bezierCurveTo(sx + 80, sy, ex - 80, ey, ex, ey);
                     ctx.stroke();
-                    
-                    // Arrowhead
-                    ctx.fillStyle = '#64748b';
-                    ctx.beginPath();
-                    ctx.arc(ex, ey, 4, 0, Math.PI*2);
-                    ctx.fill();
+                    ctx.setLineDash([]); // Reset
+
+                    // Target Arrow (Points to Target)
+                    drawArrow(ctx, ex, ey, 0, linkColor);
+
+                    // Source Arrow (Points back to Source) - Only if Bi-directional
+                    if (isBi) {
+                        drawArrow(ctx, sx, sy, Math.PI, linkColor);
+                    }
                 }
             });
         });
@@ -5197,7 +5358,7 @@ function initERD() {
             // Card Bg
             ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
             ctx.fillRect(node.x, node.y, node.w, node.h);
-            ctx.shadowBlur = 0; // reset
+            ctx.shadowBlur = 0; 
 
             // Border
             ctx.strokeStyle = isDark ? '#334155' : '#cbd5e1';
@@ -5219,10 +5380,9 @@ function initERD() {
             node.fields.forEach((f, idx) => {
                 const fy = node.y + headerH + 16 + (idx * rowH);
                 ctx.fillText(f.name, node.x + 10, fy);
-                // Type hint (fake)
                 ctx.fillStyle = isDark ? '#475569' : '#cbd5e1';
                 ctx.fillText('VARCHAR', node.x + node.w - 55, fy);
-                ctx.fillStyle = isDark ? '#94a3b8' : '#475569'; // restore
+                ctx.fillStyle = isDark ? '#94a3b8' : '#475569'; 
             });
         });
 
