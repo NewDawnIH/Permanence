@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIXr</title>
+    <style>
+        /* ==========================================================================
+           CSS VARIABLES & DESIGN TOKENS
+           ========================================================================== */
+        :root {
+            /* Brand Colors */
+            --kbc-blue: #003087;
+            --kbc-blue-hover: #002266;
+            --kbc-blue-light: #e6ebf3;
+            
+            /* UI Colors */
+            --bg-body: #f4f7f9;
+            --bg-surface: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            
+            /* Diff Colors */
+            --diff-add-bg: #dcfce7;
+            --diff-add-text: #166534;
+            --diff-rem-bg: #fee2e2;
+            --diff-rem-text: #991b1b;
+            --diff-chg-bg: #fef9c3;
+            --diff-chg-text: #854d0e;
+            
+            /* Typography & Spacing */
+            --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            
+            /* Transitions */
+            --transition: all 0.2s ease-in-out;
+        }
+
+        /* ==========================================================================
+           GLOBAL STYLES
+           ========================================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            border: none;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--kbc-blue);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--kbc-blue-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-body);
+        }
+        
+        .btn-danger {
+            background-color: var(--diff-rem-bg);
+            color: var(--diff-rem-text);
+            border: 1px solid transparent;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+        }
+        
+        .btn-danger:hover {
+            background-color: #fca5a5;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.25rem;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-icon:hover {
+            color: var(--kbc-blue);
+            background-color: var(--kbc-blue-light);
+        }
+
+        input, textarea {
+            font-family: var(--font-mono);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s;
+            font-size: 0.875rem;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--kbc-blue);
+            box-shadow: 0 0 0 3px var(--kbc-blue-light);
+        }
+
+        /* ==========================================================================
+           LAYOUT & NAVIGATION
+           ========================================================================== */
+        header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 64px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--kbc-blue);
+            cursor: pointer;
+        }
+
+        .brand svg {
+            height: 24px;
+            width: 24px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .nav-tab {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0 1rem;
+            height: 100%;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+        }
+
+        .nav-tab:hover {
+            color: var(--kbc-blue);
+        }
+
+        .nav-tab.active {
+            color: var(--kbc-blue);
+            border-bottom-color: var(--kbc-blue);
+        }
+        
+        .settings-divider {
+            border-left: 1px solid var(--border-color);
+            margin: 1rem 0;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==========================================================================
+           COMPONENTS
+           ========================================================================== */
+        
+        /* Landing Page & Logo Animations */
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+        }
+
+        .hero-logo {
+            margin-bottom: 2rem;
+        }
+
+        .animated-logo {
+            width: 120px;
+            height: 120px;
+            fill: none;
+            stroke: var(--kbc-blue);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .bracket-left { animation: pulseBracketLeft 3s infinite alternate ease-in-out; }
+        .bracket-right { animation: pulseBracketRight 3s infinite alternate ease-in-out; }
+        .data-node-1 { animation: flowNode 3s infinite linear; }
+        .data-node-2 { animation: flowNode 3s infinite linear 1s; }
+        .data-node-3 { animation: flowNode 3s infinite linear 2s; }
+
+        @keyframes pulseBracketLeft {
+            0% { transform: translateX(0); opacity: 0.7; }
+            100% { transform: translateX(-5px); opacity: 1; }
+        }
+        @keyframes pulseBracketRight {
+            0% { transform: translateX(0); opacity: 0.7; }
+            100% { transform: translateX(5px); opacity: 1; }
+        }
+        @keyframes flowNode {
+            0% { transform: translateX(-20px); opacity: 0; }
+            50% { opacity: 1; fill: var(--kbc-blue); }
+            100% { transform: translateX(20px); opacity: 0; }
+        }
+
+        .landing-title {
+            font-size: 2.5rem;
+            color: var(--kbc-blue);
+            margin-bottom: 1rem;
+        }
+
+        .landing-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 2rem auto;
+        }
+
+        /* Layouts */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards & Surfaces */
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Sidebar Lists */
+        .list-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .favorite-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            background-color: var(--bg-body);
+            border: 1px solid transparent;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .favorite-item:hover {
+            border-color: var(--border-color);
+            background-color: var(--bg-surface);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .favorite-item-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .favorite-item-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Input Areas */
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        textarea.fix-input {
+            height: 120px;
+            resize: vertical;
+        }
+
+        /* Data Tables */
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-body);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-body);
+        }
+
+        .tag-cell {
+            font-weight: 700;
+            color: var(--kbc-blue);
+            width: 100px;
+        }
+
+        .name-cell {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            width: 200px;
+        }
+
+        .val-cell {
+            font-family: var(--font-mono);
+            word-break: break-all;
+        }
+
+        .tag-translation {
+            font-style: italic;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+        /* Tag Links & Highlights */
+        .tag-link {
+            color: var(--text-muted);
+            transition: color 0.2s;
+            display: inline-flex;
+            margin-top: 2px;
+        }
+        .tag-link:hover {
+            color: var(--kbc-blue);
+        }
+        
+        tr.highlight-tag td {
+            background-color: var(--kbc-blue-light);
+        }
+        tr.highlight-tag:hover td {
+            background-color: #d8e2f0; /* slightly darker on hover */
+        }
+
+        /* Diff Highlights */
+        .diff-added { background-color: var(--diff-add-bg); color: var(--diff-add-text); }
+        .diff-removed { background-color: var(--diff-rem-bg); color: var(--diff-rem-text); text-decoration: line-through;}
+        .diff-changed { background-color: var(--diff-chg-bg); color: var(--diff-chg-text); }
+
+        /* Dialogs / Modals */
+        dialog {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 0;
+            margin: auto;
+            max-width: 400px;
+            width: 90%;
+            background: var(--bg-surface);
+        }
+
+        dialog::backdrop {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .dialog-content {
+            padding: 1.5rem;
+        }
+
+        .dialog-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Utilities */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .text-center { text-align: center; }
+        .empty-state { padding: 3rem; text-align: center; color: var(--text-muted); font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <div class="brand" onclick="app.navigate('landing')">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 30 20 L 10 50 L 30 80" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M 70 20 L 90 50 L 70 80" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="50" cy="50" r="8" fill="currentColor" />
+                </svg>
+                FIXr
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab" data-target="view" onclick="app.navigate('view')">View</button>
+                <button class="nav-tab" data-target="compare" onclick="app.navigate('compare')">Compare</button>
+                <button class="nav-tab" data-target="create" onclick="app.navigate('create')">Create</button>
+                <div class="settings-divider"></div>
+                <button class="nav-tab btn-icon" onclick="app.openSettings()" title="Settings" style="height: auto; align-self: center; padding: 0.25rem 0.5rem; border-radius: var(--radius-md);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="landing" class="view-section active">
+            <div class="landing-container">
+                <div class="hero-logo">
+                    <svg class="animated-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <g class="bracket-left">
+                            <path d="M 35 15 L 10 50 L 35 85" />
+                        </g>
+                        <g class="bracket-right">
+                            <path d="M 65 15 L 90 50 L 65 85" />
+                        </g>
+                        <circle cx="50" cy="50" r="4" class="data-node-1" />
+                        <circle cx="50" cy="50" r="4" class="data-node-2" />
+                        <circle cx="50" cy="50" r="4" class="data-node-3" />
+                    </svg>
+                </div>
+                <h1 class="landing-title">Welcome to FIXr</h1>
+                <p class="landing-subtitle">Analyze, compare, and manage FIX messages instantly in your browser.</p>
+                <div class="flex-between gap-4" style="justify-content: center;">
+                    <button class="btn-primary" onclick="app.navigate('view')">Start Viewing</button>
+                    <button class="btn-secondary" onclick="app.navigate('compare')">Compare Messages</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view" class="view-section">
+            <div class="grid-layout">
+                <aside class="card">
+                    <div class="list-header">
+                        Saved Favorites
+                    </div>
+                    <div id="favoritesList">
+                        </div>
+                </aside>
+
+                <div class="card">
+                    <div class="flex-between mb-4">
+                        <h2 class="dialog-header" style="margin:0;">Parse Message</h2>
+                        <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.25rem 0.75rem;" onclick="app.loadExample()">Load Example</button>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="viewInput" class="fix-input" placeholder="Paste raw FIX message here (delimiters: | or ^ or SOH)..."></textarea>
+                    </div>
+                    <div class="flex-between mb-4">
+                        <button class="btn-primary" onclick="app.processView()">Process</button>
+                        <button class="btn-secondary" onclick="app.promptSaveFavorite()" id="btnSaveFav" style="display:none;">
+                            <span style="display:flex; align-items:center; gap:0.5rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                                Save Favorite
+                            </span>
+                        </button>
+                    </div>
+
+                    <div id="viewResults">
+                        <div class="empty-state">Enter a FIX message above and click Process.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="compare" class="view-section">
+            <div class="card">
+                <h2 class="dialog-header">Compare FIX Messages</h2>
+                <div class="split-layout">
+                    <div class="input-group">
+                        <label for="compareInput1">Message 1 (Base)</label>
+                        <textarea id="compareInput1" class="fix-input" placeholder="Paste base FIX message..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="compareInput2">Message 2 (Target)</label>
+                        <textarea id="compareInput2" class="fix-input" placeholder="Paste target FIX message..."></textarea>
+                    </div>
+                </div>
+                <div class="mb-4 text-center">
+                    <button class="btn-primary" onclick="app.processCompare()">Run Comparison</button>
+                </div>
+                
+                <div id="compareResults">
+                    <div class="empty-state">Enter two messages to see their differences.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="create" class="view-section">
+            <div class="card text-center" style="padding: 4rem 2rem;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--kbc-blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+                <h2 class="dialog-header">Message Builder</h2>
+                <p class="landing-subtitle" style="margin-bottom: 0;">This feature is currently Under Construction.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Phase 2 will introduce an interactive form to construct compliant FIX messages from scratch.</p>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="settingsModal">
+        <div class="dialog-content">
+            <h3 class="dialog-header">Settings</h3>
+            <div class="input-group">
+                <label for="favTagsInput">Highlight Favorite Tags (Comma separated)</label>
+                <input type="text" id="favTagsInput" placeholder="e.g., 35, 49, 56">
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">Entered tag numbers will be highlighted when viewing parsed FIX messages.</p>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="app.closeSettings()">Cancel</button>
+                <button class="btn-primary" onclick="app.saveSettings()">Save Configuration</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="promptModal">
+        <div class="dialog-content">
+            <h3 class="dialog-header" id="promptTitle">Save Favorite</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;" id="promptMessage">Enter an alias for this FIX message:</p>
+            <input type="text" id="promptInput" placeholder="e.g., AAPL New Order Single" onkeypress="if(event.key === 'Enter') app.confirmPrompt()">
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="app.closePrompt()">Cancel</button>
+                <button class="btn-primary" onclick="app.confirmPrompt()">Save</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="confirmModal">
+        <div class="dialog-content">
+            <h3 class="dialog-header">Confirm Action</h3>
+            <p id="confirmMessage" style="color: var(--text-main); margin-bottom: 1.5rem;"></p>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="app.closeConfirm()">Cancel</button>
+                <button class="btn-danger" onclick="app.executeConfirm()">Delete</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="alertModal">
+        <div class="dialog-content">
+            <h3 class="dialog-header">Notice</h3>
+            <p id="alertMessage" style="color: var(--text-main); margin-bottom: 1.5rem;"></p>
+            <div class="dialog-actions">
+                <button class="btn-primary" onclick="app.closeAlert()">OK</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        /* ==========================================================================
+           FIX DICTIONARY (Phase 1: Common Tags)
+           ========================================================================== */
+        const FIX_DICTIONARY = {
+    "1": "Account", "2": "AdvId", "3": "AdvRefID", "4": "AdvSide", "5": "AdvTransType", "6": "AvgPx", "7": "BeginSeqNo", "8": "BeginString", "9": "BodyLength", "10": "CheckSum",
+    "11": "ClOrdID", "12": "Commission", "13": "CommType", "14": "CumQty", "15": "Currency", "16": "EndSeqNo", "17": "ExecID", "18": "ExecInst", "19": "ExecRefID", "20": "ExecTransType",
+    "21": "HandlInst", "22": "SecurityIDSource", "23": "IOIid", "25": "IOIQltyInd", "26": "IOIRefID", "27": "IOIQty", "28": "IOITransType", "29": "LastCapacity", "30": "LastMkt",
+    "31": "LastPx", "32": "LastQty", "33": "NoLinesOfText", "34": "MsgSeqNum", "35": "MsgType", "36": "NewSeqNo", "37": "OrderID", "38": "OrderQty", "39": "OrdStatus", "40": "OrdType",
+    "41": "OrigClOrdID", "42": "OrigTime", "43": "PossDupFlag", "44": "Price", "45": "RefSeqNum", "48": "SecurityID", "49": "SenderCompID", "50": "SenderSubID", "52": "SendingTime",
+    "53": "Quantity", "54": "Side", "55": "Symbol", "56": "TargetCompID", "57": "TargetSubID", "58": "Text", "59": "TimeInForce", "60": "TransactTime", "61": "Urgency", "62": "ValidUntilTime",
+    "63": "SettlmntTyp", "64": "FutSettDate", "65": "SymbolSfx", "66": "ListID", "67": "ListSeqNo", "68": "TotNoOrders", "69": "ListExecInst", "70": "AllocID", "71": "AllocTransType", "72": "RefAllocID",
+    "73": "NoOrders", "74": "AvgPxPrecision", "75": "TradeDate", "77": "OpenClose", "78": "NoAllocs", "79": "AllocAccount", "80": "AllocQty", "81": "ProcessCode", "82": "NoRpts", "83": "RptSeq",
+    "84": "CxlQty", "85": "NoDlvyInst", "87": "AllocStatus", "88": "AllocRejCode", "89": "Signature", "90": "SecureDataLen", "91": "SecureData", "92": "BrokerOfCredit", "93": "SignatureLength", "94": "EmailType",
+    "95": "RawDataLength", "96": "RawData", "97": "PossResend", "98": "EncryptMethod", "99": "StopPx", "100": "ExDestination", "102": "CxlRejReason", "103": "OrdRejReason", "104": "IOIQualifier", "105": "WaveNo",
+    "106": "Issuer", "107": "SecurityDesc", "108": "HeartBtInt", "110": "MinQty", "111": "MaxFloor", "112": "TestReqID", "113": "ReportToExch", "114": "LocateReqd", "115": "OnBehalfOfCompID", "116": "OnBehalfOfSubID",
+    "117": "QuoteID", "118": "NetMoney", "119": "SettlCurrAmt", "120": "SettlCurrency", "121": "ForexReq", "122": "OrigSendingTime", "123": "GapFillFlag", "124": "NoExecs", "126": "ExpireTime", "127": "DKReason",
+    "128": "DeliverToCompID", "129": "DeliverToSubID", "130": "IOINaturalFlag", "131": "QuoteReqID", "132": "BidPx", "133": "OfferPx", "134": "BidSize", "135": "OfferSize", "136": "NoMiscFees", "137": "MiscFeeAmt",
+    "138": "MiscFeeCurr", "139": "MiscFeeType", "140": "PrevClosePx", "141": "ResetSeqNumFlag", "142": "SenderLocationID", "143": "TargetLocationID", "144": "OnBehalfOfLocationID", "145": "DeliverToLocationID", "146": "NoRelatedSym",
+    "147": "Subject", "148": "Headline", "149": "URLLink", "150": "ExecType", "151": "LeavesQty", "152": "CashOrderQty", "153": "AllocAvgPx", "154": "AllocNetMoney", "155": "SettlCurrFxRate", "156": "SettlCurrFxRateCalc",
+    "157": "NumDaysInterest", "158": "AccruedInterestRate", "159": "AccruedInterestAmt", "160": "SettlInstMode", "161": "AllocText", "162": "SettlInstID", "163": "SettlInstTransType", "164": "EmailThreadID", "165": "SettlInstSource",
+    "167": "SecurityType", "168": "EffectiveTime", "169": "StandInstDbType", "170": "StandInstDbName", "171": "StandInstDbID", "172": "SettlDeliveryMethod", "188": "BidSpotRate", "189": "BidForwardPoints", "190": "OfferSpotRate", "191": "OfferForwardPoints",
+    "192": "OrderQty2", "193": "FutSettDate2", "194": "LastSpotRate", "195": "LastForwardPoints", "196": "AllocLinkID", "197": "AllocLinkType", "198": "SecondaryOrderID", "199": "NoIOIQualifiers", "200": "MaturityMonthYear", "201": "PutOrCall",
+    "202": "StrikePrice", "203": "CoveredOrUncovered", "206": "OptAttribute", "207": "SecurityExchange", "208": "NotifyBrokerOfCredit", "209": "AllocHandlInst", "210": "MaxShow", "211": "PegOffsetValue", "212": "XmlDataLen", "213": "XmlData",
+    "214": "SettlInstRefID", "215": "NoRoutingIDs", "216": "RoutingType", "217": "RoutingID", "218": "Spread", "220": "BenchmarkCurveCurrency", "221": "BenchmarkCurveName", "222": "BenchmarkCurvePoint", "223": "CouponRate", "224": "CouponPaymentDate",
+    "225": "IssueDate", "226": "RepurchaseTerm", "227": "RepurchaseRate", "228": "Factor", "229": "TradeOriginationDate", "230": "ExDate", "231": "ContractMultiplier", "232": "NoStipulations", "233": "StipulationType", "234": "StipulationValue",
+    "235": "YieldType", "236": "Yield", "237": "TotalTakedown", "238": "Concession", "239": "RepoCollateralSecurityID", "240": "RedemptionDate", "241": "UnderlyingRepoCollateralSecurityID", "242": "UnderlyingRepurchaseTerm", "243": "UnderlyingRepurchaseRate", "244": "UnderlyingFactor",
+    "245": "UnderlyingRedemptionDate", "246": "UnderlyingRepoCollateralSecurityIDSource", "247": "UnderlyingIssuer", "248": "UnderlyingSecurityDesc", "249": "UnderlyingCPProgram", "250": "UnderlyingCPRegType", "251": "UnderlyingCurrency", "252": "UnderlyingQty", "253": "Underlyingpx", "254": "UnderlyingDirtyPrice",
+    "255": "UnderlyingEndPrice", "256": "UnderlyingStartValue", "257": "UnderlyingCurrentValue", "258": "UnderlyingEndValue", "259": "NoUnderlyingSecurityAltID", "260": "UnderlyingSecurityAltID", "261": "UnderlyingSecurityAltIDSource", "262": "MDReqID", "263": "SubscriptionRequestType", "264": "MarketDepth",
+    "265": "MDUpdateType", "266": "AggregatedBook", "267": "NoMDEntryTypes", "268": "NoMDEntries", "269": "MDEntryType", "270": "MDEntryPx", "271": "MDEntrySize", "272": "MDEntryDate", "273": "MDEntryTime", "274": "TickDirection",
+    "275": "MDMkt", "276": "QuoteCondition", "277": "TradeCondition", "278": "MDEntryID", "279": "MDUpdateAction", "280": "MDEntryRefID", "281": "MDReqRejReason", "282": "MDEntryOriginator", "283": "LocationID", "284": "DeskID",
+    "285": "DeleteReason", "286": "OpenCloseSettlFlag", "287": "SellerDays", "288": "MDEntrySeller", "289": "MDEntryBuyer", "290": "MDEntryPositionNo", "291": "FinancialStatus", "292": "CorporateAction", "293": "DefBidSize", "294": "DefOfferSize",
+    "295": "NoQuoteEntries", "296": "NoQuoteSets", "297": "QuoteStatus", "298": "QuoteCancelType", "299": "QuoteEntryID", "300": "QuoteRejectReason", "301": "QuoteResponseLevel", "302": "QuoteSetID", "303": "QuoteRequestType", "304": "TotNoQuoteEntries",
+    "305": "PriceType", "306": "UnderlyingSymbolSfx", "307": "UnderlyingMaturityMonthYear", "308": "UnderlyingMaturityDay", "309": "UnderlyingSecurityID", "310": "UnderlyingSecurityIDSource", "311": "UnderlyingSymbol", "312": "UnderlyingIssuer", "313": "UnderlyingSecurityDesc", "314": "UnderlyingCPProgram",
+    "315": "UnderlyingCPRegType", "316": "UnderlyingCurrency", "317": "UnderlyingQty", "318": "UnderlyingSettlementType", "319": "UnderlyingCashAmt", "320": "SecurityReqID", "321": "SecurityRequestType", "322": "SecurityResponseID", "323": "SecurityResponseType", "324": "SecurityStatusReqID",
+    "325": "UnsolicitedIndicator", "326": "SecurityTradingStatus", "327": "HaltReason", "328": "InViewOfCommon", "329": "DueToRelated", "330": "BuyVolume", "331": "SellVolume", "332": "HighPx", "333": "LowPx", "334": "Adjustment",
+    "335": "TradSesReqID", "336": "TradingSessionID", "337": "ContraBroker", "338": "TradSesMethod", "339": "TradSesMode", "340": "TradSesStatus", "341": "TradSesStartTime", "342": "TradSesOpenTime", "343": "TradSesPreCloseTime", "344": "TradSesCloseTime",
+    "345": "TradSesEndTime", "346": "NumberOfOrders", "347": "MessageEncoding", "348": "EncodedIssuerLen", "349": "EncodedIssuer", "350": "EncodedSecurityDescLen", "351": "EncodedSecurityDesc", "352": "EncodedTextLen", "353": "EncodedText", "354": "EncodedHeadlineLen",
+    "355": "EncodedHeadline", "356": "EncodedSubjectLen", "357": "EncodedSubject", "358": "UnderlyingCouponRate", "359": "UnderlyingContractMultiplier", "360": "UnderlyingCouponPaymentDate", "361": "UnderlyingIssueDate", "362": "UnderlyingRepoCollateralSecurityID", "363": "UnderlyingRepurchaseTerm", "364": "UnderlyingRepurchaseRate",
+    "365": "UnderlyingFactor", "366": "UnderlyingRedemptionDate", "367": "QuoteSetValidUntilTime", "368": "QuoteEntryRejectReason", "369": "LastMsgSeqNumProcessed", "370": "OnBehalfOfSendingTime", "371": "RefTagID", "372": "RefMsgType", "373": "SessionRejectReason", "374": "BidRequestTransType",
+    "375": "ContraComplianceID", "376": "ComplianceID", "377": "SolicitedFlag", "378": "ExecRestatementReason", "379": "BusinessRejectRefID", "380": "BusinessRejectReason", "381": "GrossTradeAmt", "382": "NoContraBrokers", "383": "MaxMessageSize", "384": "NoMsgTypes",
+    "385": "MsgDirection", "386": "NoTradingSessions", "387": "TotalVolumeTraded", "388": "DiscretionInst", "389": "DiscretionOffsetValue", "390": "BidID", "391": "ClientBidID", "392": "ListName", "393": "TotNoRelatedSym", "394": "BidType",
+    "395": "NumTickets", "396": "SideValue1", "397": "SideValue2", "398": "NoBidDescriptor", "399": "BidDescriptorType", "400": "BidDescriptor", "401": "SideValueInd", "402": "LiquidityPctLow", "403": "LiquidityPctHigh", "404": "LiquidityValue",
+    "405": "EFPTrackingError", "406": "FairValue", "407": "OutsideIndexPct", "408": "ValueOfFutures", "409": "LiquidityIndType", "410": "WtAverageLiquidity", "411": "ExchangeForPhysical", "412": "OutMainCntryUIndex", "413": "CrossPercent", "414": "ProgRptReqs",
+    "415": "ProgPeriodInterval", "416": "IncTaxInd", "417": "NumBidders", "418": "BidTradeType", "419": "BasisPxType", "420": "NoBidComponents", "421": "Country", "422": "TotNoStrikes", "423": "PriceBoundaryMethod", "424": "PriceBoundaryPrecision",
+    "425": "DayCumQty", "426": "DayAvgPx", "427": "GTBookingInst", "428": "NoStrikes", "429": "ListStatusType", "430": "NetGrossInd", "431": "ListOrderStatus", "432": "ExpireDate", "433": "ListExecInstType", "434": "CxlRejResponseTo",
+    "435": "UnderlyingCouponLoanRate", "436": "UnderlyingContractSettlementMonth", "437": "ContraTradeQty", "438": "ContraTradeTime", "439": "ClearingFirm", "440": "ClearingAccount", "441": "LiquidityNumSecurities", "442": "MultiLegReportingType", "443": "StrikeTime", "444": "ListStatusText",
+    "445": "EncodedListStatusTextLen", "446": "EncodedListStatusText", "447": "PartyIDSource", "448": "PartyID", "451": "NetChgPrevDay", "452": "PartyRole", "453": "NoPartyIDs", "454": "NoSecurityAltID", "455": "SecurityAltID", "456": "SecurityAltIDSource",
+    "457": "NoUnderlyingSecurityAltID", "458": "UnderlyingSecurityAltID", "459": "UnderlyingSecurityAltIDSource", "460": "Product", "461": "CFICode", "462": "UnderlyingProduct", "463": "UnderlyingCFICode", "464": "TestMessageIndicator", "465": "QuantityType", "466": "BookingRefID",
+    "467": "IndividualAllocID", "468": "RoundingDirection", "469": "RoundingModulus", "470": "CountryOfIssue", "471": "StateOrProvinceOfIssue", "472": "LocaleOfIssue", "473": "NoRegistDtls", "474": "MailingDtls", "475": "MailingInst", "476": "NoNestedPartyIDs",
+    "477": "NestedPartyID", "478": "NestedPartyIDSource", "479": "NestedPartyRole", "480": "YieldRedemptionDate", "481": "YieldRedemptionPrice", "482": "YieldRedemptionPriceType", "483": "BookingUnit", "484": "PreallocMethod", "485": "CustOrderCapacity", "486": "SetupDate",
+    "487": "TradeReportTransType", "488": "CardHolderName", "489": "CardNumber", "490": "CardExpDate", "491": "CardIssNum", "492": "PaymentMethod", "493": "RegistAcctType", "494": "Designation", "495": "TaxAdvantageType", "496": "RegistRejReasonCode",
+    "497": "FundRenewWaiv", "498": "CashDistribCurr", "499": "RegistID", "500": "RegistTransType", "501": "RegistRefID", "502": "RegistDetls", "503": "NoDistribInsts", "504": "DistribPercentage", "505": "DistribPaymentMethod", "506": "RegistEmail",
+    "507": "DistributionForm", "508": "RegistListID", "509": "NoContAmts", "510": "ContAmtType", "511": "ContAmtValue", "512": "ContAmtCurr", "513": "OwnerType", "514": "PartySubID", "515": "ExecValuationPoint", "516": "CountryOfResid",
+    "517": "OwnershipType", "518": "NoSettls", "519": "SettlInstPublishPtr", "520": "ContPayeeID", "521": "ContPayeeBillID", "522": "OwnerAttribType", "523": "PartySubID", "524": "NestedPartySubID", "525": "NestedPartySubIDType", "526": "SecondaryClOrdID",
+    "527": "SecondaryExecID", "528": "OrderCapacity", "529": "OrderRestrictions", "530": "MassCancelRequestType", "531": "MassCancelResponse", "532": "MassCancelRejectReason", "533": "TotalAffectedOrders", "534": "NoAffectedOrders", "535": "AffectedOrderID", "536": "AffectedSecondaryOrderID",
+    "537": "QuoteType", "538": "NestedPartyID", "539": "NoNestedPartyIDs", "540": "NestedPartyIDSource", "541": "MaturityDate", "542": "UnderlyingMaturityDate", "543": "InstrRegistry", "544": "CashSettlAgentName", "545": "CashSettlAgentCode", "546": "CashSettlAgentAcctNum",
+    "547": "CashSettlAgentAcctName", "548": "CashSettlAgentContactName", "549": "CashSettlAgentContactPhone", "550": "CashSettlAgentReqID", "551": "SettlementInstructionID", "552": "NoSides", "553": "Username", "554": "Password", "555": "NoLegs", "556": "LegCurrency",
+    "557": "TotNoSecurityTypes", "558": "NoSecurityTypes", "559": "SecurityListRequestType", "560": "SecurityRequestResult", "561": "RoundLot", "562": "MinTradeVol", "563": "MultiLegRptTypeMod", "564": "LegPositionEffect", "565": "LegCoveredOrUncovered", "566": "LegPrice",
+    "567": "TradSesStatusRejReason", "568": "TradeRequestID", "569": "TradeRequestType", "570": "PreviouslyReported", "571": "TradeReportID", "572": "TradeReportRefID", "573": "MatchStatus", "574": "MatchType", "575": "OddLot", "576": "NoClearingInstructions",
+    "577": "ClearingInstruction", "578": "TradeInputSource", "579": "TradeInputDevice", "580": "NoDates", "581": "AccountType", "582": "CustOrderCapacity", "583": "ClOrdLinkID", "584": "MassStatusReqID", "585": "MassStatusReqType", "586": "OrigOrdModTime",
+    "587": "LegSettlType", "588": "LegSettlDate", "589": "DayBookingInst", "590": "BookingType", "591": "PreallocMethod", "592": "UnderlyingCountryOfIssue", "593": "UnderlyingStateOrProvinceOfIssue", "594": "UnderlyingLocaleOfIssue", "595": "UnderlyingInstrRegistry", "596": "LegCountryOfIssue",
+    "597": "LegStateOrProvinceOfIssue", "598": "LegLocaleOfIssue", "599": "LegInstrRegistry", "600": "LegSymbol", "601": "LegSymbolSfx", "602": "LegSecurityID", "603": "LegSecurityIDSource", "604": "NoLegSecurityAltID", "605": "LegSecurityAltID", "606": "LegSecurityAltIDSource",
+    "607": "LegProduct", "608": "LegCFICode", "609": "LegSecurityType", "610": "LegMaturityMonthYear", "611": "LegMaturityDate", "612": "LegStrikePrice", "613": "LegOptAttribute", "614": "LegContractMultiplier", "615": "LegCouponRate", "616": "LegSecurityExchange",
+    "617": "LegIssuer", "618": "EncodedLegIssuerLen", "619": "EncodedLegIssuer", "620": "LegSecurityDesc", "621": "EncodedLegSecurityDescLen", "622": "EncodedLegSecurityDesc", "623": "LegRatioQty", "624": "LegSide", "625": "TradingSessionSubID", "626": "AllocType",
+    "627": "NoHops", "628": "HopCompID", "629": "HopSendingTime", "630": "HopRefID", "631": "MidPx", "632": "BidYield", "633": "MidYield", "634": "OfferYield", "635": "YieldClosingPrice", "636": "YieldClosingPriceType", "637": "LegLastPx",
+    "638": "LegPriceType", "639": "LegSettlCurrency", "640": "LegPriceUnitOfMeasure", "641": "LegLastForwardPoints", "642": "BidForwardPoints2", "643": "OfferForwardPoints2", "644": "LastForwardPoints2", "645": "NoBidComponents", "646": "LiborExpiration", "647": "MinBidSize",
+    "648": "MinOfferSize", "649": "QuoteStatusReqID", "650": "LegalConfirm", "651": "UnderlyingLastPx", "652": "UnderlyingLastQty", "654": "LegRefID", "655": "ContraLegRefID", "656": "SettlmntTyp", "657": "LegSettlDate", "658": "QuoteRequestRejectReason",
+    "659": "SideComplianceID", "660": "AcctIDSource", "661": "AllocAcctIDSource", "662": "BenchmarkPrice", "663": "BenchmarkPriceType", "664": "ConfirmID", "665": "ConfirmStatus", "666": "ConfirmTransType", "667": "ContractSettlMonth", "668": "DeliveryForm",
+    "669": "LastParPx", "670": "NoLegAllocs", "671": "LegAllocAccount", "672": "LegIndividualAllocID", "673": "LegAllocQty", "674": "LegAllocAcctIDSource", "675": "LegSettlCurrency", "676": "LegBenchmarkCurveCurrency", "677": "LegBenchmarkCurveName", "678": "LegBenchmarkCurvePoint",
+    "679": "LegBenchmarkPrice", "680": "LegBenchmarkPriceType", "681": "LegBidForwardPoints", "682": "LegOfferForwardPoints", "683": "NoLegStipulations", "684": "LegStipulationType", "685": "LegStipulationValue", "686": "LegCouponPaymentDate", "687": "LegIssueDate", "688": "LegRepoCollateralSecurityID", "689": "LegRepurchaseTerm", "690": "LegRepurchaseRate", "691": "LegFactor", "692": "QuotePriceType", "693": "QuoteRespID", "694": "QuoteRespType", "695": "QuoteQualifier", "696": "YieldRedemptionDate", "697": "YieldRedemptionPrice", "698": "YieldRedemptionPriceType", "699": "BenchmarkSecurityID",
+    "700": "BenchmarkSecurityIDSource", "701": "YieldDisplayQty", "702": "NoPositions", "703": "PosType", "704": "LongQty", "705": "ShortQty", "706": "PosQtyStatus", "707": "NoPosAmt", "708": "PosAmtType", "709": "PosAmt", "710": "PosReqID",
+    "711": "NoUnderlyings", "712": "PosMaintAction", "713": "OrigPosReqRefID", "714": "PosMaintRptID", "715": "ClearingBusinessDate", "716": "SettlSessID", "717": "SettlSessSubID", "718": "AdjustmentType", "719": "ContraryInstructionIndicator", "720": "PriorSettlPrice",
+    "721": "PosMaintRptRefID", "722": "PosReqResult", "723": "PosReqStatus", "724": "PosMaintStatus", "725": "ResponseTransportType", "726": "ResponseDestination", "727": "TotalNumPosReports", "728": "PosReqType", "729": "SettlPrice", "730": "SettlPriceType",
+    "731": "UnderlyingSettlPrice", "732": "UnderlyingSettlPriceType", "733": "UnderlyingPriceUnitOfMeasure", "734": "PriorSettlPrice", "735": "NoQuoteQualifiers", "736": "AllocSettlCurrency", "737": "AllocSettlCurrAmt", "738": "InterestAtMaturity", "739": "LegDatedDate", "740": "LegPool",
+    "741": "AllocInterestAtMaturity", "742": "AllocAccruedInterestAmt", "743": "DeliveryDate", "744": "AssignmentMethod", "745": "AssignmentUnit", "746": "OpenInterest", "747": "ExerciseMethod", "748": "TotNumTradeReports", "749": "TradeRequestResult", "750": "TradeRequestStatus",
+    "751": "TradeReportRejectReason", "752": "SideMultiLegReportingType", "753": "NoPosSlot", "754": "PosSlotType", "755": "PosSlot", "756": "NoNested2PartyIDs", "757": "Nested2PartyID", "758": "Nested2PartyIDSource", "759": "Nested2PartyRole", "760": "Nested2PartySubID",
+    "761": "BenchmarkCurveCurrency", "762": "SecuritySubType", "763": "UnderlyingSecuritySubType", "764": "LegSecuritySubType", "765": "UnderlyingPxUnitOfMeasure", "766": "UnderlyingPxUnitOfMeasureQty", "767": "LegPxUnitOfMeasure", "768": "LegPxUnitOfMeasureQty", "769": "NoTrdRegTimestamps", "770": "TrdRegTimestamp",
+    "771": "TrdRegTimestampType", "772": "TrdRegTimestampOrigin", "773": "ConfirmRefID", "774": "ConfirmType", "775": "ConfirmRejReason", "776": "BookingType", "777": "IndividualAllocRejCode", "778": "SettlInstMsgID", "779": "LastUpdateTime", "780": "AllocSettlInstType",
+    "781": "NoSettlPartyIDs", "782": "SettlPartyID", "783": "SettlPartyIDSource", "784": "SettlPartyRole", "785": "SettlPartySubID", "786": "SettlPartySubIDType", "787": "DlvyInstType", "788": "TerminationType", "789": "NextExpectedMsgSeqNum", "790": "OrdStatusReqID",
+    "791": "SettlInstReqID", "792": "SettlInstReqRejCode", "793": "SecondaryAllocID", "794": "AllocReportType", "795": "AllocReportRefID", "796": "AllocCancReplaceIndex", "797": "CopyMsgIndicator", "798": "AllocAccountType", "799": "OrderAvgPx", "800": "OrderBookingQty",
+    "801": "NoPartySubIDs", "802": "PartySubID", "803": "PartySubIDType", "804": "NoLegPartyIDs", "805": "LegPartyID", "806": "LegPartyIDSource", "807": "LegPartyRole", "808": "NoLegPartySubIDs", "809": "LegPartySubID", "810": "LegPartySubIDType",
+    "811": "PriceUnitOfMeasure", "812": "PriceUnitOfMeasureQty", "813": "SettlMethod", "814": "ApplQueueMax", "815": "ApplQueueDepth", "816": "NoApplQueue", "817": "ApplQueueResolution", "818": "SecondaryClOrdID", "819": "AvgPxIndicator", "820": "TradeLinkID",
+    "821": "OrderInputDevice", "822": "TradeLegRefID", "823": "ExchangeRule", "824": "TradeAllocIndicator", "825": "ExpirationCycle", "826": "TrdType", "827": "TrdSubType", "828": "TrdType", "829": "TrdSubType", "830": "TransferReason",
+    "832": "TotNumAssignmentReports", "833": "AsOfIndicator", "834": "NoTradeReports", "835": "TradeReportID", "836": "TradeReportRefID", "837": "MatchStatus", "838": "MatchType", "839": "PriceDelta", "840": "NoLotTypeRules", "841": "LotType",
+    "842": "MinLotSize", "843": "MatchAlgorithm", "844": "MaxPriceVariation", "845": "PriceUnitOfMeasure", "846": "PriceUnitOfMeasureQty", "847": "TargetStrategy", "848": "TargetStrategyParameters", "849": "ParticipationRate", "850": "TargetStrategyPerformance", "851": "LastLiquidityInd",
+    "852": "PublishTrdIndicator", "853": "ShortSaleReason", "854": "QtyType", "855": "SecondaryTrdType", "856": "TradeReportType", "857": "AllocNoOrdersType", "858": "SharedCommission", "859": "ConfirmReqID", "860": "AvgParPx", "861": "ReportedPx",
+    "862": "NoCapacities", "863": "OrderCapacityQty", "864": "NoEvents", "865": "EventType", "866": "EventDate", "867": "EventPx", "868": "EventText", "869": "PctAtRisk", "870": "NoInstrAttrib", "871": "InstrAttribType",
+    "872": "InstrAttribValue", "873": "DatedDate", "874": "InterestAccrualDate", "875": "CPProgram", "876": "CPRegType", "879": "UnderlyingQty", "880": "TrdMatchID", "881": "SecondaryTradeReportID", "882": "UnderlyingDirtyPrice", "883": "UnderlyingEndPrice", "884": "UnderlyingStartValue", "885": "UnderlyingCurrentValue", "886": "UnderlyingEndValue", "887": "NoUnderlyingStips", "888": "UnderlyingStipType", "889": "UnderlyingStipValue", "890": "MaturityNetMoney", "891": "MiscFeeBasis", "892": "TotNoAllocs", "893": "LastFragment",
+    "894": "CollReqID", "895": "CollAsgnID", "896": "CollAsgnTransType", "897": "CollAsgnReason", "898": "CollAsgnRefID", "899": "MarginJobID", "900": "TotNumCollReports", "901": "CollRptID", "902": "CollStatus", "903": "CollAsgnRejectReason", "904": "CollAsgnRespType",
+    "905": "CollAsgnRespID", "906": "CollAsgnRefID", "907": "CollAsgnTransType", "908": "CollAsgnReason", "909": "CollAsgnRefID", "910": "CollAsgnTransType", "911": "TotNumPosReports", "912": "PosReqResult", "913": "AgreementDesc", "914": "AgreementID",
+    "915": "AgreementDate", "916": "StartDate", "917": "EndDate", "918": "AgreementCurrency", "919": "DeliveryType", "920": "EndAccruedInterestAmt", "921": "StartCash", "922": "EndCash", "923": "UserRequestID", "924": "UserRequestType",
+    "925": "NewPassword", "926": "UserStatus", "927": "UserStatusText", "928": "StatusValue", "929": "StatusText", "930": "RefCompID", "931": "RefSubID", "932": "NetworkResponseID", "933": "NetworkRequestID", "934": "LastNetworkResponseID",
+    "935": "NetworkRequestType", "936": "NoNetworkIDs", "937": "NetworkID", "938": "NoApplIDs", "939": "ApplID", "940": "ApplSeqNum", "941": "ApplLastSeqNum", "942": "ApplResendFlag", "943": "TimeBracket", "944": "NoTrdRegTimestamps",
+    "945": "TrdRegTimestamp", "946": "TrdRegTimestampType", "947": "TrdRegTimestampOrigin", "948": "NoMDFeedTypes", "949": "MDFeedType", "950": "MarketDepth", "951": "MDBookType", "952": "NoStatsIndicators", "953": "StatsIndicatorType", "954": "StatsIndicator",
+    "955": "NoSettls", "956": "SettlInstSource", "957": "NoNested3PartyIDs", "958": "Nested3PartyID", "959": "Nested3PartyIDSource", "960": "Nested3PartyRole", "961": "Nested3PartySubID", "962": "Nested3PartySubIDType", "963": "NoLegAllocs", "964": "LegAllocAccount",
+    "965": "LegIndividualAllocID", "966": "LegAllocQty", "967": "LegAllocAcctIDSource", "968": "LegSettlCurrency", "969": "LegBenchmarkCurveCurrency", "970": "LegBenchmarkCurveName", "971": "LegBenchmarkCurvePoint", "972": "LegBenchmarkPrice", "973": "LegBenchmarkPriceType", "974": "LegBidForwardPoints",
+    "975": "LegOfferForwardPoints", "976": "NoLegStipulations", "977": "LegStipulationType", "978": "LegStipulationValue", "979": "LegCouponPaymentDate", "980": "LegIssueDate", "981": "LegRepoCollateralSecurityID", "982": "LegRepurchaseTerm", "983": "LegRepurchaseRate", "984": "LegFactor",
+    "985": "LegRedemptionDate", "986": "LegRepoCollateralSecurityIDSource", "987": "LegIssuer", "988": "LegSecurityDesc", "989": "SecondaryIndividualAllocID", "990": "LegAllocSettlCurrency", "991": "Token", "992": "NoUnderlyingAmounts", "993": "UnderlyingAmount", "994": "UnderlyingAmountSettlementDate",
+    "996": "UnitOfMeasure", "997": "TimeUnit", "998": "UnderlyingUnitOfMeasure", "999": "UnderlyingTimeUnit", "1000": "NoLegUnitOfMeasures", "1001": "LegUnitOfMeasure", "1002": "LegTimeUnit", "1003": "UnderlyingCouponRate", "1004": "UnderlyingContractMultiplier", "1005": "UnderlyingCouponPaymentDate",
+    "1006": "UnderlyingIssueDate", "1007": "UnderlyingRepoCollateralSecurityID", "1008": "UnderlyingRepurchaseTerm", "1009": "UnderlyingRepurchaseRate", "1010": "UnderlyingFactor", "1011": "UnderlyingRedemptionDate", "1012": "UnderlyingRepoCollateralSecurityIDSource", "1013": "UnderlyingIssuer", "1014": "UnderlyingSecurityDesc"
+};
+
+        const MSG_TYPES = {
+            "0": "Heartbeat", "1": "TestRequest", "8": "ExecutionReport", 
+            "A": "Logon", "D": "NewOrderSingle", "F": "OrderCancelRequest"
+        };
+        const VALUE_MAPS = {
+            "21": { "1": "Automated execution, no broker intervention", "2": "Automated execution, broker intervention OK", "3": "Manual order" },
+            "39": { "0": "New", "1": "Partially filled", "2": "Filled", "3": "Done for day", "4": "Canceled", "5": "Replaced", "6": "Pending Cancel", "7": "Stopped", "8": "Rejected", "9": "Suspended", "A": "Pending New", "C": "Expired" },
+            "40": { "1": "Market", "2": "Limit", "3": "Stop", "4": "Stop limit", "5": "Market on close", "6": "With or without", "7": "Limit or better", "8": "Limit with or without", "9": "On basis", "A": "On close", "B": "Limit on close", "P": "Pegged" },
+            "54": { "1": "Buy", "2": "Sell", "3": "Buy minus", "4": "Sell plus", "5": "Sell short", "6": "Sell short exempt", "7": "Undisclosed", "8": "Cross", "9": "Cross short" },
+            "59": { "0": "Day", "1": "Good Till Cancel (GTC)", "2": "At the Opening (OPG)", "3": "Immediate Or Cancel (IOC)", "4": "Fill Or Kill (FOK)", "5": "Good Till Crossing (GTX)", "6": "Good Till Date (GTD)" }
+        };
+
+        /* ==========================================================================
+           STATE MANAGEMENT & ARCHITECTURE
+           ========================================================================== */
+        const app = (function() {
+            // Internal State
+            const state = {
+                currentTab: 'landing',
+                favorites: JSON.parse(localStorage.getItem('fixer_favorites') || '[]'),
+                favoriteTags: (localStorage.getItem('fixer_fav_tags') || '').split(',').map(t => t.trim()).filter(Boolean),
+                currentParsedView: null, // Holds currently parsed message string
+                promptCallback: null,
+                confirmCallback: null
+            };
+
+            // DOM Elements Cache
+            const DOM = {
+                tabs: document.querySelectorAll('.view-section'),
+                navButtons: document.querySelectorAll('.nav-tab'),
+                viewInput: document.getElementById('viewInput'),
+                viewResults: document.getElementById('viewResults'),
+                btnSaveFav: document.getElementById('btnSaveFav'),
+                favoritesList: document.getElementById('favoritesList'),
+                compareIn1: document.getElementById('compareInput1'),
+                compareIn2: document.getElementById('compareInput2'),
+                compareResults: document.getElementById('compareResults'),
+                
+                // Modals
+                promptModal: document.getElementById('promptModal'),
+                promptInput: document.getElementById('promptInput'),
+                alertModal: document.getElementById('alertModal'),
+                alertMessage: document.getElementById('alertMessage'),
+                confirmModal: document.getElementById('confirmModal'),
+                confirmMessage: document.getElementById('confirmMessage'),
+                settingsModal: document.getElementById('settingsModal'),
+                favTagsInput: document.getElementById('favTagsInput')
+            };
+
+            /* ==========================================================================
+               UTILITIES & HELPERS
+               ========================================================================== */
+            
+            // Normalize delimiters (\x01, |, ^) to a consistent array of key=value strings
+            const splitFixMessage = (rawStr) => {
+                const str = rawStr.trim();
+                if (!str) return [];
+                const delimiter = str.includes('|') ? '|' : (str.includes('^') ? '^' : '\x01');
+                return str.split(delimiter).filter(Boolean);
+            };
+
+            // Parse a raw string into an array of Tag Objects
+            const parseFix = (rawStr) => {
+                const pairs = splitFixMessage(rawStr);
+                const parsed = [];
+                pairs.forEach(pair => {
+                    const eqIndex = pair.indexOf('=');
+                    if (eqIndex > 0) {
+                        const tag = pair.substring(0, eqIndex).trim();
+                        let value = pair.substring(eqIndex + 1).trim();
+                        let name = FIX_DICTIONARY[tag] || 'Unknown';
+                        
+                        // Enrich known values
+                        let translation = null;
+                        if (tag === "35" && MSG_TYPES[value]) {
+                            translation = MSG_TYPES[value];
+                        } else if (VALUE_MAPS[tag] && VALUE_MAPS[tag][value]) {
+                            translation = VALUE_MAPS[tag][value];
+                        }
+
+                        parsed.push({ tag, name, value, translation });
+                    }
+                });
+                return parsed;
+            };
+
+            // HTML Escape utility
+            const escapeHTML = (str) => str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+            );
+
+            // Generate Link to FIX Dictionary
+            const getDictionaryLink = (tag) => {
+                return `https://www.onixs.biz/fix-dictionary/4.4/tagNum_${encodeURIComponent(tag)}.html`;
+            };
+
+            // Custom Alert Modal
+            const showAlert = (msg) => {
+                DOM.alertMessage.textContent = msg;
+                DOM.alertModal.showModal();
+            };
+
+            const closeAlert = () => DOM.alertModal.close();
+
+            // Custom Confirm Modal
+            const showConfirm = (msg, callback) => {
+                DOM.confirmMessage.textContent = msg;
+                state.confirmCallback = callback;
+                DOM.confirmModal.showModal();
+            };
+
+            const closeConfirm = () => {
+                DOM.confirmModal.close();
+                state.confirmCallback = null;
+            };
+
+            const executeConfirm = () => {
+                if (state.confirmCallback) state.confirmCallback();
+                closeConfirm();
+            };
+
+            // Custom Prompt Modal
+            const showPrompt = (msg, callback) => {
+                document.getElementById('promptMessage').textContent = msg;
+                DOM.promptInput.value = '';
+                state.promptCallback = callback;
+                DOM.promptModal.showModal();
+                setTimeout(() => DOM.promptInput.focus(), 10);
+            };
+
+            const closePrompt = () => {
+                DOM.promptModal.close();
+                state.promptCallback = null;
+            };
+
+            const confirmPrompt = () => {
+                const val = DOM.promptInput.value.trim();
+                if (state.promptCallback) state.promptCallback(val);
+                closePrompt();
+            };
+            
+            // Settings Modal
+            const openSettings = () => {
+                DOM.favTagsInput.value = state.favoriteTags.join(', ');
+                DOM.settingsModal.showModal();
+            };
+            
+            const closeSettings = () => {
+                DOM.settingsModal.close();
+            };
+            
+            const saveSettings = () => {
+                const rawTags = DOM.favTagsInput.value;
+                const parsedTags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+                state.favoriteTags = parsedTags;
+                localStorage.setItem('fixer_fav_tags', parsedTags.join(','));
+                closeSettings();
+                
+                // Reprocess view if we are currently looking at a parsed message
+                if (state.currentTab === 'view' && state.currentParsedView) {
+                    processView();
+                }
+            };
+
+            /* ==========================================================================
+               UI RENDERING
+               ========================================================================== */
+            
+            const navigate = (tabId) => {
+                state.currentTab = tabId;
+                
+                // Update Nav Active State
+                DOM.navButtons.forEach(btn => {
+                    if (btn.dataset.target === tabId) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+
+                // Show target section, hide others
+                DOM.tabs.forEach(tab => {
+                    if (tab.id === tabId) tab.classList.add('active');
+                    else tab.classList.remove('active');
+                });
+
+                // Refresh specific tab data if needed
+                if (tabId === 'view') {
+                    renderFavorites();
+                }
+            };
+
+            const renderFavorites = () => {
+                if (state.favorites.length === 0) {
+                    DOM.favoritesList.innerHTML = `<div class="empty-state" style="padding: 1rem; font-size: 0.85rem;">No saved favorites yet.</div>`;
+                    return;
+                }
+
+                DOM.favoritesList.innerHTML = state.favorites.map((fav, index) => `
+                    <div class="favorite-item" onclick="app.loadFavorite(${index})">
+                        <div>
+                            <div class="favorite-item-title">${escapeHTML(fav.alias)}</div>
+                            <div class="favorite-item-date">${new Date(fav.date).toLocaleDateString()}</div>
+                        </div>
+                        <button class="btn-icon" onclick="event.stopPropagation(); app.deleteFavorite(${index})" title="Delete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                `).join('');
+            };
+
+            /* ==========================================================================
+               BUSINESS LOGIC: VIEW TAB
+               ========================================================================== */
+            
+            const processView = () => {
+                const raw = DOM.viewInput.value;
+                const parsed = parseFix(raw);
+
+                if (parsed.length === 0) {
+                    DOM.viewResults.innerHTML = `<div class="empty-state">No valid FIX tags found. Please check format.</div>`;
+                    DOM.btnSaveFav.style.display = 'none';
+                    state.currentParsedView = null;
+                    return;
+                }
+
+                state.currentParsedView = raw; // Store for saving
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Field Name</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                parsed.forEach(item => {
+                    const isFav = state.favoriteTags.includes(item.tag);
+                    const trClass = isFav ? 'highlight-tag' : '';
+                    
+                    html += `
+                        <tr class="${trClass}">
+                            <td class="tag-cell">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    ${escapeHTML(item.tag)}
+                                    <a href="${getDictionaryLink(item.tag)}" target="_blank" title="View in FIX Dictionary" class="tag-link">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="name-cell">${escapeHTML(item.name)}</td>
+                            <td class="val-cell">
+                                ${escapeHTML(item.value)}
+                                ${item.translation ? `<span class="tag-translation">(${escapeHTML(item.translation)})</span>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                DOM.viewResults.innerHTML = html;
+                DOM.btnSaveFav.style.display = 'inline-block';
+            };
+
+            const loadExample = () => {
+                DOM.viewInput.value = "8=FIX.4.2|9=154|35=D|49=CLIENT1|56=BROKER|34=102|52=20231024-10:00:00|11=ORD9982|54=1|38=500|40=2|44=150.25|55=AAPL|59=0|10=223|";
+                processView();
+            };
+
+            /* ==========================================================================
+               BUSINESS LOGIC: FAVORITES
+               ========================================================================== */
+
+            const promptSaveFavorite = () => {
+                if (!state.currentParsedView) return;
+                showPrompt("Enter an alias for this saved message:", (alias) => {
+                    if (alias) saveFavorite(alias);
+                });
+            };
+
+            const saveFavorite = (alias) => {
+                state.favorites.push({
+                    alias: alias,
+                    raw: state.currentParsedView,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('fixer_favorites', JSON.stringify(state.favorites));
+                renderFavorites();
+                showAlert(`Message saved as "${alias}"`);
+            };
+
+            const loadFavorite = (index) => {
+                const fav = state.favorites[index];
+                if (fav) {
+                    DOM.viewInput.value = fav.raw;
+                    processView();
+                    // Scroll to top of view section smoothly
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+
+            const deleteFavorite = (index) => {
+                showConfirm("Are you sure you want to permanently delete this saved message?", () => {
+                    state.favorites.splice(index, 1);
+                    localStorage.setItem('fixer_favorites', JSON.stringify(state.favorites));
+                    renderFavorites();
+                });
+            };
+
+            /* ==========================================================================
+               BUSINESS LOGIC: COMPARE TAB
+               ========================================================================== */
+
+            const processCompare = () => {
+                const raw1 = DOM.compareIn1.value;
+                const raw2 = DOM.compareIn2.value;
+
+                if (!raw1.trim() || !raw2.trim()) {
+                    showAlert("Please provide both Base and Target messages to compare.");
+                    return;
+                }
+
+                const parsed1 = parseFix(raw1);
+                const parsed2 = parseFix(raw2);
+
+                // Note: For Phase 1, we use a simple map comparison. 
+                // This flattens repeating groups but satisfies core constraints efficiently.
+                const map1 = new Map(parsed1.map(p => [p.tag, { name: p.name, value: p.value, translation: p.translation }]));
+                const map2 = new Map(parsed2.map(p => [p.tag, { name: p.name, value: p.value, translation: p.translation }]));
+
+                // Collect all unique tags preserving order roughly based on Msg1 then Msg2
+                const allTags = new Set([...parsed1.map(p => p.tag), ...parsed2.map(p => p.tag)]);
+
+                let html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tag</th>
+                                    <th>Field Name</th>
+                                    <th>Base Value</th>
+                                    <th>Target Value</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                allTags.forEach(tag => {
+                    const in1 = map1.has(tag);
+                    const in2 = map2.has(tag);
+                    const v1 = in1 ? map1.get(tag).value : '-';
+                    const v2 = in2 ? map2.get(tag).value : '-';
+                    const name = in1 ? map1.get(tag).name : map2.get(tag).name;
+                    
+                    let v1Html = in1 ? escapeHTML(v1) : '-';
+                    if (in1 && map1.get(tag).translation) v1Html += `<span class="tag-translation">(${escapeHTML(map1.get(tag).translation)})</span>`;
+
+                    let v2Html = in2 ? escapeHTML(v2) : '-';
+                    if (in2 && map2.get(tag).translation) v2Html += `<span class="tag-translation">(${escapeHTML(map2.get(tag).translation)})</span>`;
+
+                    let statusClass = '';
+                    let statusLabel = '';
+
+                    if (in1 && !in2) {
+                        statusClass = 'diff-removed';
+                        statusLabel = 'Removed';
+                    } else if (!in1 && in2) {
+                        statusClass = 'diff-added';
+                        statusLabel = 'Added';
+                    } else if (v1 !== v2) {
+                        statusClass = 'diff-changed';
+                        statusLabel = 'Changed';
+                    } else {
+                        statusLabel = 'Unchanged';
+                    }
+
+                    html += `
+                        <tr class="${statusClass}">
+                            <td class="tag-cell">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    ${escapeHTML(tag)}
+                                    <a href="${getDictionaryLink(tag)}" target="_blank" title="View in FIX Dictionary" class="tag-link">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="name-cell">${escapeHTML(name)}</td>
+                            <td class="val-cell">${v1Html}</td>
+                            <td class="val-cell">${v2Html}</td>
+                            <td style="font-size: 0.85rem; font-weight: 600;">${statusLabel}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                DOM.compareResults.innerHTML = html;
+            };
+
+            // Public API
+            return {
+                init: () => { navigate('landing'); },
+                navigate,
+                processView,
+                loadExample,
+                promptSaveFavorite,
+                closePrompt,
+                confirmPrompt,
+                loadFavorite,
+                deleteFavorite,
+                processCompare,
+                closeAlert,
+                showConfirm,
+                closeConfirm,
+                executeConfirm,
+                openSettings,
+                closeSettings,
+                saveSettings
+            };
+
+        })();
+
+        // Bootstrap App
+        document.addEventListener('DOMContentLoaded', app.init);
+
+    </script>
+</body>
+</html>
