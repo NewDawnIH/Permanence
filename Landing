@@ -1,0 +1,269 @@
+<div id="eboss-portal">
+    <style>
+        /* Scoped CSS for Confluence Safety */
+        #eboss-portal {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        #eboss-portal h2, #eboss-portal h3 {
+            color: #005596;
+            margin-bottom: 10px;
+        }
+
+        #eboss-portal .header-section {
+            border-bottom: 3px solid #005596;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        #eboss-portal .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        #eboss-portal .card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Team Directory */
+        #eboss-portal .team-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #eboss-portal .team-member {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #eboss-portal .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+
+        /* Role-based avatar colors */
+        .role-dev { background-color: #005596; } /* KBC Blue */
+        .role-lead { background-color: #008000; } /* Green */
+        .role-ops { background-color: #d25b15; } /* Orange */
+
+        #eboss-portal .member-info strong { display: block; }
+        #eboss-portal .member-info span { font-size: 12px; color: #666; }
+
+        /* Quick Links */
+        #eboss-portal .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        #eboss-portal .btn {
+            display: inline-block;
+            background: #005596;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #eboss-portal .btn:hover {
+            background: #003a66;
+        }
+
+        /* Birthday Tracker */
+        #eboss-portal .birthday-alert {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e6f2ff;
+            border-left: 4px solid #005596;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* SVG Animation */
+        #eboss-portal .svg-container {
+            text-align: center;
+            margin-top: 20px;
+            background: #fff;
+            padding: 20px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+
+        /* Data packet animation */
+        @keyframes transmitData {
+            0% { transform: translate(60px, 80px); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(240px, 80px); opacity: 0; }
+        }
+
+        #eboss-portal .data-packet {
+            animation: transmitData 2s infinite linear;
+            fill: #005596;
+        }
+    </style>
+
+    <div class="header-section">
+        <h2>O&T eBOSS Team Portal</h2>
+        <p>Welcome to the central hub for the eBOSS (Electronic Back Office Support Systems) team. Find our operational dashboards, team contacts, and architectural overviews here.</p>
+    </div>
+
+    <div class="grid-container">
+        
+        <div>
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Team Directory</h3>
+                <ul class="team-list">
+                    <li class="team-member">
+                        <div class="avatar role-lead">JD</div>
+                        <div class="member-info">
+                            <strong>Jane Doe</strong>
+                            <span>Team Lead</span>
+                        </div>
+                    </li>
+                    <li class="team-member">
+                        <div class="avatar role-dev">JS</div>
+                        <div class="member-info">
+                            <strong>John Smith</strong>
+                            <span>AS400 Developer</span>
+                        </div>
+                    </li>
+                    <li class="team-member">
+                        <div class="avatar role-ops">AW</div>
+                        <div class="member-info">
+                            <strong>Alice Wong</strong>
+                            <span>IT Operations</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Birthday Tracker</h3>
+                <div id="birthday-display" class="birthday-alert">
+                    Loading birthday data...
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card" style="margin-bottom: 20px;">
+                <h3>Quick Links</h3>
+                <div class="btn-grid">
+                    <a href="#" class="btn">Jira Board</a>
+                    <a href="#" class="btn">Confluence Docs</a>
+                    <a href="#" class="btn">Incident Dashboard</a>
+                    <a href="#" class="btn">Architecture Maps</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>System Flow</h3>
+                <div class="svg-container">
+                    <svg width="300" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="50" width="60" height="60" rx="5" fill="#333"/>
+                        <rect x="15" y="55" width="50" height="10" fill="#555"/>
+                        <rect x="15" y="70" width="50" height="10" fill="#555"/>
+                        <rect x="15" y="85" width="50" height="10" fill="#555"/>
+                        <text x="40" y="130" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">AS400</text>
+
+                        <line x1="70" y1="80" x2="230" y2="80" stroke="#ccc" stroke-width="3" stroke-dasharray="5,5"/>
+
+                        <circle cx="0" cy="0" r="5" class="data-packet"/>
+
+                        <rect x="230" y="40" width="60" height="70" fill="#005596"/>
+                        <rect x="235" y="60" width="10" height="50" fill="#fff"/>
+                        <rect x="255" y="60" width="10" height="50" fill="#fff"/>
+                        <rect x="275" y="60" width="10" height="50" fill="#fff"/>
+                        <polygon points="230,60 260,30 290,60" fill="#fff"/>
+                        <text x="260" y="130" font-family="Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#333">Exchange</text>
+                    </svg>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">Live transmission visualization</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration: Add team birthdays here (MM-DD format) ---
+        const teamBirthdays = [
+            { name: "Jane Doe", date: "03-14" },
+            { name: "John Smith", date: "11-02" },
+            { name: "Alice Wong", date: "06-17" }, // Example: Set to today's date to see the active alert
+            { name: "David Boss", date: "12-25" }
+        ];
+
+        function calculateNextBirthday() {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            
+            // Normalize today's date for comparison (stripping time)
+            const todayStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+
+            let upcoming = [];
+            let isBirthdayToday = [];
+
+            teamBirthdays.forEach(person => {
+                if (person.date === todayStr) {
+                    isBirthdayToday.push(person.name);
+                } else {
+                    // Create date object for this year's birthday
+                    let bdayThisYear = new Date(`${currentYear}-${person.date}`);
+                    
+                    // If the birthday has passed this year, look at next year
+                    if (bdayThisYear < today) {
+                        bdayThisYear = new Date(`${currentYear + 1}-${person.date}`);
+                    }
+                    
+                    // Calculate difference in days
+                    const diffTime = Math.abs(bdayThisYear - today);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    upcoming.push({ name: person.name, daysAway: diffDays });
+                }
+            });
+
+            const displayEl = document.getElementById('birthday-display');
+
+            if (isBirthdayToday.length > 0) {
+                // Celebration mode!
+                displayEl.innerHTML = `🎉 Happy Birthday to <strong>${isBirthdayToday.join(' and ')}</strong> today! 🎂`;
+                displayEl.style.backgroundColor = '#fff3cd';
+                displayEl.style.borderLeftColor = '#ffc107';
+                displayEl.style.color = '#856404';
+            } else {
+                // Countdown mode - find the closest birthday
+                upcoming.sort((a, b) => a.daysAway - b.daysAway);
+                const nextBday = upcoming[0];
+                displayEl.innerHTML = `Upcoming: <strong>${nextBday.name}</strong>'s birthday is in ${nextBday.daysAway} days.`;
+            }
+        }
+
+        // Initialize script once DOM is ready
+        document.addEventListener("DOMContentLoaded", calculateNextBirthday);
+        // Fallback execution just in case it's injected post-DOM-load in Confluence
+        calculateNextBirthday();
+    </script>
+</div>
