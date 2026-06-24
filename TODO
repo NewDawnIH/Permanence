@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TD - Professional To Do</title>
+    <style>
+        /* Google MD3 Variables & KBC Blue */
+        :root {
+            /* KBC Blue roughly translates to this Cyan-Blue hex */
+            --primary: #00AEEF; 
+            --on-primary: #ffffff;
+            --primary-container: #CBE6FF;
+            --on-primary-container: #001E30;
+            --secondary: #4A6278;
+            --secondary-container: #CDE7FF;
+            --on-secondary-container: #001D34;
+            
+            --surface: #FAFCFF;
+            --on-surface: #191C1E;
+            --surface-variant: #DDE3EA;
+            --on-surface-variant: #41474D;
+            --surface-container: #F0F4F8;
+            --surface-container-highest: #E2E8F0;
+            
+            --outline: #71787E;
+            --outline-variant: #C1C7CE;
+            
+            --success: #146C2E;
+            --on-success: #FFFFFF;
+            --error: #BA1A1A;
+            --on-error: #FFFFFF;
+            --important: #FFB400;
+
+            --elevation-1: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 1px 3px 1px rgba(0,0,0,0.15);
+            --elevation-2: 0px 1px 2px 0px rgba(0,0,0,0.3), 0px 2px 6px 2px rgba(0,0,0,0.15);
+            --elevation-3: 0px 1px 3px 0px rgba(0,0,0,0.3), 0px 4px 8px 3px rgba(0,0,0,0.15);
+        }
+
+        /* Base Resets */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text highlight during swipe */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1 { font-size: 24px; font-weight: 500; letter-spacing: 0px; }
+        h2 { font-size: 16px; font-weight: 500; letter-spacing: 0.15px; margin-bottom: 12px; color: var(--primary); }
+        .body-large { font-size: 16px; font-weight: 400; letter-spacing: 0.5px; }
+        .body-medium { font-size: 14px; font-weight: 400; letter-spacing: 0.25px; }
+        .label-medium { font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
+
+        /* App Bar */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background-color: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--surface-container);
+            border-radius: 20px;
+            padding: 4px;
+        }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--on-surface-variant);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab.active {
+            background: var(--primary-container);
+            color: var(--on-primary-container);
+        }
+
+        /* Layout */
+        main {
+            padding: 16px 24px 100px 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .list-section {
+            margin-bottom: 32px;
+        }
+
+        /* Cards */
+        .swipe-container {
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            touch-action: pan-y;
+        }
+
+        .swipe-background {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--success);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            padding-left: 24px;
+            color: var(--on-success);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .todo-card {
+            background-color: var(--surface-container);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: var(--elevation-1);
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: box-shadow 0.2s;
+        }
+
+        .todo-card:hover {
+            box-shadow: var(--elevation-2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--on-surface);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title.completed-text {
+            text-decoration: line-through;
+            color: var(--on-surface-variant);
+        }
+
+        .important-icon {
+            color: var(--important);
+            display: inline-flex;
+            width: 20px; height: 20px;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--on-surface-variant);
+            font-size: 14px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background-color: var(--surface-variant);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background-color: var(--primary-container);
+            color: var(--on-primary-container);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--elevation-3);
+            cursor: pointer;
+            border: none;
+            transition: 0.3s cubic-bezier(0.2, 0, 0, 1);
+            z-index: 20;
+        }
+        .fab:hover {
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.25);
+            transform: translateY(-2px);
+        }
+        .fab svg { width: 24px; height: 24px; }
+
+        /* Dialogs */
+        dialog {
+            margin: auto;
+            border: none;
+            border-radius: 28px;
+            background: var(--surface-container-highest);
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--elevation-3);
+            color: var(--on-surface);
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(2px);
+        }
+
+        dialog[open] {
+            animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .dialog-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Form Inputs */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="datetime-local"], textarea {
+            width: 100%;
+            background: var(--surface);
+            border: none;
+            border-bottom: 1px solid var(--outline);
+            padding: 24px 16px 8px 16px;
+            border-radius: 4px 4px 0 0;
+            font-family: inherit;
+            font-size: 16px;
+            color: var(--on-surface);
+            transition: 0.2s;
+            user-select: auto;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input[type="text"]:focus, input[type="datetime-local"]:focus, textarea:focus {
+            outline: none;
+            border-bottom: 2px solid var(--primary);
+            background: var(--surface-variant);
+        }
+
+        .floating-label {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            font-size: 16px;
+            color: var(--on-surface-variant);
+            pointer-events: none;
+            transition: 0.2s;
+        }
+
+        input:focus ~ .floating-label, input:not(:placeholder-shown) ~ .floating-label,
+        textarea:focus ~ .floating-label, textarea:not(:placeholder-shown) ~ .floating-label {
+            top: 6px;
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        /* Custom Switch for Important */
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding: 8px 0;
+        }
+
+        .md-switch {
+            position: relative;
+            width: 52px; height: 32px;
+            background: var(--surface-variant);
+            border-radius: 16px;
+            cursor: pointer;
+            border: 2px solid var(--outline);
+            transition: 0.3s;
+        }
+        .md-switch::after {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px;
+            width: 20px; height: 20px;
+            background: var(--outline);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .md-switch.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .md-switch.active::after {
+            background: var(--on-primary);
+            transform: translateX(20px);
+            width: 24px; height: 24px;
+            top: 2px;
+        }
+
+        /* Dialog Actions */
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .dialog-actions-left {
+            margin-right: auto;
+        }
+
+        button.btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        button.btn-text { background: transparent; color: var(--primary); }
+        button.btn-text:hover { background: var(--primary-container); }
+        
+        button.btn-filled { background: var(--primary); color: var(--on-primary); }
+        button.btn-filled:hover { box-shadow: var(--elevation-1); opacity: 0.9; }
+
+        button.btn-error { background: transparent; color: var(--error); }
+        button.btn-error:hover { background: rgba(186, 26, 26, 0.1); }
+
+        /* Toasts */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #313033;
+            color: #F4EFF4;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: var(--elevation-2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: 0.3s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOutRight {
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--on-surface-variant);
+        }
+        .empty-state svg { width: 64px; height: 64px; opacity: 0.5; margin-bottom: 16px; }
+
+        /* SVGs styling */
+        svg { display: inline-block; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>TD</h1>
+        <div class="tabs">
+            <div class="tab active" id="tab-active" onclick="switchTab('active')">Active</div>
+            <div class="tab" id="tab-completed" onclick="switchTab('completed')">Completed</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Active View -->
+        <div id="view-active">
+            <div id="upcoming-section" class="list-section" style="display: none;">
+                <h2>Upcoming</h2>
+                <div id="upcoming-list"></div>
+            </div>
+            
+            <div id="someday-section" class="list-section" style="display: none;">
+                <h2>Anytime</h2>
+                <div id="someday-list"></div>
+            </div>
+
+            <div id="active-empty" class="empty-state">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                <p>All caught up! Press 'N' or use the button to add a task.</p>
+            </div>
+        </div>
+
+        <!-- Completed View -->
+        <div id="view-completed" style="display: none;">
+            <div class="list-section">
+                <h2>Completed Tasks</h2>
+                <div id="completed-list"></div>
+            </div>
+
+            <div id="completed-empty" class="empty-state">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>
+                <p>No completed tasks yet.</p>
+            </div>
+        </div>
+    </main>
+
+    <button class="fab" id="fab-add" onclick="openDialog()">
+        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    </button>
+
+    <!-- Add/Edit Dialog -->
+    <dialog id="edit-dialog">
+        <div class="dialog-header" id="dialog-title">New To Do</div>
+        
+        <div class="input-group">
+            <input type="text" id="todo-title" placeholder=" " autocomplete="off">
+            <label class="floating-label">Task description</label>
+        </div>
+
+        <div class="input-group">
+            <input type="datetime-local" id="todo-date" placeholder=" ">
+            <label class="floating-label" style="top:6px; font-size:12px; color:var(--primary);">Due Date (Optional)</label>
+        </div>
+
+        <div class="switch-row">
+            <span class="body-large">Mark as Important</span>
+            <div class="md-switch" id="todo-important" onclick="this.classList.toggle('active')"></div>
+        </div>
+
+        <div class="dialog-actions">
+            <button class="btn btn-error dialog-actions-left" id="btn-delete" style="display: none;" onclick="deleteTodo()">Delete</button>
+            <button class="btn btn-text" onclick="closeDialog()">Cancel</button>
+            <button class="btn btn-filled" onclick="saveTodo()">Save</button>
+        </div>
+    </dialog>
+
+    <!-- Remarks / Edit Completed Dialog -->
+    <dialog id="remark-dialog">
+        <div class="dialog-header">Completed Task</div>
+        
+        <div class="input-group">
+            <input type="text" id="remark-title" placeholder=" " autocomplete="off">
+            <label class="floating-label">Task description</label>
+        </div>
+
+        <div class="input-group">
+            <textarea id="remark-text" placeholder=" "></textarea>
+            <label class="floating-label">Remarks / Notes</label>
+        </div>
+
+        <div class="dialog-actions">
+            <button class="btn btn-error dialog-actions-left" onclick="deleteTodoFromRemark()">Delete</button>
+            <button class="btn btn-text" onclick="uncompleteTodo()">Mark Active</button>
+            <button class="btn btn-text" onclick="closeRemarkDialog()">Cancel</button>
+            <button class="btn btn-filled" onclick="saveRemark()">Save</button>
+        </div>
+    </dialog>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // Data Structure & Storage
+        let todos = [];
+        let currentEditId = null;
+        let currentTab = 'active';
+
+        const ICONS = {
+            importantFill: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
+            importantOutline: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/></svg>',
+            calendar: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>',
+            check: '<svg viewBox="0 0 24 24" style="width: 32px; height: 32px;"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>'
+        };
+
+        function init() {
+            try {
+                const stored = localStorage.getItem('td_data');
+                if (stored) todos = JSON.parse(stored);
+            } catch (e) {
+                console.warn("localStorage is restricted, using in-memory state.");
+                showToast("Running in secure mode (data won't save after reload)");
+            }
+            render();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('td_data', JSON.stringify(todos));
+            } catch (e) {
+                // Silently fail if localStorage is restricted
+            }
+        }
+
+        // Global Keyboard Shortcut
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'n' || e.key === 'N') && 
+                !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) &&
+                !document.getElementById('edit-dialog').open &&
+                !document.getElementById('remark-dialog').open) {
+                e.preventDefault();
+                openDialog();
+            }
+        });
+
+        // UI Interactions
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-active').classList.toggle('active', tab === 'active');
+            document.getElementById('tab-completed').classList.toggle('active', tab === 'completed');
+            
+            document.getElementById('view-active').style.display = tab === 'active' ? 'block' : 'none';
+            document.getElementById('view-completed').style.display = tab === 'completed' ? 'block' : 'none';
+            
+            // Hide FAB on completed tab
+            document.getElementById('fab-add').style.display = tab === 'active' ? 'flex' : 'none';
+            render();
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => toast.classList.add('show'));
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Rendering logic
+        function render() {
+            const activeTodos = todos.filter(t => !t.completed);
+            const completedTodos = todos.filter(t => t.completed).sort((a, b) => b.completedAt - a.completedAt);
+
+            if (currentTab === 'active') {
+                const withDate = activeTodos.filter(t => t.dueDate).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                const withoutDate = activeTodos.filter(t => !t.dueDate);
+
+                renderList('upcoming-list', withDate);
+                renderList('someday-list', withoutDate);
+
+                document.getElementById('upcoming-section').style.display = withDate.length > 0 ? 'block' : 'none';
+                document.getElementById('someday-section').style.display = withoutDate.length > 0 ? 'block' : 'none';
+                document.getElementById('active-empty').style.display = activeTodos.length === 0 ? 'block' : 'none';
+            } else {
+                renderList('completed-list', completedTodos, true);
+                document.getElementById('completed-empty').style.display = completedTodos.length === 0 ? 'block' : 'none';
+            }
+        }
+
+        function renderList(containerId, list, isCompletedView = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            list.forEach(todo => {
+                const swipeContainer = document.createElement('div');
+                swipeContainer.className = 'swipe-container';
+                swipeContainer.dataset.id = todo.id;
+
+                let dateHtml = '';
+                if (todo.dueDate) {
+                    const d = new Date(todo.dueDate);
+                    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    dateHtml = `<div class="chip">${ICONS.calendar} ${dateStr}</div>`;
+                }
+
+                let remarksHtml = '';
+                if (isCompletedView && todo.remarks) {
+                    remarksHtml = `<div class="body-medium" style="color: var(--on-surface-variant); margin-top: 8px; border-left: 2px solid var(--outline-variant); padding-left: 8px;">${todo.remarks}</div>`;
+                }
+
+                const bgHtml = isCompletedView ? '' : `
+                    <div class="swipe-background">
+                        ${ICONS.check}
+                    </div>
+                `;
+
+                swipeContainer.innerHTML = `
+                    ${bgHtml}
+                    <div class="todo-card" ${isCompletedView ? '' : 'style="touch-action: pan-y;"'}>
+                        <div class="card-header">
+                            <div class="card-title ${isCompletedView ? 'completed-text' : ''}">
+                                ${todo.title}
+                            </div>
+                            ${todo.important ? `<div class="important-icon">${ICONS.importantFill}</div>` : ''}
+                        </div>
+                        <div class="card-meta">
+                            ${dateHtml}
+                        </div>
+                        ${remarksHtml}
+                    </div>
+                `;
+
+                const card = swipeContainer.querySelector('.todo-card');
+                
+                // Click to edit
+                card.addEventListener('click', (e) => {
+                    // Prevent click if we were swiping
+                    if (card.dataset.swiping === 'true') return;
+                    if (isCompletedView) {
+                        openRemarkDialog(todo.id);
+                    } else {
+                        openDialog(todo.id);
+                    }
+                });
+
+                if (!isCompletedView) {
+                    attachSwipeHandler(swipeContainer, card, todo.id);
+                }
+
+                container.appendChild(swipeContainer);
+            });
+        }
+
+        // Swipe Logic
+        function attachSwipeHandler(container, card, id) {
+            let startX = 0;
+            let startY = 0;
+            let currentX = 0;
+            let isDragging = false;
+            let isScrolling = false;
+            const bg = container.querySelector('.swipe-background');
+
+            const handleStart = (clientX, clientY) => {
+                startX = clientX;
+                startY = clientY;
+                isDragging = true;
+                isScrolling = false;
+                card.style.transition = 'none';
+                bg.style.transition = 'none';
+                card.dataset.swiping = 'false';
+            };
+
+            const handleMove = (clientX, clientY, e) => {
+                if (!isDragging) return;
+                
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+
+                // Detect scroll intention
+                if (Math.abs(dy) > Math.abs(dx) && currentX === 0) {
+                    isDragging = false;
+                    isScrolling = true;
+                    return;
+                }
+
+                if (isScrolling) return;
+
+                if (dx > 0) { // Only swipe right
+                    currentX = dx;
+                    card.style.transform = `translateX(${dx}px)`;
+                    bg.style.opacity = Math.min(1, dx / 150);
+                    card.dataset.swiping = 'true';
+                    if (e && e.cancelable) e.preventDefault();
+                }
+            };
+
+            const handleEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
+                bg.style.transition = 'opacity 0.3s';
+
+                if (currentX > 100) {
+                    // Trigger complete
+                    card.style.transform = `translateX(100%)`;
+                    bg.style.opacity = 1;
+                    setTimeout(() => completeTask(id), 300);
+                } else {
+                    // Snap back
+                    card.style.transform = `translateX(0)`;
+                    bg.style.opacity = 0;
+                }
+                
+                // Delay removing swiping state to prevent click event
+                setTimeout(() => {
+                    currentX = 0;
+                    card.dataset.swiping = 'false';
+                }, 50);
+            };
+
+            // Touch events
+            container.addEventListener('touchstart', e => handleStart(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+            container.addEventListener('touchmove', e => handleMove(e.touches[0].clientX, e.touches[0].clientY, e), {passive: false});
+            container.addEventListener('touchend', handleEnd);
+
+            // Pointer/Mouse events for desktop
+            container.addEventListener('mousedown', e => {
+                if (e.button !== 0) return; // Left click only
+                handleStart(e.clientX, e.clientY);
+            });
+            document.addEventListener('mousemove', e => {
+                if(isDragging) handleMove(e.clientX, e.clientY, e);
+            });
+            document.addEventListener('mouseup', () => {
+                if(isDragging) handleEnd();
+            });
+        }
+
+        // CRUD Operations
+        function completeTask(id) {
+            const index = todos.findIndex(t => t.id === id);
+            if (index > -1) {
+                todos[index].completed = true;
+                todos[index].completedAt = Date.now();
+                saveState();
+                render();
+                showToast("Task completed. Swipe to greatness!");
+            }
+        }
+
+        function uncompleteTodo() {
+            if (!currentEditId) return;
+            const index = todos.findIndex(t => t.id === currentEditId);
+            if (index > -1) {
+                todos[index].completed = false;
+                todos[index].completedAt = null;
+                saveState();
+                closeRemarkDialog();
+                render();
+                showToast("Task moved back to active.");
+            }
+        }
+
+        // Add / Edit Dialog logic
+        const dialog = document.getElementById('edit-dialog');
+        const remarkDialog = document.getElementById('remark-dialog');
+
+        function openDialog(id = null) {
+            currentEditId = id;
+            const titleInput = document.getElementById('todo-title');
+            const dateInput = document.getElementById('todo-date');
+            const impSwitch = document.getElementById('todo-important');
+            const delBtn = document.getElementById('btn-delete');
+            const header = document.getElementById('dialog-title');
+
+            if (id) {
+                const todo = todos.find(t => t.id === id);
+                header.textContent = "Edit To Do";
+                titleInput.value = todo.title;
+                dateInput.value = todo.dueDate || '';
+                impSwitch.classList.toggle('active', todo.important);
+                delBtn.style.display = 'block';
+            } else {
+                header.textContent = "New To Do";
+                titleInput.value = '';
+                dateInput.value = '';
+                impSwitch.classList.remove('active');
+                delBtn.style.display = 'none';
+            }
+            dialog.showModal();
+            // Small delay for focus so animation is smooth
+            setTimeout(() => titleInput.focus(), 100);
+        }
+
+        function closeDialog() {
+            dialog.close();
+            currentEditId = null;
+        }
+
+        function saveTodo() {
+            const title = document.getElementById('todo-title').value.trim();
+            if (!title) {
+                showToast("Task description is required");
+                return;
+            }
+
+            const dueDate = document.getElementById('todo-date').value;
+            const important = document.getElementById('todo-important').classList.contains('active');
+
+            if (currentEditId) {
+                const index = todos.findIndex(t => t.id === currentEditId);
+                todos[index] = { ...todos[index], title, dueDate, important };
+                showToast("Task updated");
+            } else {
+                todos.push({
+                    id: generateId(),
+                    title,
+                    dueDate: dueDate || null,
+                    important,
+                    completed: false,
+                    remarks: "",
+                    createdAt: Date.now(),
+                    completedAt: null
+                });
+                showToast("Task created");
+            }
+
+            saveState();
+            closeDialog();
+            render();
+        }
+
+        function deleteTodo() {
+            if (!currentEditId) return;
+            todos = todos.filter(t => t.id !== currentEditId);
+            saveState();
+            closeDialog();
+            render();
+            showToast("Task deleted");
+        }
+
+        // Remarks Dialog Logic
+        function openRemarkDialog(id) {
+            currentEditId = id;
+            const todo = todos.find(t => t.id === id);
+            document.getElementById('remark-title').value = todo.title;
+            document.getElementById('remark-text').value = todo.remarks || '';
+            remarkDialog.showModal();
+        }
+
+        function closeRemarkDialog() {
+            remarkDialog.close();
+            currentEditId = null;
+        }
+
+        function saveRemark() {
+            if (!currentEditId) return;
+            const index = todos.findIndex(t => t.id === currentEditId);
+            
+            const newTitle = document.getElementById('remark-title').value.trim();
+            if(!newTitle) { showToast("Title cannot be empty"); return; }
+
+            todos[index].title = newTitle;
+            todos[index].remarks = document.getElementById('remark-text').value.trim();
+            
+            saveState();
+            closeRemarkDialog();
+            render();
+            showToast("Remarks saved");
+        }
+
+        function deleteTodoFromRemark() {
+            if (!currentEditId) return;
+            todos = todos.filter(t => t.id !== currentEditId);
+            saveState();
+            closeRemarkDialog();
+            render();
+            showToast("Task deleted");
+        }
+
+        // Initialize App
+        window.onload = init;
+
+    </script>
+</body>
+</html>
